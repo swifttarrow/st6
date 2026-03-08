@@ -84,6 +84,31 @@ Review and approve the plan before implementation. A bad plan → hundreds of ba
 
 ---
 
+## Phase 2.5: Milestones (Optional)
+
+**Goal**: Break an approved plan into trackable milestones and tasks.
+
+### When to Run
+
+After plan approval, when you want granular task tracking or coordination across sessions.
+
+### How to Run (Cursor)
+
+Attach `@agent/prompts/milestones-from-plan.md` and `@thoughts/plans/[your-plan].md`, then: "Generate milestones and tasks from [plan path]"
+
+### Output
+
+- **Artifact**: `thoughts/plans/milestones/` with:
+  - `_index.md` — master index
+  - `NN-milestone-slug/README.md` — per-milestone overview
+  - `NN-milestone-slug/tasks/MMM-task-slug.md` — individual tasks
+
+### Human Checkpoint
+
+Review task granularity; adjust if tasks are too coarse or too fine.
+
+---
+
 ## Phase 3: Implement
 
 **Goal**: Execute the plan phase-by-phase, verifying each step before proceeding.
@@ -98,10 +123,10 @@ From Cursor's terminal:
 
 ```
 claude
-/implement_plan thoughts/plans/[file].md
+/implement [milestone-id]
 ```
 
-Have the plan file path ready. Claude Code will read the plan and execute phase-by-phase.
+Example: `/implement 01-project-setup-webrtc`. Claude Code reads from `thoughts/plans/milestones/` and executes all tasks in the milestone.
 
 ### Output
 
@@ -169,7 +194,8 @@ In a new session: "Read thoughts/handoffs/[file].md and continue from the Action
 |-------|------|------------|
 | Research | Cursor | `@agent/prompts/research.md` + "Research: [question]" |
 | Plan | Cursor | `@agent/prompts/plan.md` + research + "Create plan for [task]" |
-| Implement | **Claude Code** | `claude` → `/implement_plan thoughts/plans/[file].md` |
+| **Milestones** | Cursor | `@agent/prompts/milestones-from-plan.md` + plan + "Generate milestones and tasks" |
+| Implement | **Claude Code** | `claude` → `/implement [milestone]` |
 | Validate | Cursor | `@agent/prompts/validate.md` + plan + "Validate..." |
 | Handoff | Cursor | `@agent/prompts/handoff.md` + "Create handoff" |
 
@@ -190,4 +216,5 @@ In a new session: "Read thoughts/handoffs/[file].md and continue from the Action
 |------|------|
 | Research | `thoughts/research/` |
 | Plans | `thoughts/plans/` |
+| Milestones & Tasks | `thoughts/plans/milestones/` |
 | Handoffs | `thoughts/handoffs/` |
