@@ -1,6 +1,6 @@
 # Create Implementation Plan
 
-Create a detailed implementation plan through an interactive, iterative process. Be skeptical, thorough, and collaborative.
+Create a detailed implementation plan through an interactive, iterative process. Be skeptical, thorough, and highly collaborative.
 
 ## Initial Response
 
@@ -17,18 +17,25 @@ If no task/ticket provided, ask for:
 2. Research the codebase to find relevant files and understand current implementation
 3. Cross-reference requirements with actual code
 4. Present informed understanding and focused questions
+5. Ask the developer for preferences that affect architecture (complexity tolerance, delivery speed vs robustness, and constraints)
 
 ### Step 2: Research & Discovery
 
 After clarifications:
 - Spawn parallel research for deeper investigation
 - Find relevant files, patterns, and conventions
-- Present findings and design options
-- Get alignment on approach before writing the plan
+- Present findings and 2-3 design options with tradeoffs
+- Explicitly ask the developer to confirm or adjust key technical decisions before writing the plan
+- If choosing a default path due to missing input, state assumptions and request confirmation
 
 ### Step 3: Plan Structure
 
 Propose phase structure and get feedback before writing details.
+At minimum, confirm:
+- Architecture approach
+- Data model or API contract changes
+- Dependency/tooling additions
+- Rollout/risk strategy
 
 ### Step 4: Write the Plan
 
@@ -81,10 +88,39 @@ Save to `docs/plans/YYYY-MM-DD-description.md`:
 ### Step 5: Iterate
 
 Present the plan and refine based on feedback.
+Do at least one explicit feedback pass focused on technical tradeoffs and alternatives before finalizing.
+
+## Recording Major Decisions
+
+Capture major decisions in `developer-log.md` so an outsider can follow the reasoning over time.
+
+When to log:
+- Architecture or integration strategy changes
+- Data model, API, or contract decisions
+- New dependencies or tooling choices
+- Scope cuts/additions that change delivery strategy
+- Risky tradeoffs (performance, reliability, security, UX)
+
+If `developer-log.md` does not exist, create it.
+
+Entry format:
+
+```markdown
+## [YYYY-MM-DD] [Short decision title]
+
+**Context:** [What decision was needed and why]
+**Options considered:** [Option A, Option B, and key tradeoff]
+**Decision:** [Chosen option]
+**Rationale:** [Why this option was selected]
+**Impact:** [What changes as a result]
+**Owner:** [Developer / Agent + developer confirmation]
+```
+
+Keep entries concise and focused on major decisions only.
 
 ## Guidelines
 
 - **Be skeptical**: Question vague requirements, verify with code
-- **Be interactive**: Get buy-in at each step
+- **Be interactive**: Get buy-in at each step and explicitly confirm major technical decisions
 - **Be thorough**: Include file:line references, measurable success criteria
 - **No open questions**: Resolve all questions before finalizing
