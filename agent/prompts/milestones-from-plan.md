@@ -27,16 +27,15 @@ Read the plan completely before generating.
 
 ```
 docs/plans/milestones/
-├── 01-milestone-slug/
+├── m1-milestone-slug/
 │   ├── README.md          # Milestone overview, success criteria, dependencies
-│   └── tasks/
-│       ├── 001-task-slug.md
-│       ├── 002-task-slug.md
-│       └── ...
-├── 02-milestone-slug/
+│   ├── 001-task-slug.md
+│   ├── 002-task-slug.md
+│   └── ...
+├── m2-milestone-slug/
 │   ├── README.md
-│   └── tasks/
-│       └── ...
+│   ├── 001-task-slug.md
+│   └── ...
 └── _index.md              # Master index: milestones, order, links to plan
 ```
 
@@ -58,13 +57,13 @@ docs/plans/milestones/
 
 For each phase in the plan:
 
-- Create `docs/plans/milestones/NN-slug/` where:
-  - `NN` = zero-padded phase number (01, 02, …)
+- Create `docs/plans/milestones/mN-slug/` where:
+  - `mN` = phase number prefixed by `m`, no leading zero (m1, m2, ...)
   - `slug` = kebab-case from phase title (e.g. `project-setup-webrtc`)
 
 ### Step 3: Write Milestone README
 
-Each `docs/plans/milestones/NN-slug/README.md` must include:
+Each `docs/plans/milestones/mN-slug/README.md` must include:
 
 ```markdown
 # Milestone N: [Phase Title]
@@ -88,8 +87,8 @@ Each `docs/plans/milestones/NN-slug/README.md` must include:
 - [ ] [From plan]
 
 ## Tasks
-- [001-task-slug](./tasks/001-task-slug.md)
-- [002-task-slug](./tasks/002-task-slug.md)
+- [001-task-slug](./001-task-slug.md)
+- [002-task-slug](./002-task-slug.md)
 ```
 
 ### Step 4: Decompose into Tasks
@@ -100,7 +99,7 @@ Break each phase into **concrete, implementable tasks**. Each task should:
 - Have a clear deliverable (file created, test passing, etc.)
 - Be ordered so dependencies are respected
 
-**Task file format** — `docs/plans/milestones/NN-slug/tasks/MMM-task-slug.md`:
+**Task file format** — `docs/plans/milestones/mN-slug/MMM-task-slug.md`:
 
 ```markdown
 # Task MMM: [Short Title]
@@ -134,8 +133,8 @@ Create `docs/plans/milestones/_index.md`:
 
 | # | Milestone | Status |
 |---|-----------|--------|
-| 1 | [01-slug](./01-slug/) | Pending |
-| 2 | [02-slug](./02-slug/) | Pending |
+| 1 | [m1-slug](./m1-slug/) | Pending |
+| 2 | [m2-slug](./m2-slug/) | Pending |
 | ... | ... | ... |
 
 ## Quick Links
@@ -151,7 +150,7 @@ Create `docs/plans/milestones/_index.md`:
 - **Tasks are atomic** — each task = one logical unit of work
 - **Preserve success criteria** — copy automated and manual verification from the plan into milestone READMEs
 - **Link back to plan** — each milestone README should reference the source plan section
-- **Slug consistently** — use kebab-case, no spaces, lowercase
+- **Slug consistently** — use `mN-` prefix + kebab-case slug, no spaces, lowercase
 - **Respect order** — milestones and tasks follow the plan's dependency order
 
 ---
@@ -160,9 +159,9 @@ Create `docs/plans/milestones/_index.md`:
 
 | Plan Phase | Milestone Dir | Example Tasks |
 |------------|---------------|---------------|
-| Phase 1: Project Setup & WebRTC | `01-project-setup-webrtc/` | Create package.json, Add LiveKit client, Frame sampler, Token API |
-| Phase 2: Face Detection & Gaze | `02-face-detection-gaze/` | MediaPipe init, Gaze derivation, Pipeline orchestration |
-| Phase 3: Audio Pipeline | `03-audio-pipeline/` | Silero VAD, Talk-time aggregation, Pipeline wiring |
+| Phase 1: Project Setup & WebRTC | `m1-project-setup-webrtc/` | Create package.json, Add LiveKit client, Frame sampler, Token API |
+| Phase 2: Face Detection & Gaze | `m2-face-detection-gaze/` | MediaPipe init, Gaze derivation, Pipeline orchestration |
+| Phase 3: Audio Pipeline | `m3-audio-pipeline/` | Silero VAD, Talk-time aggregation, Pipeline wiring |
 | ... | ... | ... |
 
 ---
