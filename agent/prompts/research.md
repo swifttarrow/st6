@@ -1,268 +1,141 @@
-# Prompt: Architecture Research & Brainstorming Partner
+# Produce Non-Authoritative Research Notes
 
-Use this **after generating your PRD**.
+Use this prompt to explore a product or technical question before writing specs.
 
----
+Research is **not** executable. Its job is to reduce uncertainty, compare options, and capture useful findings in `docs/research/`.
 
-## Prompt
-
-You are a **principal software architect and systems researcher** helping me design a production-grade system.
-
-I will give you a **project document / PRD** describing a system to build. Your role is to:
-
-1. **Analyze the system requirements**
-2. **Identify the hardest technical challenges**
-3. **Research viable architectural approaches**
-4. **Propose multiple architecture options**
-5. **Evaluate tradeoffs**
-6. **Iterate with me on decisions**
-
-Do **not jump straight to a single solution**. Your job is to explore the design space and help me reason through tradeoffs.
-
-Assume the reader is an experienced engineer who wants **deep architectural insight**, not beginner explanations.
-
----
-
-# Inputs
+## Inputs
 
 You will receive:
 
-1. **The PRD**
-2. Optional constraints:
+- A research question or topic
+- `docs/prd.md`
+- Optional repo areas to inspect
+- Optional constraints such as stack, budget, timeline, hosting, or external APIs
 
-   * budget
-   * scale targets
-   * preferred languages
-   * time constraints
-   * infra constraints
+If `docs/prd.md` is missing or too vague to frame the question, STOP and ask for the missing context.
 
-Treat the PRD as the **source of truth**.
+## Goal
 
----
+Create a structured research note at:
 
-# Phase 1 — System Understanding
+```text
+docs/research/YYYY-MM-DD-topic-slug.md
+```
 
-First summarize the project in **5–10 bullet points** covering:
+The note should help the later spec phase make informed decisions without turning research itself into instructions.
 
-* system purpose
-* core user interaction loop
-* primary technical components
-* most difficult engineering challenges
-* expected scale
-* latency / performance requirements
-* major external dependencies
-* AI/LLM usage (if applicable)
+## Research Rules
 
-Then list:
+- Do not implement code.
+- Do not write executable tasks.
+- Do not produce milestone specs under `docs/specs/`.
+- Treat the PRD as the product source of truth.
+- Treat research findings as provisional unless explicitly locked elsewhere.
+- If the repo already contains relevant code or patterns, cite it.
+- If external docs or APIs are relevant, cite them or summarize them clearly.
 
-### Hard Problems
+## Process
 
-Identify **5–8 engineering problems** that will determine whether the system succeeds.
+### Step 1: Frame the question
+
+Start by identifying:
+
+- What decision or uncertainty is being researched
+- Which PRD requirements are relevant
+- What constraints matter most
+- What would make the research actionable for the spec phase
+
+### Step 2: Gather evidence
+
+Use available tools to inspect:
+
+- Relevant repository patterns
+- Existing architecture or docs
+- External libraries, APIs, or reference materials
+- Tradeoffs, risks, and operational constraints
+
+### Step 3: Synthesize
+
+Reduce the findings into clear options, implications, and open questions.
+
+Prefer 2-4 viable options over a long list of weak ones.
+
+### Step 4: Mark the output correctly
+
+End with a **tentative recommendation** if one is justified, but label it as research output, not implementation authority.
+
+## Output Structure
+
+Write the research note in markdown using this structure:
+
+```markdown
+# Research: [Topic]
+
+## Question
+[What is being researched]
+
+## Relevant PRD Context
+- [Relevant requirement or constraint]
+
+## Existing Repo Context
+- [File or pattern reference, if any]
+
+## Findings
+- [Concrete finding]
+
+## Options Considered
+
+### Option A: [Name]
+- Strengths:
+- Weaknesses:
+- Risks:
+
+### Option B: [Name]
+- Strengths:
+- Weaknesses:
+- Risks:
+
+## Recommendation
+[Tentative recommendation with rationale]
+
+## Open Questions
+- [Question that still needs an answer]
+
+## Spec-Phase Implications
+- [What the later spec should lock in]
+- [What must not remain ambiguous]
+
+## References
+- Repo: `path/to/file`
+- External: [Doc, API, package, article]
+```
+
+## Writing Guidance
+
+- Be concrete, not generic.
+- Separate facts from inferences.
+- Call out uncertainty explicitly.
+- If two options are viable, explain the tradeoff instead of pretending one is obviously correct.
+- Keep the note useful for a spec author, not for an implementer.
+
+## Do Not Do This
+
+- Do not write task files
+- Do not prescribe exact implementation steps
+- Do not treat research as source of truth during implementation
+- Do not hide unresolved issues
+
+## Output
+
+- Write one research note under `docs/research/`
+- Return the created path
+- Summarize the main recommendation and remaining unknowns
+
+## Invocation
 
 Examples:
 
-* retrieval architecture
-* latency vs cost tradeoffs
-* indexing strategy
-* tool orchestration
-* data synchronization
-* deployment architecture
-
-For each problem, briefly explain **why it is difficult**.
-
----
-
-# Phase 2 — Architecture Exploration
-
-For the overall system, propose **3 different architecture strategies**.
-
-For each architecture:
-
-### Architecture Name
-
-Give it a short descriptive name.
-
-### High-Level Design
-
-Describe the architecture in 6–10 bullet points.
-
-### Key Components
-
-List major components such as:
-
-* frontend
-* API layer
-* worker services
-* databases
-* vector stores
-* queues
-* LLM orchestration
-* caching layers
-
-### Data Flow
-
-Explain the end-to-end request lifecycle.
-
-### Strengths
-
-List 4–6 advantages.
-
-### Weaknesses
-
-List 4–6 risks or downsides.
-
-### Best Use Case
-
-Explain when this architecture is the best choice.
-
----
-
-# Phase 3 — Deep Technical Decisions
-
-Identify **5–7 architectural decisions that matter most**, such as:
-
-* retrieval architecture
-* indexing strategy
-* LLM orchestration
-* evaluation harness
-* storage layout
-* scaling strategy
-* streaming vs synchronous workflows
-
-For each decision provide:
-
-### Decision
-
-Describe the choice.
-
-### Option A / B / C
-
-Compare alternatives.
-
-### Tradeoffs
-
-Explain:
-
-* complexity
-* latency
-* cost
-* maintainability
-* scalability
-
-### Recommendation
-
-Provide a clear recommendation and reasoning.
-
----
-
-# Phase 4 — System Diagram
-
-Provide a **simple architecture diagram in ASCII**, showing:
-
-* major services
-* data stores
-* request flow
-* LLM interactions
-* background jobs
-
-Example style:
-
-```
-User
- │
- ▼
-Frontend (Next.js)
- │
- ▼
-API Gateway
- │
- ├── Retrieval Service
- │     └── Vector DB
- │
- ├── LLM Orchestrator
- │     └── OpenAI / Anthropic
- │
- └── Task Queue
-       └── Workers
-```
-
----
-
-# Phase 5 — Risks & Unknowns
-
-List:
-
-### Top Technical Risks
-
-5–7 risks that could derail the project.
-
-### Unknowns Worth Researching
-
-Topics that need investigation or experimentation.
-
-### Fast Experiments
-
-3–5 quick experiments that would reduce uncertainty.
-
----
-
-# Phase 6 — Initial Delivery Architecture
-
-Recommend an **initial delivery architecture**, optimized for:
-
-* fastest development
-* lowest complexity
-* reasonable scalability
-
-Explain:
-
-* what to build first
-* what to stage behind later checkpoints
-* what to simplify
-
-End with:
-
-> “A simple X with Y beats a complex X with broken Y.”
-
----
-
-# Phase 7 — Iteration Mode
-
-After the analysis, ask me:
-
-* what constraints I care about most (cost, speed, scale)
-* which architecture direction I prefer
-* what part of the system we should deep dive next
-
-Then be prepared to **iterate deeply on individual subsystems**, such as:
-
-* retrieval
-* indexing
-* agent orchestration
-* evaluation harness
-* deployment
-* observability
-
----
-
-# Research Output Requirements
-
-Research is complete when you **commit to architecture decisions** and **document the rationale** for each. Output must include:
-
-1. **Decision** — A clear, actionable choice (e.g., "MediaPipe Face Landmarker in-browser", not "MediaPipe or OpenCV").
-2. **Rationale** — The "why": constraints that drove the choice, tradeoffs accepted, and what we're optimizing for.
-
-Findings alone are insufficient. Each discovery point must conclude with a locked decision + rationale before handoff to Planning.
-
----
-
-# Output Style
-
-* Use **structured sections**
-* Prefer **bullet points and tables**
-* Be **concrete and technical**
-* Reference real tools where appropriate (e.g. Redis, Postgres, Kafka, OpenAI, etc.)
-
-Avoid generic advice.
-
----
+- "Research auth approaches for the first milestone in `docs/prd.md`"
+- "Investigate rate-limiting options for the API described in `docs/prd.md`"
+- "Compare queueing approaches for the background jobs implied by `docs/prd.md`"

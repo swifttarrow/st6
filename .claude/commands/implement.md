@@ -1,75 +1,99 @@
 ---
-description: Implement a milestone from docs/plans/milestones
+description: Implement a spec from docs/specs by executing tasks sequentially
 ---
 
 # Implement
 
-Implement a milestone from `docs/plans/milestones/`. Execute all tasks in order with verification.
+Implement a spec from `docs/specs/` by executing tasks in order.
+
+---
 
 ## Usage
 
 ```
-implement 01-project-setup-webrtc
-implement 02-face-detection-gaze
+implement m1-presence-system
+implement m2-realtime-sync
 ```
 
-If no milestone provided, ask for one. List milestones in `docs/plans/milestones/_index.md`.
+If no spec is provided:
+→ ask for one and list available specs in `docs/specs/`
+
+---
 
 ## Getting Started
 
-1. Resolve the milestone: `docs/plans/milestones/{id}-{name}/` → read `README.md`, enumerate tasks from `tasks/`
-2. Read each task file to implement
-3. Create a todo list to track progress
-4. Start implementing when you understand the work
+1. Resolve the spec: `docs/specs/{spec-name}/`
+2. Read `README.md` (milestone spec)
+3. Enumerate task files (`001-task.md`, `002-task.md`, …)
+4. Read each task fully before starting
 
-## Implementation Philosophy
+---
 
-- Follow the plan's intent while adapting to reality
-- Implement each task fully before moving to the next
-- Update checkboxes in task files and milestone README as you complete them
-- When things don't match, STOP and explain clearly
+## Execution Rules
 
-## Verification
+* Execute tasks **sequentially**
+* Follow the task exactly—DO NOT infer beyond it
+* DO NOT reference PRD or research during execution
+* Each task must be completed before moving to the next
+
+---
+
+## Task Execution Loop
+
+For each task:
+
+1. Implement the task
+2. Validate against acceptance criteria
+3. Confirm outputs are correct
+4. Proceed to next task
+
+---
+
+## Validation
 
 After each task:
-1. Run automated success criteria from the task or milestone
-2. Fix issues before proceeding
-3. Update plan checkboxes
-4. Inform human that manual verification is ready (if any)
-5. Wait for confirmation before next task (unless instructed to run multiple tasks)
 
-```
-Task [nnn] Complete – Ready for Manual Verification
+* Verify all acceptance criteria are satisfied
+* Ensure expected outputs were produced
+* Check for unintended side effects
 
-Automated verification passed:
-- [List checks that passed]
+If validation fails:
+→ STOP and fix before continuing
 
-Please perform manual verification from the plan:
-- [List manual steps]
-
-Let me know when complete so I can proceed to the next task.
-```
-
-If instructed to run multiple tasks consecutively, skip the pause until the last task.
-
-Do not check off manual verification items until confirmed by the user.
+---
 
 ## On Mismatch
 
-If reality doesn't match the plan:
-- STOP and explain the discrepancy
-- Present: Expected vs Found vs Why it matters
-- Ask how to proceed before deviating
+If reality does not match the spec or task:
+
+STOP and report:
 
 ```
 Issue in Task [nnn]:
-Expected: [what the plan says]
+
+Expected: [what the task specifies]
 Found: [actual situation]
-Why this matters: [explanation]
+Why this matters: [impact]
 
 How should I proceed?
 ```
 
+DO NOT proceed without clarification.
+
+---
+
 ## Resuming
 
-If the milestone or task has existing checkmarks, trust completed work and pick up from the first unchecked item.
+If partial progress exists:
+
+* Identify completed tasks based on outputs (not assumptions)
+* Resume from the first incomplete task
+
+---
+
+## Constraints
+
+* Tasks are the ONLY execution unit
+* Specs define behavior but are NOT directly executable
+* DO NOT introduce changes not specified in the task
+* DO NOT optimize or extend beyond the task
