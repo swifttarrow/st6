@@ -12,8 +12,8 @@ Implement the backend endpoint that powers the Leadership Organization Overview.
 
 ## Outputs
 
-- Create: `backend/src/main/java/com/wct/dashboard/LeadershipOverviewController.java`
-- Create: `backend/src/main/java/com/wct/dashboard/LeadershipOverviewService.java`
+- Create: `backend/src/main/java/com/wct/dashboard/controller/LeadershipOverviewController.java`
+- Create: `backend/src/main/java/com/wct/dashboard/service/LeadershipOverviewService.java`
 - Create: `backend/src/main/java/com/wct/dashboard/dto/OrgOverviewResponse.java`
 - Create: `backend/src/main/java/com/wct/dashboard/dto/RcdoHierarchyCoverage.java`
 - Create: `backend/src/test/java/com/wct/dashboard/LeadershipOverviewControllerTest.java`

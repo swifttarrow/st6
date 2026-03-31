@@ -13,8 +13,8 @@ Implement the manager unlock capability that allows a manager to transition an I
 
 ## Outputs
 
-- Modify: `backend/src/main/java/com/wct/plan/WeeklyPlanController.java` — add unlock endpoint
-- Modify: `backend/src/main/java/com/wct/plan/WeeklyPlanService.java` — add unlock logic
+- Modify: `backend/src/main/java/com/wct/plan/controller/WeeklyPlanController.java` — add unlock endpoint
+- Modify: `backend/src/main/java/com/wct/plan/service/WeeklyPlanService.java` — add unlock logic
 - Create: `backend/src/test/java/com/wct/plan/ManagerUnlockTest.java`
 - Side effects: none
 

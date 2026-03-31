@@ -16,9 +16,10 @@ Implement the reconciliation flow where ICs annotate each commitment with an act
 - Create: `backend/src/main/java/com/wct/commitment/dto/ReconcileCommitmentRequest.java`
 - Create: `backend/src/main/java/com/wct/commitment/dto/BulkReconcileRequest.java`
 - Create: `backend/src/main/java/com/wct/commitment/ActualStatus.java` — enum
-- Modify: `backend/src/main/java/com/wct/commitment/CommitmentController.java` — add reconciliation endpoints
-- Modify: `backend/src/main/java/com/wct/commitment/CommitmentService.java` — add reconciliation logic
-- Modify: `backend/src/main/java/com/wct/plan/WeeklyPlanService.java` — add reconciliation completeness check before RECONCILING→RECONCILED transition
+- Modify: `backend/src/main/java/com/wct/commitment/controller/CommitmentController.java` — add reconciliation endpoints
+- Modify: `backend/src/main/java/com/wct/commitment/service/CommitmentService.java` — add reconciliation logic
+- Modify: `backend/src/main/java/com/wct/plan/service/WeeklyPlanService.java` — add reconciliation completeness check before RECONCILING→RECONCILED transition
+- Create: `backend/src/main/java/com/wct/plan/service/IncompleteReconciliationException.java` — exception for 409 with unannotated IDs
 - Create: `backend/src/test/java/com/wct/commitment/ReconciliationTest.java`
 - Side effects: none
 

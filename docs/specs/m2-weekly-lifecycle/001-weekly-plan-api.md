@@ -15,8 +15,9 @@ Implement the weekly plan creation, retrieval, and state machine transition endp
 ## Outputs
 
 - Modify: `backend/src/main/java/com/wct/plan/entity/WeeklyPlan.java` — expand to full entity with all fields
-- Create: `backend/src/main/java/com/wct/plan/WeeklyPlanController.java`
-- Create: `backend/src/main/java/com/wct/plan/WeeklyPlanService.java`
+- Create: `backend/src/main/java/com/wct/plan/controller/WeeklyPlanController.java`
+- Create: `backend/src/main/java/com/wct/plan/service/WeeklyPlanService.java`
+- Create: `backend/src/main/java/com/wct/plan/service/InvalidTransitionException.java` — custom exception for 409 responses
 - Create: `backend/src/main/java/com/wct/plan/repository/WeeklyPlanRepository.java`
 - Create: `backend/src/main/java/com/wct/plan/dto/WeeklyPlanResponse.java`
 - Create: `backend/src/main/java/com/wct/plan/dto/PlanTransitionRequest.java`
@@ -24,7 +25,7 @@ Implement the weekly plan creation, retrieval, and state machine transition endp
 - Create: `backend/src/main/java/com/wct/plan/entity/PlanStateTransition.java` — JPA entity
 - Create: `backend/src/main/java/com/wct/plan/repository/PlanStateTransitionRepository.java`
 - Create: `backend/src/main/java/com/wct/plan/WeekDateUtil.java` — utility to compute Monday of a given date
-- Create: `backend/src/test/java/com/wct/plan/WeeklyPlanControllerTest.java`
+- Create: `backend/src/test/java/com/wct/plan/controller/WeeklyPlanControllerTest.java`
 - Create: `backend/src/test/java/com/wct/plan/WeekDateUtilTest.java`
 - Side effects: none
 

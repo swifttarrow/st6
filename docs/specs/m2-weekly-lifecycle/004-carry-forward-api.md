@@ -14,8 +14,9 @@ Implement the carry-forward mechanism that pre-populates an IC's next week DRAFT
 
 ## Outputs
 
-- Modify: `backend/src/main/java/com/wct/plan/WeeklyPlanService.java` — integrate carry-forward into get-or-create
-- Create: `backend/src/main/java/com/wct/commitment/CarryForwardService.java`
+- Modify: `backend/src/main/java/com/wct/plan/service/WeeklyPlanService.java` — integrate carry-forward into get-or-create
+- Create: `backend/src/main/java/com/wct/commitment/service/CarryForwardService.java`
+- Create: `backend/src/main/java/com/wct/plan/service/ArchivedOutcomeException.java` — exception for 409 when locking with archived outcomes
 - Modify: `backend/src/main/java/com/wct/commitment/dto/CommitmentResponse.java` — add `carriedForward` flag and `outcomeArchived` flag
 - Create: `backend/src/test/java/com/wct/commitment/CarryForwardTest.java`
 - Side effects: new commitment rows created in the next week's plan

@@ -15,8 +15,8 @@ Implement the backend endpoints that power the Manager Dashboard. These provide 
 
 ## Outputs
 
-- Create: `backend/src/main/java/com/wct/dashboard/ManagerDashboardController.java`
-- Create: `backend/src/main/java/com/wct/dashboard/ManagerDashboardService.java`
+- Create: `backend/src/main/java/com/wct/dashboard/controller/ManagerDashboardController.java`
+- Create: `backend/src/main/java/com/wct/dashboard/service/ManagerDashboardService.java`
 - Create: `backend/src/main/java/com/wct/dashboard/dto/TeamOverviewResponse.java`
 - Create: `backend/src/main/java/com/wct/dashboard/dto/TeamMemberSummary.java`
 - Create: `backend/src/main/java/com/wct/dashboard/dto/RallyCryCoverage.java`

@@ -16,13 +16,13 @@ Implement the endpoints for creating, reading, updating, deleting, and reorderin
 
 - Modify: `backend/src/main/java/com/wct/commitment/entity/Commitment.java` — expand to full entity
 - Modify: `backend/src/main/java/com/wct/commitment/repository/CommitmentRepository.java` — add query methods
-- Create: `backend/src/main/java/com/wct/commitment/CommitmentController.java`
-- Create: `backend/src/main/java/com/wct/commitment/CommitmentService.java`
+- Create: `backend/src/main/java/com/wct/commitment/controller/CommitmentController.java`
+- Create: `backend/src/main/java/com/wct/commitment/service/CommitmentService.java`
 - Create: `backend/src/main/java/com/wct/commitment/dto/CreateCommitmentRequest.java`
 - Create: `backend/src/main/java/com/wct/commitment/dto/UpdateCommitmentRequest.java`
 - Create: `backend/src/main/java/com/wct/commitment/dto/ReorderCommitmentsRequest.java`
 - Create: `backend/src/main/java/com/wct/commitment/dto/CommitmentResponse.java`
-- Create: `backend/src/test/java/com/wct/commitment/CommitmentControllerTest.java`
+- Create: `backend/src/test/java/com/wct/commitment/controller/CommitmentControllerTest.java`
 - Side effects: none
 
 ## Dependencies
