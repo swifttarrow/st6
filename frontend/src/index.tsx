@@ -18,7 +18,9 @@ export { PageHeader } from './components/PageHeader/PageHeader';
 export { Badge } from './components/Badge/Badge';
 export type { BadgeVariant } from './components/Badge/Badge';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string || 'http://localhost:8080';
+const API_BASE_URL =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
+  (import.meta.env.DEV ? '' : 'http://localhost:8080');
 
 let root: Root | null = null;
 
