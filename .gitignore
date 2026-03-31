@@ -1,0 +1,9 @@
+# Gradle (backend)
+backend/.gradle/
+backend/build/
+
+# Node / Vite (frontend)
+frontend/node_modules/
+frontend/dist/
+
+.DS_Store
