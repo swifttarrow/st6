@@ -12,11 +12,11 @@ Implement the hierarchy tree endpoint and search endpoint that power the Strateg
 
 ## Outputs
 
-- Create: `backend/src/main/java/com/wct/rcdo/RcdoTreeController.java`
-- Create: `backend/src/main/java/com/wct/rcdo/RcdoTreeService.java`
+- Create: `backend/src/main/java/com/wct/rcdo/controller/RcdoTreeController.java`
+- Create: `backend/src/main/java/com/wct/rcdo/service/RcdoTreeService.java`
 - Create: `backend/src/main/java/com/wct/rcdo/dto/RcdoTreeResponse.java` — nested tree DTO
 - Create: `backend/src/main/java/com/wct/rcdo/dto/RcdoSearchResult.java` — flat search result DTO
-- Create: `backend/src/test/java/com/wct/rcdo/RcdoTreeControllerTest.java`
+- Create: `backend/src/test/java/com/wct/rcdo/controller/RcdoTreeControllerTest.java`
 - Side effects: none
 
 ## Dependencies

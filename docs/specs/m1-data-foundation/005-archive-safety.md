@@ -7,17 +7,19 @@ Implement safety checks that prevent archiving or deleting RCDO hierarchy nodes 
 ## Inputs
 
 - Spec: `docs/specs/m1-data-foundation/README.md`
-- Files: `backend/src/main/java/com/wct/rcdo/OutcomeService.java` (from Task 003)
-- Files: `backend/src/main/java/com/wct/rcdo/DefiningObjectiveService.java` (from Task 003)
-- Files: `backend/src/main/java/com/wct/rcdo/RallyCryService.java` (from Task 003)
+- Files: `backend/src/main/java/com/wct/rcdo/service/OutcomeService.java` (from Task 003)
+- Files: `backend/src/main/java/com/wct/rcdo/service/DefiningObjectiveService.java` (from Task 003)
+- Files: `backend/src/main/java/com/wct/rcdo/service/RallyCryService.java` (from Task 003)
 - Files: Migration `V003__create_commitments.sql` (from Task 002) — defines the commitment table with `outcome_id` FK
 
 ## Outputs
 
-- Modify: `backend/src/main/java/com/wct/rcdo/OutcomeService.java` — add archive safety check
-- Modify: `backend/src/main/java/com/wct/rcdo/DefiningObjectiveService.java` — add cascade archive safety check
-- Modify: `backend/src/main/java/com/wct/rcdo/RallyCryService.java` — add cascade archive safety check
+- Modify: `backend/src/main/java/com/wct/rcdo/service/OutcomeService.java` — add archive safety check
+- Modify: `backend/src/main/java/com/wct/rcdo/service/DefiningObjectiveService.java` — add cascade archive safety check
+- Modify: `backend/src/main/java/com/wct/rcdo/service/RallyCryService.java` — add cascade archive safety check
 - Create: `backend/src/main/java/com/wct/rcdo/dto/ArchiveConflictResponse.java` — response DTO for 409 conflicts
+- Create: `backend/src/main/java/com/wct/rcdo/exception/ArchiveConflictException.java` — runtime exception carrying the conflict response
+- Create: `backend/src/main/java/com/wct/rcdo/exception/ArchiveConflictAdvice.java` — @ControllerAdvice returning 409 from the exception
 - Create: `backend/src/main/java/com/wct/commitment/repository/CommitmentRepository.java` — repository with query for active commitments by outcome
 - Use: `backend/src/main/java/com/wct/commitment/entity/Commitment.java` (created in Task 002)
 - Use: `backend/src/main/java/com/wct/plan/entity/WeeklyPlan.java` (created in Task 002)

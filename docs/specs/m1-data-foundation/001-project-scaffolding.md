@@ -32,7 +32,7 @@ Establish the monorepo structure, build tooling, and development configuration f
 - TypeScript must use `"strict": true` in `tsconfig.json`.
 - The backend must use Flyway for database migrations (configured but no migration files yet — those come in Task 002).
 - The frontend is a shell only in this task — no UI components yet. It must export a `mount(container: HTMLElement, context: HostContext): void` function signature where `HostContext` includes at minimum `{ userId: string; role: 'IC' | 'MANAGER' | 'LEADERSHIP'; managerId?: string; teamId: string }`.
-- Use Gradle (Kotlin DSL preferred) for the backend build.
+- Use Gradle (Groovy or Kotlin DSL) for the backend build. Groovy DSL is preferred if the JDK version is not yet supported by the Kotlin compiler embedded in Gradle.
 - Use a standard module bundler (Vite, webpack, or Rspack) configured for module federation or remote entry output — the specific bundler choice is open but must support the PA host app's remote module pattern.
 
 ## Required Changes

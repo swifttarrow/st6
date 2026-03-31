@@ -12,12 +12,12 @@ Implement the REST API endpoints for creating, reading, updating, and archiving 
 
 ## Outputs
 
-- Create: `backend/src/main/java/com/wct/rcdo/RallyCryController.java`
-- Create: `backend/src/main/java/com/wct/rcdo/DefiningObjectiveController.java`
-- Create: `backend/src/main/java/com/wct/rcdo/OutcomeController.java`
-- Create: `backend/src/main/java/com/wct/rcdo/RallyCryService.java`
-- Create: `backend/src/main/java/com/wct/rcdo/DefiningObjectiveService.java`
-- Create: `backend/src/main/java/com/wct/rcdo/OutcomeService.java`
+- Create: `backend/src/main/java/com/wct/rcdo/controller/RallyCryController.java`
+- Create: `backend/src/main/java/com/wct/rcdo/controller/DefiningObjectiveController.java`
+- Create: `backend/src/main/java/com/wct/rcdo/controller/OutcomeController.java`
+- Create: `backend/src/main/java/com/wct/rcdo/service/RallyCryService.java`
+- Create: `backend/src/main/java/com/wct/rcdo/service/DefiningObjectiveService.java`
+- Create: `backend/src/main/java/com/wct/rcdo/service/OutcomeService.java`
 - Use: `backend/src/main/java/com/wct/rcdo/entity/RallyCry.java` (created in Task 002)
 - Use: `backend/src/main/java/com/wct/rcdo/entity/DefiningObjective.java` (created in Task 002)
 - Use: `backend/src/main/java/com/wct/rcdo/entity/Outcome.java` (created in Task 002)
@@ -33,12 +33,14 @@ Implement the REST API endpoints for creating, reading, updating, and archiving 
 - Create: `backend/src/main/java/com/wct/rcdo/dto/CreateOutcomeRequest.java` — `{ definingObjectiveId: UUID, name: String, description: String }`
 - Create: `backend/src/main/java/com/wct/rcdo/dto/UpdateOutcomeRequest.java` — `{ name: String, description: String, sortOrder: int }`
 - Create: `backend/src/main/java/com/wct/rcdo/dto/OutcomeResponse.java` — `{ id, definingObjectiveId, name, description, sortOrder, archivedAt, createdAt, updatedAt }`
-- Create: `backend/src/main/java/com/wct/auth/UserContext.java` — interface for extracting user identity from requests
+- Create: `backend/src/main/java/com/wct/auth/Role.java` — enum: IC, MANAGER, LEADERSHIP
+- Create: `backend/src/main/java/com/wct/auth/UserContext.java` — record for extracting user identity from requests
+- Create: `backend/src/main/java/com/wct/auth/UserContextHolder.java` — thread-local holder for UserContext
 - Create: `backend/src/main/java/com/wct/auth/UserContextFilter.java` — servlet filter that parses user context from request headers
-- Create: `backend/src/main/java/com/wct/auth/RoleGuard.java` — annotation or interceptor for role-based access
-- Create: `backend/src/test/java/com/wct/rcdo/RallyCryControllerTest.java`
-- Create: `backend/src/test/java/com/wct/rcdo/DefiningObjectiveControllerTest.java`
-- Create: `backend/src/test/java/com/wct/rcdo/OutcomeControllerTest.java`
+- Create: `backend/src/main/java/com/wct/auth/RoleGuard.java` — utility for role-based access checks (throws 403)
+- Create: `backend/src/test/java/com/wct/rcdo/controller/RallyCryControllerTest.java`
+- Create: `backend/src/test/java/com/wct/rcdo/controller/DefiningObjectiveControllerTest.java`
+- Create: `backend/src/test/java/com/wct/rcdo/controller/OutcomeControllerTest.java`
 - Side effects: none
 
 ## Dependencies
