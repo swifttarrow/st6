@@ -24,4 +24,10 @@ public interface CommitmentRepository extends JpaRepository<Commitment, UUID> {
     @Query("SELECT DISTINCT wp.id, wp.userId, wp.weekStartDate FROM Commitment c JOIN WeeklyPlan wp ON c.weeklyPlanId = wp.id " +
            "WHERE c.outcomeId IN :outcomeIds AND wp.status IN (com.wct.plan.PlanStatus.DRAFT, com.wct.plan.PlanStatus.LOCKED, com.wct.plan.PlanStatus.RECONCILING)")
     List<Object[]> findAffectedPlansByOutcomeIds(@Param("outcomeIds") Collection<UUID> outcomeIds);
+
+    List<Commitment> findByWeeklyPlanIdOrderByPriority(UUID planId);
+
+    long countByWeeklyPlanId(UUID planId);
+
+    List<Commitment> findByWeeklyPlanIdAndActualStatusIsNull(UUID planId);
 }

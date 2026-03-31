@@ -1,0 +1,176 @@
+package com.wct.plan.service;
+
+import com.wct.auth.Role;
+import com.wct.auth.UserContext;
+import com.wct.commitment.entity.Commitment;
+import com.wct.commitment.repository.CommitmentRepository;
+import com.wct.commitment.service.CarryForwardService;
+import com.wct.plan.PlanStatus;
+import com.wct.plan.WeekDateUtil;
+import com.wct.plan.entity.PlanStateTransition;
+import com.wct.plan.entity.WeeklyPlan;
+import com.wct.plan.repository.PlanStateTransitionRepository;
+import com.wct.plan.repository.WeeklyPlanRepository;
+import com.wct.rcdo.entity.Outcome;
+import com.wct.rcdo.repository.OutcomeRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+public class WeeklyPlanService {
+
+    private final WeeklyPlanRepository weeklyPlanRepository;
+    private final PlanStateTransitionRepository transitionRepository;
+    private final CommitmentRepository commitmentRepository;
+    private final CarryForwardService carryForwardService;
+    private final OutcomeRepository outcomeRepository;
+
+    public WeeklyPlanService(WeeklyPlanRepository weeklyPlanRepository,
+                             PlanStateTransitionRepository transitionRepository,
+                             CommitmentRepository commitmentRepository,
+                             CarryForwardService carryForwardService,
+                             OutcomeRepository outcomeRepository) {
+        this.weeklyPlanRepository = weeklyPlanRepository;
+        this.transitionRepository = transitionRepository;
+        this.commitmentRepository = commitmentRepository;
+        this.carryForwardService = carryForwardService;
+        this.outcomeRepository = outcomeRepository;
+    }
+
+    @Transactional
+    public WeeklyPlan getOrCreatePlan(String userId, LocalDate date, UserContext user) {
+        LocalDate monday = WeekDateUtil.toMonday(date);
+        var existing = weeklyPlanRepository.findByUserIdAndWeekStartDate(userId, monday);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        WeeklyPlan plan = new WeeklyPlan();
+        plan.setUserId(userId);
+        plan.setWeekStartDate(monday);
+        plan.setTeamId(user.teamId());
+        plan.setStatus(PlanStatus.DRAFT);
+        plan = weeklyPlanRepository.save(plan);
+        carryForwardService.carryForward(plan);
+        return plan;
+    }
+
+    public WeeklyPlan getPlanById(UUID planId) {
+        return weeklyPlanRepository.findById(planId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan not found"));
+    }
+
+    public WeeklyPlan getPlanWithAuthCheck(UUID planId, UserContext user) {
+        WeeklyPlan plan = getPlanById(planId);
+
+        if (user.role() == Role.LEADERSHIP) {
+            return plan;
+        }
+
+        if (user.role() == Role.MANAGER) {
+            return plan;
+        }
+
+        // IC: must own the plan
+        if (!plan.getUserId().equals(user.userId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        return plan;
+    }
+
+    @Transactional
+    public WeeklyPlan transitionPlan(UUID planId, PlanStatus targetStatus, UserContext user) {
+        WeeklyPlan plan = getPlanById(planId);
+
+        // Only the plan owner can transition
+        if (!plan.getUserId().equals(user.userId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the plan owner can transition the plan");
+        }
+
+        if (!plan.getStatus().canTransitionTo(targetStatus)) {
+            throw new InvalidTransitionException(plan.getStatus(), targetStatus);
+        }
+
+        // Archived outcome check for DRAFT -> LOCKED
+        if (targetStatus == PlanStatus.LOCKED) {
+            List<Commitment> commitments = commitmentRepository.findByWeeklyPlanIdOrderByPriority(planId);
+            List<UUID> archivedCommitmentIds = new ArrayList<>();
+            for (Commitment c : commitments) {
+                Outcome outcome = outcomeRepository.findById(c.getOutcomeId()).orElse(null);
+                if (outcome != null && outcome.getArchivedAt() != null) {
+                    archivedCommitmentIds.add(c.getId());
+                }
+            }
+            if (!archivedCommitmentIds.isEmpty()) {
+                throw new ArchivedOutcomeException(archivedCommitmentIds);
+            }
+        }
+
+        // Completeness check for RECONCILING -> RECONCILED
+        if (targetStatus == PlanStatus.RECONCILED) {
+            long totalCommitments = commitmentRepository.countByWeeklyPlanId(planId);
+            if (totalCommitments > 0) {
+                List<Commitment> unannotated = commitmentRepository.findByWeeklyPlanIdAndActualStatusIsNull(planId);
+                if (!unannotated.isEmpty()) {
+                    List<UUID> ids = unannotated.stream().map(Commitment::getId).toList();
+                    throw new IncompleteReconciliationException(ids);
+                }
+            }
+        }
+
+        PlanStatus fromStatus = plan.getStatus();
+        plan.setStatus(targetStatus);
+        plan = weeklyPlanRepository.save(plan);
+
+        PlanStateTransition transition = new PlanStateTransition();
+        transition.setWeeklyPlanId(plan.getId());
+        transition.setFromStatus(fromStatus.name());
+        transition.setToStatus(targetStatus.name());
+        transition.setTriggeredBy(user.userId());
+        transitionRepository.save(transition);
+
+        return plan;
+    }
+
+    @Transactional
+    public WeeklyPlan unlockPlan(UUID planId, UserContext managerContext) {
+        // Verify role is MANAGER or LEADERSHIP
+        if (managerContext.role() == Role.IC) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only managers or leadership can unlock plans");
+        }
+
+        // Load plan
+        WeeklyPlan plan = getPlanById(planId);
+
+        // Verify plan is LOCKED
+        if (plan.getStatus() != PlanStatus.LOCKED) {
+            throw new InvalidTransitionException("Plan can only be unlocked from LOCKED state");
+        }
+
+        // Set status to DRAFT
+        PlanStatus fromStatus = plan.getStatus();
+        plan.setStatus(PlanStatus.DRAFT);
+        plan = weeklyPlanRepository.save(plan);
+
+        // Log transition
+        PlanStateTransition transition = new PlanStateTransition();
+        transition.setWeeklyPlanId(plan.getId());
+        transition.setFromStatus(fromStatus.name());
+        transition.setToStatus(PlanStatus.DRAFT.name());
+        transition.setTriggeredBy(managerContext.userId());
+        transitionRepository.save(transition);
+
+        return plan;
+    }
+
+    public List<PlanStateTransition> getTransitions(UUID planId) {
+        return transitionRepository.findByWeeklyPlanIdOrderByTransitionedAt(planId);
+    }
+}
