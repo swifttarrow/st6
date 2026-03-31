@@ -1,0 +1,235 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import React from 'react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { ManagerDashboardPage } from '../../pages/ManagerDashboard/ManagerDashboardPage';
+
+const mockTeamOverview = {
+  weekStartDate: '2026-03-23',
+  stats: {
+    directReports: 4,
+    plansLocked: 3,
+    totalCommitments: 22,
+    avgCompletionRate: 78.5,
+  },
+  members: [
+    {
+      userId: 'alice',
+      planId: 'plan-1',
+      planStatus: 'ACTIVE',
+      commitmentCount: 7,
+      topRallyCry: 'RC #1',
+      completionRate: 80,
+    },
+    {
+      userId: 'bob',
+      planId: 'plan-2',
+      planStatus: 'DRAFT',
+      commitmentCount: 6,
+      topRallyCry: null,
+      completionRate: null,
+    },
+  ],
+  rallyCryCoverage: [
+    {
+      rallyCryId: 'rc-1',
+      rallyCryName: 'Rally Cry Alpha',
+      commitmentCount: 10,
+      memberCount: 4,
+      consecutiveZeroWeeks: 0,
+    },
+    {
+      rallyCryId: 'rc-2',
+      rallyCryName: 'Rally Cry Beta',
+      commitmentCount: 0,
+      memberCount: 0,
+      consecutiveZeroWeeks: 4,
+    },
+  ],
+};
+
+const mockApi = {
+  plans: {
+    getPlan: vi.fn(),
+    getPlanById: vi.fn(),
+    transitionPlan: vi.fn(),
+    unlockPlan: vi.fn(),
+    getTransitions: vi.fn(),
+  },
+  rcdo: {
+    getTree: vi.fn(),
+    searchOutcomes: vi.fn(),
+  },
+  commitments: {
+    listCommitments: vi.fn(),
+    createCommitment: vi.fn(),
+    updateCommitment: vi.fn(),
+    deleteCommitment: vi.fn(),
+    reorderCommitments: vi.fn(),
+    reconcileCommitment: vi.fn(),
+    bulkReconcile: vi.fn(),
+  },
+  dashboard: {
+    getTeamOverview: vi.fn(),
+  },
+};
+
+vi.mock('../../context/ApiContext', () => ({
+  useApi: () => mockApi,
+}));
+
+let mockRole = 'MANAGER';
+
+vi.mock('../../context/UserContext', () => ({
+  useUserContext: () => ({
+    userId: 'manager-1',
+    role: mockRole,
+    teamId: 'team-1',
+  }),
+}));
+
+describe('ManagerDashboardPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRole = 'MANAGER';
+    mockApi.dashboard.getTeamOverview.mockResolvedValue(mockTeamOverview);
+  });
+
+  it('shows loading state initially', () => {
+    render(
+      <MemoryRouter>
+        <ManagerDashboardPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('Loading...')).toBeDefined();
+  });
+
+  it('renders dashboard with stats for MANAGER role', async () => {
+    render(
+      <MemoryRouter>
+        <ManagerDashboardPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('manager-dashboard')).toBeDefined();
+    });
+
+    expect(screen.getByText('Team Dashboard')).toBeDefined();
+    expect(screen.getByText('4')).toBeDefined(); // directReports
+    expect(screen.getByText('3/4')).toBeDefined(); // plansLocked
+    expect(screen.getByText('22')).toBeDefined(); // totalCommitments
+    expect(screen.getByText('79%')).toBeDefined(); // avgCompletionRate
+  });
+
+  it('renders team members table', async () => {
+    render(
+      <MemoryRouter>
+        <ManagerDashboardPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('team-members-table')).toBeDefined();
+    });
+
+    expect(screen.getByText('alice')).toBeDefined();
+    expect(screen.getByText('bob')).toBeDefined();
+    expect(screen.getByText('Locked')).toBeDefined();
+    expect(screen.getByText('Draft')).toBeDefined();
+  });
+
+  it('renders coverage panel with zero-coverage warning', async () => {
+    render(
+      <MemoryRouter>
+        <ManagerDashboardPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('coverage-panel')).toBeDefined();
+    });
+
+    expect(screen.getByText('Rally Cry Alpha')).toBeDefined();
+    expect(screen.getByText('Rally Cry Beta')).toBeDefined();
+    expect(screen.getByText('No coverage - 4 week running')).toBeDefined();
+  });
+
+  it('shows unlock button for locked plans', async () => {
+    render(
+      <MemoryRouter>
+        <ManagerDashboardPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('unlock-alice')).toBeDefined();
+    });
+
+    const unlockBtn = screen.getByTestId('unlock-alice');
+    expect(unlockBtn.textContent).toBe('Unlock');
+  });
+
+  it('calls unlockPlan and refreshes on unlock click', async () => {
+    mockApi.plans.unlockPlan.mockResolvedValue({});
+
+    render(
+      <MemoryRouter>
+        <ManagerDashboardPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('unlock-alice')).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByTestId('unlock-alice'));
+
+    await waitFor(() => {
+      expect(mockApi.plans.unlockPlan).toHaveBeenCalledWith('plan-1');
+    });
+
+    // Should also re-fetch data
+    expect(mockApi.dashboard.getTeamOverview.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('renders week navigator', async () => {
+    render(
+      <MemoryRouter>
+        <ManagerDashboardPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('week-navigator')).toBeDefined();
+    });
+  });
+
+  it('redirects IC users to /my-week', () => {
+    mockRole = 'IC';
+
+    render(
+      <MemoryRouter initialEntries={['/team']}>
+        <ManagerDashboardPage />
+      </MemoryRouter>,
+    );
+
+    // IC role should not see the dashboard
+    expect(screen.queryByTestId('manager-dashboard')).toBeNull();
+  });
+
+  it('shows error state on API failure', async () => {
+    mockApi.dashboard.getTeamOverview.mockRejectedValue(new Error('Network error'));
+
+    render(
+      <MemoryRouter>
+        <ManagerDashboardPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Network error')).toBeDefined();
+    });
+  });
+});

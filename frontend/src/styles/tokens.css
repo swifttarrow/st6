@@ -1,0 +1,92 @@
+:root {
+  /* ─── Colors: Brand ─── */
+  --color-red-primary: #E53E3E;
+  --color-red-dark: #C53030;
+  --color-red-light: #FEB2B2;
+  --color-red-bg: #FFF5F5;
+
+  /* ─── Colors: Neutral ─── */
+  --color-black: #1A1A1A;
+  --color-grey-900: #2D2D2D;
+  --color-grey-700: #4A4A4A;
+  --color-grey-500: #718096;
+  --color-grey-300: #CBD5E0;
+  --color-grey-100: #F7FAFC;
+  --color-white: #FFFFFF;
+
+  /* ─── Colors: Semantic ─── */
+  --color-success: #38A169;
+  --color-success-bg: #F0FFF4;
+  --color-warning: #D69E2E;
+  --color-warning-bg: #FFFFF0;
+  --color-error: #E53E3E;
+  --color-error-bg: #FFF5F5;
+  --color-info: #3182CE;
+  --color-info-bg: #EBF8FF;
+
+  /* ─── Typography ─── */
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 2.5rem;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.025em;
+
+  /* ─── Layout ─── */
+  --sidebar-width: 240px;
+  --content-max-width: 1200px;
+  --content-padding: 2rem;
+  --header-height: 64px;
+
+  /* ─── Spacing ─── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ─── Borders ─── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+  --border-color: var(--color-grey-300);
+
+  /* ─── Shadows ─── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+  /* ─── Transitions ─── */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+
+  /* ─── Component: Badge ─── */
+  --badge-padding: var(--space-1) var(--space-3);
+  --badge-radius: var(--radius-full);
+  --badge-font-size: var(--text-xs);
+  --badge-font-weight: var(--weight-semibold);
+}

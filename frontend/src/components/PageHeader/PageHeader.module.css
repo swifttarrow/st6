@@ -1,0 +1,27 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-8);
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: var(--text-4xl);
+  font-weight: var(--weight-medium);
+  letter-spacing: -1px;
+  color: var(--color-black);
+  line-height: var(--leading-tight);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}

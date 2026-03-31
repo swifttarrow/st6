@@ -1,0 +1,179 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  min-width: 500px;
+  max-width: 600px;
+  width: 100%;
+  padding: var(--space-8);
+  box-shadow: var(--shadow-lg);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  color: var(--color-black);
+  margin: 0 0 var(--space-6) 0;
+}
+
+.field {
+  margin-bottom: var(--space-5);
+}
+
+.label {
+  display: block;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-grey-700);
+  margin-bottom: var(--space-2);
+}
+
+.required {
+  color: var(--color-error);
+}
+
+.textInput {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.textInput:focus {
+  border-color: var(--color-grey-500);
+}
+
+.textarea {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+  box-sizing: border-box;
+}
+
+.textarea:focus {
+  border-color: var(--color-grey-500);
+}
+
+.outcomeSelector {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.outcomeSearch {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 13px;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  padding: 8px 12px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.outcomeOption {
+  padding: 8px 12px;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.outcomeOption:hover {
+  background: var(--color-grey-100);
+}
+
+.outcomeOptionSelected {
+  background: var(--color-red-bg);
+  color: var(--color-red-primary);
+  font-weight: var(--weight-medium);
+}
+
+.outcomePath {
+  font-size: var(--text-xs);
+  color: var(--color-grey-500);
+}
+
+.noOutcomes {
+  padding: 12px;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-grey-500);
+  text-align: center;
+}
+
+.errorText {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  color: var(--color-error);
+  margin-top: var(--space-1);
+}
+
+.buttonRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.cancelButton {
+  padding: 10px 20px;
+  border: 1px solid #E8E8E8;
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-grey-700);
+  cursor: pointer;
+}
+
+.cancelButton:hover {
+  background: var(--color-grey-100);
+}
+
+.submitButton {
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: #E42313;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-white);
+  cursor: pointer;
+}
+
+.submitButton:hover {
+  background: var(--color-red-dark);
+}
+
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

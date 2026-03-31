@@ -1,0 +1,25 @@
+.badge {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 9999px;
+  padding: 4px 8px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.onTrack {
+  background-color: #22C55E;
+  color: #FFFFFF;
+}
+
+.atRisk {
+  background-color: #F59E0B;
+  color: #1A1A1A;
+}
+
+.alert {
+  background-color: #E42313;
+  color: #FFFFFF;
+}

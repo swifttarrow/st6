@@ -1,0 +1,39 @@
+.container {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  color: var(--color-grey-500);
+  cursor: pointer;
+  padding: 0;
+  transition: background var(--transition-fast);
+}
+
+.chevron:hover:not(:disabled) {
+  background: var(--color-grey-100);
+}
+
+.chevron.disabled,
+.chevron:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-grey-700);
+  min-width: 100px;
+  text-align: center;
+}

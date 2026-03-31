@@ -1,0 +1,41 @@
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #FAFAFA;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+}
+
+.icon {
+  color: var(--color-grey-500);
+  flex-shrink: 0;
+}
+
+.message {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-grey-700);
+  flex: 1;
+}
+
+.dismissButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--color-grey-500);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--transition-fast);
+}
+
+.dismissButton:hover {
+  background: var(--color-grey-100);
+}

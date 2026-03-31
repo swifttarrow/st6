@@ -1,0 +1,25 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  padding: 28px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  flex: 1;
+  background: var(--color-white);
+}
+
+.label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-grey-500);
+  margin-bottom: 8px;
+}
+
+.value {
+  font-family: var(--font-heading);
+  font-size: 36px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: -1px;
+  color: #0D0D0D;
+  line-height: 1;
+}

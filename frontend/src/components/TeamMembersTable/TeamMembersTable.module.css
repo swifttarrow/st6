@@ -1,0 +1,124 @@
+.container {
+  flex: 1;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-white);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  background: #FAFAFA;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.headerTitle {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: var(--weight-semibold);
+  color: var(--color-grey-900);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tableHeaderRow {
+  background: var(--color-white);
+}
+
+.th {
+  padding: 12px 20px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-grey-500);
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.row {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.row:hover {
+  background: #FAFAFA;
+}
+
+.td {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+
+.row:last-child .td {
+  border-bottom: none;
+}
+
+.memberCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: var(--weight-semibold);
+  flex-shrink: 0;
+}
+
+.memberName {
+  font-weight: 500;
+  color: var(--color-grey-900);
+}
+
+.statusCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.noPlan {
+  color: var(--color-grey-400);
+  font-size: 12px;
+}
+
+.unlockButton {
+  padding: 4px 10px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-grey-700);
+  background: var(--color-white);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.unlockButton:hover {
+  background: var(--color-grey-100);
+}
+
+.commitCount {
+  color: var(--color-grey-900);
+}
+
+.rallyCry {
+  color: var(--color-grey-500);
+  font-size: 12px;
+}
