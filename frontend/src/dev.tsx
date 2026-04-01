@@ -1,17 +1,13 @@
 /**
- * Dev harness — simulates how the PA host app would mount the micro-frontend.
- * Change the role to 'IC' | 'MANAGER' | 'LEADERSHIP' to test different views.
+ * Vite dev entry — login + session, then full app (simulates PA host mounting the micro-frontend).
  */
-import { mount } from './index';
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { DevApp } from './DevApp';
 
-const container = document.getElementById('app')!;
+const container = document.getElementById('app');
+if (!container) {
+  throw new Error('Missing #app element');
+}
 
-// Change these to test different roles (IC userIds in seed: alice, bob, carol, diana, frank, eve).
-const context = {
-  userId: 'dev-user-1',
-  role: 'MANAGER' as const,
-  teamId: 'team-alpha',
-  managerId: 'mgr-1',
-};
-
-mount(container, context);
+createRoot(container).render(<DevApp />);

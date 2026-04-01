@@ -2,6 +2,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
+  // Dev harness uses client-side routes; with `build.lib` set, default appType can skip SPA fallback
+  // and deep links (e.g. /executive) return real 404s from the dev server.
+  appType: 'spa',
   plugins: [react()],
   server: {
     proxy: {
