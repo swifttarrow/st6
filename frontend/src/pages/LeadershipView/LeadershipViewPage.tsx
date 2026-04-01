@@ -71,9 +71,9 @@ export const LeadershipViewPage: React.FC = () => {
     setCurrentDate(date);
   }, []);
 
-  // Role guard: redirect non-LEADERSHIP to /my-week
+  // Role guard: redirect non-LEADERSHIP to /commitments
   if (userContext.role !== 'LEADERSHIP') {
-    return <Navigate to="/my-week" replace />;
+    return <Navigate to="/commitments" replace />;
   }
 
   if (loading) {

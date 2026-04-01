@@ -251,7 +251,7 @@ export const StrategyManagementPage: React.FC = () => {
   }, [api, selectedRallyCry, loadTree]);
 
   if (userContext.role === 'IC') {
-    return <Navigate to="/my-week" replace />;
+    return <Navigate to="/commitments" replace />;
   }
 
   if (loading) {

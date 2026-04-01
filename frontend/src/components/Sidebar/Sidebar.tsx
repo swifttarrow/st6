@@ -7,6 +7,7 @@ import {
   CalendarDays,
   ClipboardCheck,
 } from 'lucide-react';
+import { useReconciliationNavAvailable } from '../../hooks/useReconciliationNavAvailable';
 import styles from './Sidebar.module.css';
 
 type UserRole = 'IC' | 'MANAGER' | 'LEADERSHIP';
@@ -19,7 +20,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { path: '/my-week', label: 'My Week', icon: <CalendarDays size={16} strokeWidth={1.75} /> },
+  { path: '/commitments', label: 'Commitments', icon: <CalendarDays size={16} strokeWidth={1.75} /> },
   {
     path: '/reconciliation',
     label: 'Reconciliation',
@@ -57,6 +58,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
   const location = useLocation();
+  const reconciliationNav = useReconciliationNavAvailable();
   const roleLevel = ROLE_HIERARCHY[userRole];
 
   const visibleItems = NAV_ITEMS.filter((item) => {
@@ -74,6 +76,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
       <nav className={styles.nav}>
         {visibleItems.map((item) => {
           const isActive = location.pathname === item.path;
+          const reconciliationBlocked =
+            item.path === '/reconciliation' &&
+            (reconciliationNav.loading || !reconciliationNav.enabled);
+
+          if (reconciliationBlocked) {
+            return (
+              <span
+                key={item.path}
+                className={`${styles.navItem} ${styles.navItemDisabled} ${isActive ? styles.active : ''}`}
+                aria-disabled="true"
+                title={reconciliationNav.loading ? undefined : reconciliationNav.disabledTitle}
+              >
+                <span className={styles.icon}>{item.icon}</span>
+                <span className={styles.label}>{item.label}</span>
+              </span>
+            );
+          }
+
           return (
             <NavLink
               key={item.path}

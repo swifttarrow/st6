@@ -7,7 +7,7 @@ export default defineConfig({
     proxy: {
       // Same-origin /api in dev avoids CORS (browser → :5173 → :8080).
       '/api': {
-        target: 'http://localhost:8080',
+        target: process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:8080',
         changeOrigin: true,
       },
     },

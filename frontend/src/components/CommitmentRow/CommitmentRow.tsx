@@ -13,6 +13,8 @@ interface CommitmentRowProps {
   onEdit: (commitment: Commitment) => void;
   onDelete: (commitmentId: string) => void;
   onRelink?: (commitmentId: string) => void;
+  /** When true, hide reorder, edit, delete, and relink affordances. */
+  readOnly?: boolean;
 }
 
 function getOutcomePath(tree: RcdoTreeRallyCry[], outcomeId: string): string {
@@ -49,6 +51,7 @@ export const CommitmentRow: React.FC<CommitmentRowProps> = ({
   onEdit,
   onDelete,
   onRelink,
+  readOnly = false,
 }) => {
   const isDraft = planStatus === 'DRAFT';
   const {
@@ -57,7 +60,7 @@ export const CommitmentRow: React.FC<CommitmentRowProps> = ({
     setNodeRef,
     transform,
     transition,
-  } = useSortable({ id: commitment.id, disabled: !isDraft });
+  } = useSortable({ id: commitment.id, disabled: !isDraft || readOnly });
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -73,12 +76,12 @@ export const CommitmentRow: React.FC<CommitmentRowProps> = ({
     <>
       <div ref={setNodeRef} style={style} className={styles.row}>
         <div className={styles.rank}>
-          {isDraft && (
+          {isDraft && !readOnly && (
             <button className={styles.dragHandle} {...attributes} {...listeners} type="button" aria-label="Drag to reorder">
               <GripIcon />
             </button>
           )}
-          {!isDraft && <span>{rank}</span>}
+          {(!isDraft || readOnly) && <span>{rank}</span>}
         </div>
         <div className={styles.descriptionCell}>
           <span className={styles.description}>
@@ -90,7 +93,7 @@ export const CommitmentRow: React.FC<CommitmentRowProps> = ({
         </div>
         <div className={outcomePathClassName} title={outcomePath}>{outcomePath}</div>
         <div className={styles.actions}>
-          {isDraft && (
+          {isDraft && !readOnly && (
             <>
               <button
                 className={styles.iconButton}
@@ -112,7 +115,7 @@ export const CommitmentRow: React.FC<CommitmentRowProps> = ({
           )}
         </div>
       </div>
-      {commitment.outcomeArchived && onRelink && (
+      {commitment.outcomeArchived && onRelink && !readOnly && (
         <ArchivedOutcomeWarning
           commitmentId={commitment.id}
           outcomeName={getOutcomeName(tree, commitment.outcomeId)}

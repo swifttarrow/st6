@@ -25,6 +25,7 @@ interface CommitmentListProps {
   onDelete: (commitmentId: string) => void;
   onReorder: (orderedIds: string[]) => void;
   onRelink?: (commitmentId: string) => void;
+  readOnly?: boolean;
 }
 
 export const CommitmentList: React.FC<CommitmentListProps> = ({
@@ -35,6 +36,7 @@ export const CommitmentList: React.FC<CommitmentListProps> = ({
   onDelete,
   onReorder,
   onRelink,
+  readOnly = false,
 }) => {
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -62,6 +64,20 @@ export const CommitmentList: React.FC<CommitmentListProps> = ({
 
   const isDraft = planStatus === 'DRAFT';
 
+  const row = (c: Commitment, i: number) => (
+    <CommitmentRow
+      key={c.id}
+      commitment={c}
+      rank={i + 1}
+      planStatus={planStatus}
+      tree={tree}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      onRelink={onRelink}
+      readOnly={readOnly}
+    />
+  );
+
   return (
     <div className={styles.container}>
       <div className={styles.headerRow}>
@@ -76,35 +92,17 @@ export const CommitmentList: React.FC<CommitmentListProps> = ({
         </div>
       )}
       {isDraft ? (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={readOnly ? () => {} : handleDragEnd}
+        >
           <SortableContext items={commitments.map(c => c.id)} strategy={verticalListSortingStrategy}>
-            {commitments.map((c, i) => (
-              <CommitmentRow
-                key={c.id}
-                commitment={c}
-                rank={i + 1}
-                planStatus={planStatus}
-                tree={tree}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onRelink={onRelink}
-              />
-            ))}
+            {commitments.map((c, i) => row(c, i))}
           </SortableContext>
         </DndContext>
       ) : (
-        commitments.map((c, i) => (
-          <CommitmentRow
-            key={c.id}
-            commitment={c}
-            rank={i + 1}
-            planStatus={planStatus}
-            tree={tree}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onRelink={onRelink}
-          />
-        ))
+        commitments.map((c, i) => row(c, i))
       )}
     </div>
   );

@@ -1,5 +1,8 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useApi } from '../../context/ApiContext';
+import { useUserContext } from '../../context/UserContext';
+import { DEFAULT_TEAM_MEMBER_IDS } from '../../constants/teamMemberIds';
 import { PageHeader } from '../../components/PageHeader/PageHeader';
 import { ActionBar } from '../../components/ActionBar/ActionBar';
 import { StrategyBrowser } from '../../components/StrategyBrowser/StrategyBrowser';
@@ -13,6 +16,7 @@ import {
   Commitment,
   RcdoTreeRallyCry,
   PlanStatus,
+  TeamOverviewResponse,
 } from '../../api/types';
 import type { BadgeVariant } from '../../components/Badge/Badge';
 import styles from './WeeklyPlanningPage.module.css';
@@ -57,6 +61,16 @@ function isWeekStale(weekStartDate: string): boolean {
 
 export const WeeklyPlanningPage: React.FC = () => {
   const api = useApi();
+  const userContext = useUserContext();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const planIdParam = searchParams.get('planId');
+  const memberIdsFromUrl = useMemo(() => {
+    const ids = searchParams.getAll('memberIds');
+    return ids.length > 0 ? ids : DEFAULT_TEAM_MEMBER_IDS;
+  }, [searchParams]);
+
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
   const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [tree, setTree] = useState<RcdoTreeRallyCry[]>([]);
@@ -68,18 +82,30 @@ export const WeeklyPlanningPage: React.FC = () => {
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [locking, setLocking] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [teamOverview, setTeamOverview] = useState<TeamOverviewResponse | null>(null);
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const today = getTodayDate();
-      const [fetchedPlan, fetchedTree] = await Promise.all([
-        api.plans.getPlan(today),
+      const fetchedPlan = planIdParam
+        ? await api.plans.getPlanById(planIdParam)
+        : await api.plans.getPlan(today);
+
+      const loadTeamPicker =
+        userContext.role === 'MANAGER' || userContext.role === 'LEADERSHIP';
+
+      const [fetchedTree, overview] = await Promise.all([
         api.rcdo.getTree(),
+        loadTeamPicker
+          ? api.dashboard.getTeamOverview(fetchedPlan.weekStartDate, memberIdsFromUrl).catch(() => null)
+          : Promise.resolve(null),
       ]);
+
       setPlan(fetchedPlan);
       setTree(fetchedTree);
+      setTeamOverview(overview);
       const fetchedCommitments = await api.commitments.listCommitments(fetchedPlan.id);
       setCommitments(fetchedCommitments);
     } catch (err) {
@@ -87,7 +113,7 @@ export const WeeklyPlanningPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [api]);
+  }, [api, planIdParam, userContext.role, memberIdsFromUrl]);
 
   useEffect(() => {
     loadData();
@@ -213,6 +239,37 @@ export const WeeklyPlanningPage: React.FC = () => {
     setEditingCommitment(null);
   }, []);
 
+  const readOnly = useMemo(
+    () => Boolean(plan && plan.userId !== userContext.userId),
+    [plan, userContext.userId],
+  );
+
+  const pageTitle = useMemo(() => {
+    const dateLabel = plan ? formatWeekDate(plan.weekStartDate) : '';
+    if (!plan) return 'Commitments';
+    if (readOnly) {
+      return `Commitments \u2014 ${plan.userId} \u2014 ${dateLabel}`;
+    }
+    return `Commitments \u2014 ${dateLabel}`;
+  }, [plan, readOnly]);
+
+  const handlePersonSelect = useCallback(
+    (nextPlanId: string | null) => {
+      const explicitMemberIds = searchParams.getAll('memberIds');
+      const params = new URLSearchParams();
+      explicitMemberIds.forEach(id => params.append('memberIds', id));
+      if (nextPlanId) params.set('planId', nextPlanId);
+      const qs = params.toString();
+      navigate(qs ? `/commitments?${qs}` : '/commitments');
+    },
+    [navigate, searchParams],
+  );
+
+  const teamPickerMembers = teamOverview?.members ?? [];
+  const showTeamPicker =
+    (userContext.role === 'MANAGER' || userContext.role === 'LEADERSHIP') &&
+    teamPickerMembers.length > 0;
+
   if (loading) {
     return <div className={styles.loading}>Loading...</div>;
   }
@@ -226,26 +283,60 @@ export const WeeklyPlanningPage: React.FC = () => {
   }
 
   const badge = getStatusBadge(plan.status);
-  const dateLabel = formatWeekDate(plan.weekStartDate);
   const isDraft = plan.status === 'DRAFT';
-  const showCarryForwardBanner = isDraft && carriedForwardCount > 0 && !bannerDismissed;
+  const showCarryForwardBanner =
+    isDraft && carriedForwardCount > 0 && !bannerDismissed && !readOnly;
   const treeIsEmpty = tree.length === 0;
 
   return (
     <div className={styles.page}>
       <PageHeader
-        title={`My Week \u2014 ${dateLabel}`}
+        title={pageTitle}
         badge={badge}
         actions={
-          <ActionBar
-            planStatus={plan.status}
-            onLock={handleLock}
-            onAddCommitment={handleAddCommitment}
-            onStartReconciliation={handleStartReconciliation}
-            locking={locking}
-          />
+          readOnly ? undefined : (
+            <ActionBar
+              planStatus={plan.status}
+              onLock={handleLock}
+              onAddCommitment={handleAddCommitment}
+              onStartReconciliation={handleStartReconciliation}
+              locking={locking}
+            />
+          )
         }
       />
+
+      {readOnly && (
+        <p className={styles.readOnlyNote} data-testid="read-only-banner">
+          You are viewing this person&apos;s commitments in read-only mode.
+        </p>
+      )}
+
+      {showTeamPicker && (
+        <div className={styles.personToolbar} data-testid="commitments-person-picker">
+          <label className={styles.personLabel} htmlFor="commitments-person-select">
+            Person
+          </label>
+          <select
+            id="commitments-person-select"
+            className={styles.personSelect}
+            value={planIdParam ?? ''}
+            onChange={(e) => {
+              const v = e.target.value;
+              handlePersonSelect(v === '' ? null : v);
+            }}
+          >
+            <option value="">Me</option>
+            {teamPickerMembers
+              .filter(m => m.planId)
+              .map(m => (
+                <option key={m.userId} value={m.planId!}>
+                  {m.userId}
+                </option>
+              ))}
+          </select>
+        </div>
+      )}
 
       {weekStale && (
         <div className={styles.staleBanner} data-testid="stale-week-banner">
@@ -273,8 +364,12 @@ export const WeeklyPlanningPage: React.FC = () => {
         {commitments.length === 0 ? (
           <EmptyState
             title="No commitments yet"
-            description="Add your first commitment to start planning your week."
-            action={isDraft ? { label: 'Add Commitment', onClick: handleAddCommitment } : undefined}
+            description={
+              readOnly
+                ? 'This plan has no commitments for this week.'
+                : 'Add your first commitment to start planning your week.'
+            }
+            action={isDraft && !readOnly ? { label: 'Add Commitment', onClick: handleAddCommitment } : undefined}
           />
         ) : (
           <CommitmentList
@@ -285,11 +380,12 @@ export const WeeklyPlanningPage: React.FC = () => {
             onDelete={handleDeleteCommitment}
             onReorder={handleReorder}
             onRelink={handleRelink}
+            readOnly={readOnly}
           />
         )}
       </div>
 
-      {showForm && (
+      {showForm && !readOnly && (
         <CommitmentForm
           mode={editingCommitment ? 'edit' : 'create'}
           commitment={editingCommitment ?? undefined}

@@ -193,7 +193,7 @@ describe('ReconciliationPage', () => {
     expect(submitBtn.disabled).toBe(false);
   });
 
-  it('redirects to /my-week when plan is DRAFT', async () => {
+  it('redirects to /commitments when plan is DRAFT', async () => {
     mockApi.plans.getPlan.mockResolvedValue(mockPlanDraft);
 
     render(
@@ -203,7 +203,7 @@ describe('ReconciliationPage', () => {
     );
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/my-week', { replace: true });
+      expect(mockNavigate).toHaveBeenCalledWith('/commitments', { replace: true });
     });
   });
 });

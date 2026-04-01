@@ -206,7 +206,7 @@ describe('ManagerDashboardPage', () => {
     });
   });
 
-  it('redirects IC users to /my-week', () => {
+  it('redirects IC users to /commitments', () => {
     mockRole = 'IC';
 
     render(

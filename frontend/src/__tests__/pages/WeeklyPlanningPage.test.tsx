@@ -97,7 +97,7 @@ describe('WeeklyPlanningPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/My Week/)).toBeDefined();
+      expect(screen.getByText(/Commitments/)).toBeDefined();
     });
 
     expect(screen.getByText('Draft')).toBeDefined();

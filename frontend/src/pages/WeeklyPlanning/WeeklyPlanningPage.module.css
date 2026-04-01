@@ -43,3 +43,35 @@
   font-weight: var(--weight-semibold);
   text-decoration: underline;
 }
+
+.readOnlyNote {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-grey-600);
+  margin: 0 0 var(--space-4);
+}
+
+.personToolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.personLabel {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-grey-700);
+}
+
+.personSelect {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  min-width: 14rem;
+  padding: 8px 12px;
+  border: 1px solid var(--color-grey-300);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  color: var(--color-grey-900);
+}

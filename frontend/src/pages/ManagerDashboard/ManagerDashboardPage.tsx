@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useSearchParams, useNavigate } from 'react-router-dom';
 import { useApi } from '../../context/ApiContext';
 import { useUserContext } from '../../context/UserContext';
 import { PageHeader } from '../../components/PageHeader/PageHeader';
@@ -9,9 +9,8 @@ import { TeamMembersTable } from '../../components/TeamMembersTable/TeamMembersT
 import { CoveragePanel } from '../../components/CoveragePanel/CoveragePanel';
 import { ErrorToast } from '../../components/ErrorToast/ErrorToast';
 import { TeamOverviewResponse } from '../../api/types';
+import { DEFAULT_TEAM_MEMBER_IDS } from '../../constants/teamMemberIds';
 import styles from './ManagerDashboardPage.module.css';
-
-const DEFAULT_MEMBER_IDS = ['user1', 'user2', 'user3'];
 
 function getTodayDate(): string {
   const now = new Date();
@@ -47,10 +46,11 @@ export const ManagerDashboardPage: React.FC = () => {
   const api = useApi();
   const userContext = useUserContext();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const memberIds = useMemo(() => {
     const ids = searchParams.getAll('memberIds');
-    return ids.length > 0 ? ids : DEFAULT_MEMBER_IDS;
+    return ids.length > 0 ? ids : DEFAULT_TEAM_MEMBER_IDS;
   }, [searchParams]);
 
   const [currentDate, setCurrentDate] = useState(getTodayDate);
@@ -89,14 +89,19 @@ export const ManagerDashboardPage: React.FC = () => {
     }
   }, [api, currentDate, loadData]);
 
-  const handleViewPlan = useCallback((planId: string) => {
-    // Navigate to plan view (read-only). For now, navigate to my-week with planId param.
-    window.location.href = `/my-week?planId=${planId}`;
-  }, []);
+  const handleViewPlan = useCallback(
+    (planId: string) => {
+      const params = new URLSearchParams();
+      memberIds.forEach(id => params.append('memberIds', id));
+      params.set('planId', planId);
+      navigate(`/commitments?${params.toString()}`);
+    },
+    [navigate, memberIds],
+  );
 
   // Role guard: redirect IC users
   if (userContext.role === 'IC') {
-    return <Navigate to="/my-week" replace />;
+    return <Navigate to="/commitments" replace />;
   }
 
   if (loading) {

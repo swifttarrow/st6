@@ -60,6 +60,15 @@
   color: var(--color-red-primary);
 }
 
+.navItemDisabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.navItemDisabled:hover {
+  color: var(--color-grey-500);
+}
+
 .icon {
   display: flex;
   align-items: center;

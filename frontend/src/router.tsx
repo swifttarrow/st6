@@ -9,12 +9,13 @@ import { StrategyManagementPage } from './pages/StrategyManagement/StrategyManag
 export const AppRouter: React.FC = () => {
   return (
     <Routes>
-      <Route path="/my-week" element={<WeeklyPlanningPage />} />
+      <Route path="/commitments" element={<WeeklyPlanningPage />} />
+      <Route path="/my-week" element={<Navigate to="/commitments" replace />} />
       <Route path="/reconciliation" element={<ReconciliationPage />} />
       <Route path="/team" element={<ManagerDashboardPage />} />
       <Route path="/leadership" element={<LeadershipViewPage />} />
       <Route path="/strategy" element={<StrategyManagementPage />} />
-      <Route path="*" element={<Navigate to="/my-week" replace />} />
+      <Route path="*" element={<Navigate to="/commitments" replace />} />
     </Routes>
   );
 };

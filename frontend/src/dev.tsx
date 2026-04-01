@@ -6,7 +6,7 @@ import { mount } from './index';
 
 const container = document.getElementById('app')!;
 
-// Change these to test different roles
+// Change these to test different roles (IC userIds in seed: alice, bob, carol, diana, frank, eve).
 const context = {
   userId: 'dev-user-1',
   role: 'MANAGER' as const,

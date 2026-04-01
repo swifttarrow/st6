@@ -188,7 +188,7 @@ describe('LeadershipViewPage', () => {
     expect(valueEl!.getAttribute('style')).toContain('rgb(228, 35, 19)');
   });
 
-  it('redirects non-LEADERSHIP users to /my-week', () => {
+  it('redirects non-LEADERSHIP users to /commitments', () => {
     mockRole = 'IC';
 
     render(
@@ -200,7 +200,7 @@ describe('LeadershipViewPage', () => {
     expect(screen.queryByTestId('leadership-view')).toBeNull();
   });
 
-  it('redirects MANAGER role to /my-week', () => {
+  it('redirects MANAGER role to /commitments', () => {
     mockRole = 'MANAGER';
 
     render(

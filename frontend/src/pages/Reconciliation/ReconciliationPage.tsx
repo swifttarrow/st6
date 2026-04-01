@@ -72,7 +72,7 @@ export const ReconciliationPage: React.FC = () => {
       try {
         fetchedPlan = await api.plans.getPlan(today);
       } catch {
-        navigate('/my-week', { replace: true });
+        navigate('/commitments', { replace: true });
         return;
       }
 
@@ -81,15 +81,15 @@ export const ReconciliationPage: React.FC = () => {
         fetchedPlan = await api.plans.transitionPlan(fetchedPlan.id, 'RECONCILING');
       }
 
-      // Redirect DRAFT to /my-week (not a reconcilable state)
+      // Redirect DRAFT to /commitments (not a reconcilable state)
       if (fetchedPlan.status === 'DRAFT') {
-        navigate('/my-week', { replace: true });
+        navigate('/commitments', { replace: true });
         return;
       }
 
       // Only RECONCILING and RECONCILED are valid states for this page
       if (fetchedPlan.status !== 'RECONCILING' && fetchedPlan.status !== 'RECONCILED') {
-        navigate('/my-week', { replace: true });
+        navigate('/commitments', { replace: true });
         return;
       }
 
@@ -187,7 +187,7 @@ export const ReconciliationPage: React.FC = () => {
           <EmptyState
             title="No commitments to reconcile"
             description="There are no commitments for this week. Go back to planning to add commitments."
-            action={{ label: 'Go to Planning', onClick: () => navigate('/my-week') }}
+            action={{ label: 'Go to Planning', onClick: () => navigate('/commitments') }}
           />
         ) : (
           <>
