@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useApi } from '../../context/ApiContext';
 import { PageHeader } from '../../components/PageHeader/PageHeader';
+import { WeekNavigator } from '../../components/WeekNavigator/WeekNavigator';
 import { StatsBar } from '../../components/StatsBar/StatsBar';
 import { ReconciliationTable } from '../../components/ReconciliationTable/ReconciliationTable';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
@@ -9,15 +10,8 @@ import { ErrorToast } from '../../components/ErrorToast/ErrorToast';
 import type { WeeklyPlan, Commitment, PlanStatus, ActualStatus, RcdoTreeRallyCry } from '../../api/types';
 import { ApiError } from '../../api/types';
 import type { BadgeVariant } from '../../components/Badge/Badge';
+import { getMonday, getTodayDate } from '../../utils/weekDates';
 import styles from './ReconciliationPage.module.css';
-
-function getTodayDate(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
 
 function formatWeekRange(weekStartDate: string): string {
   const [year, month, day] = weekStartDate.split('-').map(Number);
@@ -28,7 +22,6 @@ function formatWeekRange(weekStartDate: string): string {
   const monDay = monday.getDate();
   const friDay = friday.getDate();
 
-  // If same month
   if (monday.getMonth() === friday.getMonth()) {
     return `Reconcile Week \u2014 ${monMonth} ${monDay}\u2013${friDay}, ${year}`;
   }
@@ -48,9 +41,19 @@ function getStatusBadge(status: PlanStatus): { label: string; variant: BadgeVari
   }
 }
 
+function commitmentsQuery(weekStart: string): string {
+  return `week=${encodeURIComponent(weekStart)}`;
+}
+
 export const ReconciliationPage: React.FC = () => {
   const api = useApi();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const weekParam = searchParams.get('week');
+  const weekMonday = useMemo(
+    () => getMonday(weekParam ?? getTodayDate()),
+    [weekParam],
+  );
 
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
   const [commitments, setCommitments] = useState<Commitment[]>([]);
@@ -61,35 +64,46 @@ export const ReconciliationPage: React.FC = () => {
   const [toastError, setToastError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const handleWeekChange = useCallback(
+    (nextDate: string) => {
+      const mon = getMonday(nextDate);
+      setSearchParams(
+        (prev) => {
+          const p = new URLSearchParams(prev);
+          p.set('week', mon);
+          return p;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const today = getTodayDate();
       let fetchedPlan: WeeklyPlan;
 
       try {
-        fetchedPlan = await api.plans.getPlan(today);
+        fetchedPlan = await api.plans.getPlan(weekMonday);
       } catch {
-        navigate('/commitments', { replace: true });
+        navigate(`/commitments?${commitmentsQuery(weekMonday)}`, { replace: true });
         return;
       }
 
-      // If locked, transition to RECONCILING
       if (fetchedPlan.status === 'LOCKED') {
         fetchedPlan = await api.plans.transitionPlan(fetchedPlan.id, 'RECONCILING');
       }
 
-      // Redirect DRAFT to /commitments (not a reconcilable state)
       if (fetchedPlan.status === 'DRAFT') {
-        navigate('/commitments', { replace: true });
+        navigate(`/commitments?${commitmentsQuery(fetchedPlan.weekStartDate)}`, { replace: true });
         return;
       }
 
-      // Only RECONCILING and RECONCILED are valid states for this page
       if (fetchedPlan.status !== 'RECONCILING' && fetchedPlan.status !== 'RECONCILED') {
-        navigate('/commitments', { replace: true });
+        navigate(`/commitments?${commitmentsQuery(fetchedPlan.weekStartDate)}`, { replace: true });
         return;
       }
 
@@ -106,7 +120,7 @@ export const ReconciliationPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [api, navigate]);
+  }, [api, navigate, weekMonday]);
 
   useEffect(() => {
     loadData();
@@ -115,7 +129,6 @@ export const ReconciliationPage: React.FC = () => {
   const handleReconcile = useCallback(async (commitmentId: string, actualStatus: ActualStatus, noteText: string) => {
     if (!plan) return;
 
-    // Optimistically update local state
     setCommitments((prev) =>
       prev.map((c) =>
         c.id === commitmentId ? { ...c, actualStatus } : c,
@@ -129,7 +142,6 @@ export const ReconciliationPage: React.FC = () => {
       });
     } catch (err) {
       setToastError(err instanceof Error ? err.message : 'Failed to update commitment status');
-      // Revert on error
       const refreshed = await api.commitments.listCommitments(plan.id);
       setCommitments(refreshed);
     }
@@ -175,10 +187,19 @@ export const ReconciliationPage: React.FC = () => {
 
   const badge = getStatusBadge(plan.status);
   const title = formatWeekRange(plan.weekStartDate);
+  const navDate = plan.weekStartDate;
 
   return (
     <div className={styles.page}>
-      <PageHeader title={title} badge={badge} />
+      <PageHeader
+        title={title}
+        badge={badge}
+        actions={
+          <div className={styles.headerActions}>
+            <WeekNavigator currentDate={navDate} onWeekChange={handleWeekChange} />
+          </div>
+        }
+      />
 
       <div className={styles.body}>
         <StatsBar commitments={commitments} />
@@ -187,7 +208,10 @@ export const ReconciliationPage: React.FC = () => {
           <EmptyState
             title="No commitments to reconcile"
             description="There are no commitments for this week. Go back to planning to add commitments."
-            action={{ label: 'Go to Planning', onClick: () => navigate('/commitments') }}
+            action={{
+              label: 'Go to Planning',
+              onClick: () => navigate(`/commitments?${commitmentsQuery(plan.weekStartDate)}`),
+            }}
           />
         ) : (
           <>

@@ -50,6 +50,7 @@ const mockApi = {
   plans: {
     getPlan: vi.fn().mockResolvedValue(mockPlan),
     getPlanById: vi.fn(),
+    listMyPlans: vi.fn().mockResolvedValue([]),
     transitionPlan: vi.fn(),
     unlockPlan: vi.fn(),
     getTransitions: vi.fn(),

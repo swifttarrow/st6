@@ -2,6 +2,12 @@
   width: 100%;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 .loading {
   font-family: var(--font-body);
   font-size: var(--text-sm);

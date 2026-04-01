@@ -122,9 +122,11 @@ describe('ReconciliationPage', () => {
     mockApi.commitments.listCommitments.mockResolvedValue(mockCommitmentsPending);
   });
 
+  const routerOpts = { initialEntries: ['/reconciliation?week=2026-03-23'] };
+
   it('shows loading state initially', () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter {...routerOpts}>
         <ReconciliationPage />
       </MemoryRouter>,
     );
@@ -134,7 +136,7 @@ describe('ReconciliationPage', () => {
 
   it('renders title and stats bar for RECONCILING plan', async () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter {...routerOpts}>
         <ReconciliationPage />
       </MemoryRouter>,
     );
@@ -149,7 +151,7 @@ describe('ReconciliationPage', () => {
 
   it('renders commitment rows', async () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter {...routerOpts}>
         <ReconciliationPage />
       </MemoryRouter>,
     );
@@ -163,7 +165,7 @@ describe('ReconciliationPage', () => {
 
   it('submit button disabled when not all commitments annotated', async () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter {...routerOpts}>
         <ReconciliationPage />
       </MemoryRouter>,
     );
@@ -180,7 +182,7 @@ describe('ReconciliationPage', () => {
     mockApi.commitments.listCommitments.mockResolvedValue(mockCommitmentsAnnotated);
 
     render(
-      <MemoryRouter>
+      <MemoryRouter {...routerOpts}>
         <ReconciliationPage />
       </MemoryRouter>,
     );
@@ -197,13 +199,13 @@ describe('ReconciliationPage', () => {
     mockApi.plans.getPlan.mockResolvedValue(mockPlanDraft);
 
     render(
-      <MemoryRouter>
+      <MemoryRouter {...routerOpts}>
         <ReconciliationPage />
       </MemoryRouter>,
     );
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/commitments', { replace: true });
+      expect(mockNavigate).toHaveBeenCalledWith('/commitments?week=2026-03-23', { replace: true });
     });
   });
 });

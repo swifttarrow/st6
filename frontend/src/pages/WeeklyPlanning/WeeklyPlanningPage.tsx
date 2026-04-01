@@ -3,8 +3,9 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useApi } from '../../context/ApiContext';
 import { useUserContext } from '../../context/UserContext';
 import { DEFAULT_TEAM_MEMBER_IDS } from '../../constants/teamMemberIds';
-import { PageHeader } from '../../components/PageHeader/PageHeader';
+import { Badge } from '../../components/Badge/Badge';
 import { ActionBar } from '../../components/ActionBar/ActionBar';
+import { WeekNavigator } from '../../components/WeekNavigator/WeekNavigator';
 import { StrategyBrowser } from '../../components/StrategyBrowser/StrategyBrowser';
 import { CommitmentList } from '../../components/CommitmentList/CommitmentList';
 import { CommitmentForm } from '../../components/CommitmentForm/CommitmentForm';
@@ -17,8 +18,10 @@ import {
   RcdoTreeRallyCry,
   PlanStatus,
   TeamOverviewResponse,
+  MyPlanSummary,
 } from '../../api/types';
 import type { BadgeVariant } from '../../components/Badge/Badge';
+import { addWeeks, getMonday, getTodayDate } from '../../utils/weekDates';
 import styles from './WeeklyPlanningPage.module.css';
 
 function formatWeekDate(dateStr: string): string {
@@ -29,6 +32,15 @@ function formatWeekDate(dateStr: string): string {
     day: 'numeric',
     year: 'numeric',
   });
+}
+
+function formatHistoryWeekLabel(weekStartDate: string): string {
+  const [year, month, day] = weekStartDate.split('-').map(Number);
+  const mon = new Date(year, month - 1, day);
+  const fri = new Date(year, month - 1, day + 4);
+  const a = mon.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const b = fri.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return `${a} – ${b}, ${year}`;
 }
 
 function getStatusBadge(status: PlanStatus): { label: string; variant: BadgeVariant } {
@@ -44,28 +56,38 @@ function getStatusBadge(status: PlanStatus): { label: string; variant: BadgeVari
   }
 }
 
-function getTodayDate(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
 function isWeekStale(weekStartDate: string): boolean {
   const [year, month, day] = weekStartDate.split('-').map(Number);
-  // Friday = weekStart + 4 days, end of Friday = 23:59:59
   const friday = new Date(year, month - 1, day + 4, 23, 59, 59, 999);
   return new Date() > friday;
+}
+
+function statusLabel(s: PlanStatus): string {
+  switch (s) {
+    case 'DRAFT':
+      return 'Draft';
+    case 'LOCKED':
+      return 'Locked';
+    case 'RECONCILING':
+      return 'Reconciling';
+    case 'RECONCILED':
+      return 'Reconciled';
+  }
 }
 
 export const WeeklyPlanningPage: React.FC = () => {
   const api = useApi();
   const userContext = useUserContext();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const planIdParam = searchParams.get('planId');
+  const weekParam = searchParams.get('week');
+  const weekMonday = useMemo(
+    () => getMonday(weekParam ?? getTodayDate()),
+    [weekParam],
+  );
+
   const memberIdsFromUrl = useMemo(() => {
     const ids = searchParams.getAll('memberIds');
     return ids.length > 0 ? ids : DEFAULT_TEAM_MEMBER_IDS;
@@ -83,15 +105,32 @@ export const WeeklyPlanningPage: React.FC = () => {
   const [locking, setLocking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [teamOverview, setTeamOverview] = useState<TeamOverviewResponse | null>(null);
+  const [myPlanHistory, setMyPlanHistory] = useState<MyPlanSummary[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  const handleWeekChange = useCallback(
+    (nextDate: string) => {
+      const mon = getMonday(nextDate);
+      setSearchParams(
+        (prev) => {
+          const p = new URLSearchParams(prev);
+          p.set('week', mon);
+          p.delete('planId');
+          return p;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const today = getTodayDate();
       const fetchedPlan = planIdParam
         ? await api.plans.getPlanById(planIdParam)
-        : await api.plans.getPlan(today);
+        : await api.plans.getPlan(weekMonday);
 
       const loadTeamPicker =
         userContext.role === 'MANAGER' || userContext.role === 'LEADERSHIP';
@@ -113,7 +152,7 @@ export const WeeklyPlanningPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [api, planIdParam, userContext.role, memberIdsFromUrl]);
+  }, [api, planIdParam, weekMonday, userContext.role, memberIdsFromUrl]);
 
   useEffect(() => {
     loadData();
@@ -124,6 +163,30 @@ export const WeeklyPlanningPage: React.FC = () => {
     const fetched = await api.commitments.listCommitments(plan.id);
     setCommitments(fetched);
   }, [api, plan]);
+
+  useEffect(() => {
+    if (!plan) return;
+    const ro = plan.userId !== userContext.userId;
+    if (planIdParam || ro) return;
+
+    let cancelled = false;
+    (async () => {
+      setHistoryLoading(true);
+      try {
+        const to = getMonday(getTodayDate());
+        const from = addWeeks(to, -52);
+        const rows = await api.plans.listMyPlans(from, to);
+        if (!cancelled) setMyPlanHistory(rows);
+      } catch {
+        if (!cancelled) setMyPlanHistory([]);
+      } finally {
+        if (!cancelled) setHistoryLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [api, plan, planIdParam, userContext.userId]);
 
   const carriedForwardCount = useMemo(
     () => commitments.filter(c => c.carriedForward).length,
@@ -143,7 +206,6 @@ export const WeeklyPlanningPage: React.FC = () => {
   const handleLock = useCallback(async () => {
     if (!plan) return;
 
-    // Validate: no archived outcomes
     if (archivedOutcomeCount > 0) {
       setToastError(
         `Cannot lock: ${archivedOutcomeCount} commitment(s) reference archived outcomes. Please re-link them first.`,
@@ -258,6 +320,8 @@ export const WeeklyPlanningPage: React.FC = () => {
       const explicitMemberIds = searchParams.getAll('memberIds');
       const params = new URLSearchParams();
       explicitMemberIds.forEach(id => params.append('memberIds', id));
+      const w = searchParams.get('week');
+      if (w) params.set('week', getMonday(w));
       if (nextPlanId) params.set('planId', nextPlanId);
       const qs = params.toString();
       navigate(qs ? `/commitments?${qs}` : '/commitments');
@@ -269,6 +333,9 @@ export const WeeklyPlanningPage: React.FC = () => {
   const showTeamPicker =
     (userContext.role === 'MANAGER' || userContext.role === 'LEADERSHIP') &&
     teamPickerMembers.length > 0;
+
+  const showWeekNavigator = !planIdParam;
+  const weekNavDate = plan ? plan.weekStartDate : weekMonday;
 
   if (loading) {
     return <div className={styles.loading}>Loading...</div>;
@@ -287,24 +354,55 @@ export const WeeklyPlanningPage: React.FC = () => {
   const showCarryForwardBanner =
     isDraft && carriedForwardCount > 0 && !bannerDismissed && !readOnly;
   const treeIsEmpty = tree.length === 0;
+  const showHistoryBlock = !planIdParam && !readOnly;
 
   return (
     <div className={styles.page}>
-      <PageHeader
-        title={pageTitle}
-        badge={badge}
-        actions={
-          readOnly ? undefined : (
-            <ActionBar
-              planStatus={plan.status}
-              onLock={handleLock}
-              onAddCommitment={handleAddCommitment}
-              onStartReconciliation={handleStartReconciliation}
-              locking={locking}
-            />
-          )
-        }
-      />
+      <header className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>{pageTitle}</h1>
+        <div className={styles.toolbar}>
+          {showTeamPicker && (
+            <div className={styles.toolbarLeft} data-testid="commitments-person-picker">
+              <label className={styles.personLabel} htmlFor="commitments-person-select">
+                Person
+              </label>
+              <select
+                id="commitments-person-select"
+                className={styles.personSelect}
+                value={planIdParam ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  handlePersonSelect(v === '' ? null : v);
+                }}
+              >
+                <option value="">Me</option>
+                {teamPickerMembers
+                  .filter(m => m.planId)
+                  .map(m => (
+                    <option key={m.userId} value={m.planId!}>
+                      {m.userId}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
+          <div className={styles.toolbarRight}>
+            <Badge label={badge.label} variant={badge.variant} />
+            {showWeekNavigator && (
+              <WeekNavigator currentDate={weekNavDate} onWeekChange={handleWeekChange} />
+            )}
+            {!readOnly && (
+              <ActionBar
+                planStatus={plan.status}
+                onLock={handleLock}
+                onAddCommitment={handleAddCommitment}
+                onStartReconciliation={handleStartReconciliation}
+                locking={locking}
+              />
+            )}
+          </div>
+        </div>
+      </header>
 
       {readOnly && (
         <p className={styles.readOnlyNote} data-testid="read-only-banner">
@@ -312,36 +410,15 @@ export const WeeklyPlanningPage: React.FC = () => {
         </p>
       )}
 
-      {showTeamPicker && (
-        <div className={styles.personToolbar} data-testid="commitments-person-picker">
-          <label className={styles.personLabel} htmlFor="commitments-person-select">
-            Person
-          </label>
-          <select
-            id="commitments-person-select"
-            className={styles.personSelect}
-            value={planIdParam ?? ''}
-            onChange={(e) => {
-              const v = e.target.value;
-              handlePersonSelect(v === '' ? null : v);
-            }}
-          >
-            <option value="">Me</option>
-            {teamPickerMembers
-              .filter(m => m.planId)
-              .map(m => (
-                <option key={m.userId} value={m.planId!}>
-                  {m.userId}
-                </option>
-              ))}
-          </select>
-        </div>
-      )}
-
       {weekStale && (
         <div className={styles.staleBanner} data-testid="stale-week-banner">
           This week has ended. Visit reconciliation to review your commitments.{' '}
-          <a href="/reconciliation" className={styles.staleLink}>Go to Reconciliation</a>
+          <a
+            href={`/reconciliation?week=${encodeURIComponent(plan.weekStartDate)}`}
+            className={styles.staleLink}
+          >
+            Go to Reconciliation
+          </a>
         </div>
       )}
 
@@ -353,37 +430,110 @@ export const WeeklyPlanningPage: React.FC = () => {
       )}
 
       <div className={styles.body}>
-        {treeIsEmpty ? (
-          <EmptyState
-            title="No strategies found"
-            description="No rally cries, objectives, or outcomes have been configured yet."
-          />
-        ) : (
-          <StrategyBrowser tree={tree} />
-        )}
-        {commitments.length === 0 ? (
-          <EmptyState
-            title="No commitments yet"
-            description={
-              readOnly
-                ? 'This plan has no commitments for this week.'
-                : 'Add your first commitment to start planning your week.'
-            }
-            action={isDraft && !readOnly ? { label: 'Add Commitment', onClick: handleAddCommitment } : undefined}
-          />
-        ) : (
-          <CommitmentList
-            commitments={commitments}
-            planStatus={plan.status}
-            tree={tree}
-            onEdit={handleEditCommitment}
-            onDelete={handleDeleteCommitment}
-            onReorder={handleReorder}
-            onRelink={handleRelink}
-            readOnly={readOnly}
-          />
-        )}
+        <div className={styles.strategyColumn}>
+          {treeIsEmpty ? (
+            <div className={styles.strategyFallback}>
+              <EmptyState
+                title="No strategies found"
+                description="No rally cries, objectives, or outcomes have been configured yet."
+              />
+            </div>
+          ) : (
+            <StrategyBrowser tree={tree} />
+          )}
+        </div>
+        <div className={styles.mainColumn}>
+          {commitments.length === 0 ? (
+            <div className={styles.emptyMain}>
+              <EmptyState
+                title="No commitments yet"
+                description={
+                  readOnly
+                    ? 'This plan has no commitments for this week.'
+                    : isDraft
+                      ? 'Use Add Commitment in the toolbar to link an outcome to this week.'
+                      : 'This week has no commitments yet.'
+                }
+              />
+            </div>
+          ) : (
+            <div className={styles.commitmentListWrap}>
+              <CommitmentList
+                commitments={commitments}
+                planStatus={plan.status}
+                tree={tree}
+                onEdit={handleEditCommitment}
+                onDelete={handleDeleteCommitment}
+                onReorder={handleReorder}
+                onRelink={handleRelink}
+                readOnly={readOnly}
+              />
+            </div>
+          )}
+        </div>
       </div>
+
+      {showHistoryBlock && (
+        <section className={styles.historySection} aria-labelledby="plan-history-heading">
+          <h2 id="plan-history-heading" className={styles.historyTitle}>
+            Your plan history
+          </h2>
+          <p className={styles.historyHint}>
+            Weeks where you already have a plan (last 52 weeks). Open or reconcile without creating empty weeks.
+          </p>
+          {historyLoading ? (
+            <p className={styles.historyHint}>Loading history…</p>
+          ) : myPlanHistory.length === 0 ? (
+            <p className={styles.historyHint}>No saved weeks in this range yet.</p>
+          ) : (
+            <table className={styles.historyTable}>
+              <thead>
+                <tr>
+                  <th scope="col">Week</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Commitments</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {myPlanHistory.map((row) => {
+                  const isCurrent = row.weekStartDate === plan.weekStartDate;
+                  const canReconcile =
+                    row.status === 'LOCKED' || row.status === 'RECONCILING' || row.status === 'RECONCILED';
+                  return (
+                    <tr
+                      key={row.id}
+                      className={isCurrent ? styles.historyRowCurrent : undefined}
+                    >
+                      <td>{formatHistoryWeekLabel(row.weekStartDate)}</td>
+                      <td>{statusLabel(row.status)}</td>
+                      <td>{row.commitmentCount}</td>
+                      <td>
+                        <div className={styles.historyActions}>
+                          <a
+                            className={styles.historyLink}
+                            href={`/commitments?week=${encodeURIComponent(row.weekStartDate)}`}
+                          >
+                            Open
+                          </a>
+                          {canReconcile && (
+                            <a
+                              className={styles.historyLink}
+                              href={`/reconciliation?week=${encodeURIComponent(row.weekStartDate)}`}
+                            >
+                              Reconcile
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </section>
+      )}
 
       {showForm && !readOnly && (
         <CommitmentForm
