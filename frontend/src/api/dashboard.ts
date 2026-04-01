@@ -1,9 +1,10 @@
 import { ApiClient } from './client';
-import { TeamOverviewResponse, OrgOverviewResponse } from './types';
+import { TeamOverviewResponse, OrgOverviewResponse, ExecutiveOverviewResponse } from './types';
 
 export interface DashboardApi {
   getTeamOverview(date: string, memberIds: string[]): Promise<TeamOverviewResponse>;
   getOrgOverview(date: string): Promise<OrgOverviewResponse>;
+  getExecutiveOverview(date: string): Promise<ExecutiveOverviewResponse>;
 }
 
 export function createDashboardApi(client: ApiClient): DashboardApi {
@@ -20,6 +21,11 @@ export function createDashboardApi(client: ApiClient): DashboardApi {
       const params = new URLSearchParams();
       params.set('date', date);
       return client.get<OrgOverviewResponse>(`/api/dashboard/leadership?${params.toString()}`);
+    },
+    getExecutiveOverview(date: string): Promise<ExecutiveOverviewResponse> {
+      const params = new URLSearchParams();
+      params.set('date', date);
+      return client.get<ExecutiveOverviewResponse>(`/api/dashboard/executive?${params.toString()}`);
     },
   };
 }

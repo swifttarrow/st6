@@ -6,8 +6,11 @@ import {
   List,
   CalendarDays,
   ClipboardCheck,
+  TrendingUp,
 } from 'lucide-react';
 import { useReconciliationNavAvailable } from '../../hooks/useReconciliationNavAvailable';
+import { useUserContext } from '../../context/UserContext';
+import { clearDevSession } from '../../dev/devSession';
 import styles from './Sidebar.module.css';
 
 type UserRole = 'IC' | 'MANAGER' | 'LEADERSHIP';
@@ -39,6 +42,12 @@ const NAV_ITEMS: NavItem[] = [
     icon: <Eye size={16} strokeWidth={1.75} />,
   },
   {
+    path: '/executive',
+    label: 'Executive rollup',
+    minRole: 'LEADERSHIP',
+    icon: <TrendingUp size={16} strokeWidth={1.75} />,
+  },
+  {
     path: '/strategy',
     label: 'RCDO Management',
     minRole: 'MANAGER',
@@ -58,7 +67,9 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
   const location = useLocation();
+  const { userId } = useUserContext();
   const reconciliationNav = useReconciliationNavAvailable();
+  const showDevSignOut = import.meta.env.DEV;
   const roleLevel = ROLE_HIERARCHY[userRole];
 
   const visibleItems = NAV_ITEMS.filter((item) => {
@@ -75,7 +86,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
 
       <nav className={styles.nav}>
         {visibleItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive =
+            item.path === '/leadership'
+              ? location.pathname === '/leadership'
+              : location.pathname === item.path;
           const reconciliationBlocked =
             item.path === '/reconciliation' &&
             (reconciliationNav.loading || !reconciliationNav.enabled);
@@ -110,7 +124,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
       <div className={styles.spacer} />
 
       <div className={styles.userInfo}>
+        {showDevSignOut && (
+          <span className={styles.userId} title="Dev session user">
+            {userId}
+          </span>
+        )}
         <span className={styles.userRole}>{userRole}</span>
+        {showDevSignOut && (
+          <button
+            type="button"
+            className={styles.devSignOut}
+            onClick={() => {
+              clearDevSession();
+              window.location.reload();
+            }}
+          >
+            Sign out
+          </button>
+        )}
       </div>
     </aside>
   );

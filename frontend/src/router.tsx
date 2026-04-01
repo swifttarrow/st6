@@ -4,6 +4,7 @@ import { WeeklyPlanningPage } from './pages/WeeklyPlanning/WeeklyPlanningPage';
 import { ReconciliationPage } from './pages/Reconciliation/ReconciliationPage';
 import { ManagerDashboardPage } from './pages/ManagerDashboard/ManagerDashboardPage';
 import { LeadershipViewPage } from './pages/LeadershipView/LeadershipViewPage';
+import { ExecutiveOverviewPage } from './pages/ExecutiveOverview/ExecutiveOverviewPage';
 import { StrategyManagementPage } from './pages/StrategyManagement/StrategyManagementPage';
 
 export const AppRouter: React.FC = () => {
@@ -14,6 +15,8 @@ export const AppRouter: React.FC = () => {
       <Route path="/reconciliation" element={<ReconciliationPage />} />
       <Route path="/team" element={<ManagerDashboardPage />} />
       <Route path="/leadership" element={<LeadershipViewPage />} />
+      <Route path="/executive" element={<ExecutiveOverviewPage />} />
+      <Route path="/leadership/executive" element={<Navigate to="/executive" replace />} />
       <Route path="/strategy" element={<StrategyManagementPage />} />
       <Route path="*" element={<Navigate to="/commitments" replace />} />
     </Routes>

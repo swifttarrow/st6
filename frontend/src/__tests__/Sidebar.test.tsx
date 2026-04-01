@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { UserContextProvider } from '../context/UserContext';
 import { Sidebar } from '../components/Sidebar/Sidebar';
 
 /** Stable reference — useReconciliationNavAvailable depends on `api` in useEffect. */
@@ -11,6 +12,7 @@ const { mockApi, mockGetPlan } = vi.hoisted(() => {
     plans: {
       getPlan: mockGetPlanInner,
       getPlanById: vi.fn(),
+      listMyPlans: vi.fn(),
       transitionPlan: vi.fn(),
       unlockPlan: vi.fn(),
       getTransitions: vi.fn(),
@@ -45,8 +47,10 @@ const mockPlanReconciling = {
 function renderSidebar(role: 'IC' | 'MANAGER' | 'LEADERSHIP') {
   return render(
     <MemoryRouter initialEntries={['/commitments']}>
-      <Sidebar userRole={role} />
-    </MemoryRouter>
+      <UserContextProvider context={{ userId: 'test-user', role, teamId: 'team-test' }}>
+        <Sidebar userRole={role} />
+      </UserContextProvider>
+    </MemoryRouter>,
   );
 }
 
@@ -85,6 +89,7 @@ describe('Sidebar', () => {
     await waitForReconciliationNavEnabled();
     expect(screen.getByText('Team Dashboard')).toBeDefined();
     expect(screen.getByText('Leadership View')).toBeDefined();
+    expect(screen.getByText('Executive rollup')).toBeDefined();
     expect(screen.getByText('RCDO Management')).toBeDefined();
   });
 

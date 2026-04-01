@@ -25,6 +25,11 @@ export type {
   RallyCryCoverage,
   OrgOverviewResponse,
   RcdoHierarchyCoverage,
+  MyPlanSummary,
+  ExecutiveOverviewResponse,
+  OrgLifecycleRollup,
+  WeekExecutionTrendRow,
+  RallyCryPulseRow,
 } from './types';
 export { ApiError } from './types';
 

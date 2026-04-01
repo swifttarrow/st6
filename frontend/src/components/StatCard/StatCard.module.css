@@ -1,25 +1,96 @@
 .container {
   display: flex;
   flex-direction: column;
-  padding: 28px;
+  gap: 12px;
+  padding: 20px 22px;
+  min-height: 112px;
+  justify-content: center;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   flex: 1;
+  min-width: 140px;
   background: var(--color-white);
+  box-shadow: 0 1px 2px rgba(26, 26, 26, 0.04);
+  transition:
+    box-shadow 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.container:hover {
+  box-shadow: 0 6px 20px rgba(26, 26, 26, 0.07);
+  border-color: var(--color-grey-300);
+}
+
+.highlight {
+  padding-left: 20px;
+  border-left: 4px solid var(--color-success);
+  background: linear-gradient(
+    120deg,
+    var(--color-success-bg) 0%,
+    rgba(240, 255, 244, 0.35) 38%,
+    var(--color-white) 72%
+  );
+}
+
+.highlight:hover {
+  border-left-color: #2f855a;
 }
 
 .label {
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
   color: var(--color-grey-500);
-  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: var(--leading-normal);
+  max-width: 18ch;
+}
+
+.figureRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 10px;
 }
 
 .value {
   font-family: var(--font-heading);
-  font-size: 36px;
+  font-size: 2.25rem;
   font-weight: var(--weight-semibold);
-  letter-spacing: -1px;
-  color: #0D0D0D;
+  letter-spacing: -0.03em;
+  color: var(--color-black);
   line-height: 1;
+}
+
+.secondary {
+  font-family: var(--font-body);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-medium);
+  line-height: 1.2;
+  color: var(--color-grey-500);
+}
+
+/* Tones (skipped when parent passes inline valueColor on .value) */
+.container[data-tone='default'] .secondary {
+  color: var(--color-grey-600);
+}
+
+.container[data-tone='success'] .value {
+  color: var(--color-success);
+}
+
+.container[data-tone='success'] .secondary {
+  color: #166534;
+  font-weight: var(--weight-semibold);
+}
+
+.container[data-tone='neutral'] .value {
+  color: var(--color-grey-900);
+}
+
+.container[data-tone='neutral'] .secondary {
+  color: var(--color-grey-500);
+  font-weight: var(--weight-regular);
 }

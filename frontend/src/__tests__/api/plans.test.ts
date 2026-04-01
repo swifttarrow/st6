@@ -40,6 +40,12 @@ describe('createPlansApi', () => {
     expect(client.get).toHaveBeenCalledWith('/api/plans/plan-123');
   });
 
+  it('listMyPlans calls GET /api/plans/me with from and to', async () => {
+    const api = createPlansApi(client);
+    await api.listMyPlans('2025-01-06', '2026-01-05');
+    expect(client.get).toHaveBeenCalledWith('/api/plans/me?from=2025-01-06&to=2026-01-05');
+  });
+
   it('transitionPlan calls POST /api/plans/{id}/transition with body', async () => {
     const api = createPlansApi(client);
     await api.transitionPlan('plan-1', 'LOCKED');

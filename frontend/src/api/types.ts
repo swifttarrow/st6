@@ -116,6 +116,14 @@ export interface WeeklyPlan {
   updatedAt: string;
 }
 
+/** Existing plan row from `GET /api/plans/me` (no auto-create). */
+export interface MyPlanSummary {
+  id: string;
+  weekStartDate: string;
+  status: PlanStatus;
+  commitmentCount: number;
+}
+
 export interface PlanTransition {
   id: string;
   planId: string;
@@ -221,6 +229,43 @@ export interface RcdoHierarchyCoverage {
   consecutiveZeroWeeks?: number;
   warningNote?: string | null;
   children?: RcdoHierarchyCoverage[];
+}
+
+// ── Executive overview (leadership only) ──
+
+export interface OrgLifecycleRollup {
+  totalPlans: number;
+  draftCount: number;
+  lockedCount: number;
+  reconcilingCount: number;
+  reconciledCount: number;
+  distinctUsers: number;
+  distinctTeams: number;
+  totalCommitments: number;
+}
+
+export interface WeekExecutionTrendRow {
+  weekStartDate: string;
+  totalPlans: number;
+  draftCount: number;
+  lockedCount: number;
+  reconcilingCount: number;
+  reconciledCount: number;
+  totalCommitments: number;
+}
+
+export interface RallyCryPulseRow {
+  rallyCryId: string;
+  rallyCryName: string;
+  commitmentCount: number;
+  percentOfOrgCommitments: number;
+}
+
+export interface ExecutiveOverviewResponse {
+  focusWeekStart: string;
+  focusWeek: OrgLifecycleRollup;
+  eightWeekTrend: WeekExecutionTrendRow[];
+  rallyCryCommitmentMix: RallyCryPulseRow[];
 }
 
 // ── API Error ──

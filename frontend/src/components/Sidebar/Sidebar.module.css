@@ -87,6 +87,16 @@
 .userInfo {
   padding-top: var(--space-4);
   border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.userId {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--color-grey-700);
+  word-break: break-all;
 }
 
 .userRole {
@@ -95,4 +105,23 @@
   color: var(--color-grey-500);
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
+}
+
+.devSignOut {
+  align-self: flex-start;
+  margin-top: var(--space-1);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  color: var(--color-grey-700);
+  cursor: pointer;
+}
+
+.devSignOut:hover {
+  color: var(--color-red-primary);
+  border-color: var(--color-red-light);
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { LeadershipViewPage } from '../../pages/LeadershipView/LeadershipViewPage';
 
@@ -180,12 +180,10 @@ describe('LeadershipViewPage', () => {
     });
 
     const statCards = screen.getAllByTestId('stat-card');
-    // Coverage Gaps is the 4th stat card
     const gapsCard = statCards[3];
-    const valueEl = gapsCard.querySelector('[class*="value"]');
-    expect(valueEl).toBeDefined();
-    expect(valueEl!.getAttribute('style')).toContain('color');
-    expect(valueEl!.getAttribute('style')).toContain('rgb(228, 35, 19)');
+    const valueEl = within(gapsCard).getByTestId('stat-card-value');
+    expect(valueEl.getAttribute('style')).toContain('color');
+    expect(valueEl.getAttribute('style')).toContain('rgb(228, 35, 19)');
   });
 
   it('redirects non-LEADERSHIP users to /commitments', () => {
