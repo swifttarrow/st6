@@ -15,4 +15,7 @@ public interface WeeklyPlanRepository extends JpaRepository<WeeklyPlan, UUID> {
     Optional<WeeklyPlan> findByUserIdAndWeekStartDate(String userId, LocalDate weekStartDate);
 
     List<WeeklyPlan> findByUserIdInAndWeekStartDate(List<String> userIds, LocalDate weekStartDate);
+
+    List<WeeklyPlan> findByUserIdAndWeekStartDateBetweenOrderByWeekStartDateDesc(
+            String userId, LocalDate fromInclusive, LocalDate toInclusive);
 }

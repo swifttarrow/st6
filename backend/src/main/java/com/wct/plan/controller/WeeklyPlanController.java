@@ -3,6 +3,7 @@ package com.wct.plan.controller;
 import com.wct.auth.UserContext;
 import com.wct.auth.UserContextHolder;
 import com.wct.plan.PlanStatus;
+import com.wct.plan.dto.MyPlanSummaryResponse;
 import com.wct.plan.dto.PlanTransitionRequest;
 import com.wct.plan.dto.PlanTransitionResponse;
 import com.wct.plan.dto.WeeklyPlanResponse;
@@ -37,6 +38,17 @@ public class WeeklyPlanController {
         UserContext user = UserContextHolder.get();
         WeeklyPlan plan = weeklyPlanService.getOrCreatePlan(user.userId(), date, user);
         return ResponseEntity.ok(WeeklyPlanResponse.from(plan));
+    }
+
+    /**
+     * Lists existing weekly plans for the current user in a date range (no auto-create).
+     */
+    @GetMapping("/me")
+    public ResponseEntity<List<MyPlanSummaryResponse>> listMyPlans(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        UserContext user = UserContextHolder.get();
+        return ResponseEntity.ok(weeklyPlanService.listMyPlanSummaries(user.userId(), from, to));
     }
 
     @GetMapping("/{id}")

@@ -2,7 +2,9 @@ package com.wct.dashboard.controller;
 
 import com.wct.auth.Role;
 import com.wct.auth.RoleGuard;
+import com.wct.dashboard.dto.ExecutiveOverviewResponse;
 import com.wct.dashboard.dto.OrgOverviewResponse;
+import com.wct.dashboard.service.LeadershipExecutiveService;
 import com.wct.dashboard.service.LeadershipOverviewService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +20,12 @@ import java.time.LocalDate;
 public class LeadershipOverviewController {
 
     private final LeadershipOverviewService leadershipOverviewService;
+    private final LeadershipExecutiveService leadershipExecutiveService;
 
-    public LeadershipOverviewController(LeadershipOverviewService leadershipOverviewService) {
+    public LeadershipOverviewController(LeadershipOverviewService leadershipOverviewService,
+                                        LeadershipExecutiveService leadershipExecutiveService) {
         this.leadershipOverviewService = leadershipOverviewService;
+        this.leadershipExecutiveService = leadershipExecutiveService;
     }
 
     @GetMapping("/leadership")
@@ -29,5 +34,12 @@ public class LeadershipOverviewController {
         RoleGuard.requireRole(Role.LEADERSHIP);
         OrgOverviewResponse response = leadershipOverviewService.getOrgOverview(date);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/executive")
+    public ResponseEntity<ExecutiveOverviewResponse> getExecutiveOverview(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        RoleGuard.requireRole(Role.LEADERSHIP);
+        return ResponseEntity.ok(leadershipExecutiveService.getExecutiveOverview(date));
     }
 }

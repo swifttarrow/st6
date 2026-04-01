@@ -7,6 +7,7 @@ import com.wct.commitment.repository.CommitmentRepository;
 import com.wct.commitment.service.CarryForwardService;
 import com.wct.plan.PlanStatus;
 import com.wct.plan.WeekDateUtil;
+import com.wct.plan.dto.MyPlanSummaryResponse;
 import com.wct.plan.entity.PlanStateTransition;
 import com.wct.plan.entity.WeeklyPlan;
 import com.wct.plan.repository.PlanStateTransitionRepository;
@@ -172,5 +173,32 @@ public class WeeklyPlanService {
 
     public List<PlanStateTransition> getTransitions(UUID planId) {
         return transitionRepository.findByWeeklyPlanIdOrderByTransitionedAt(planId);
+    }
+
+    /**
+     * Lists existing plans for the user in the date range (inclusive, normalized to Mondays).
+     * Does not create plans.
+     */
+    public List<MyPlanSummaryResponse> listMyPlanSummaries(String userId, LocalDate from, LocalDate to) {
+        LocalDate mondayFrom = WeekDateUtil.toMonday(from);
+        LocalDate mondayTo = WeekDateUtil.toMonday(to);
+        if (mondayFrom.isAfter(mondayTo)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "`from` must be on or before `to`");
+        }
+        long weeksBetween = java.time.temporal.ChronoUnit.WEEKS.between(mondayFrom, mondayTo);
+        if (weeksBetween > 104) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Date range cannot exceed 104 weeks");
+        }
+        List<WeeklyPlan> plans = weeklyPlanRepository
+                .findByUserIdAndWeekStartDateBetweenOrderByWeekStartDateDesc(userId, mondayFrom, mondayTo);
+        List<MyPlanSummaryResponse> out = new ArrayList<>();
+        for (WeeklyPlan wp : plans) {
+            long cc = commitmentRepository.countByWeeklyPlanId(wp.getId());
+            out.add(new MyPlanSummaryResponse(
+                    wp.getId(), wp.getWeekStartDate(), wp.getStatus().name(), cc));
+        }
+        return out;
     }
 }

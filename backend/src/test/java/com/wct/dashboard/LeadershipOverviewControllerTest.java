@@ -232,6 +232,39 @@ class LeadershipOverviewControllerTest {
                 .andExpect(jsonPath("$.hierarchy[0].status").value("ALERT"));
     }
 
+    @Test
+    void executiveReturnsLifecycleTrendAndMix() throws Exception {
+        String planId1 = createPlan("user-1", "2026-03-30", "team-A");
+        createCommitment(planId1, "user-1", outcomeId1, "Task 1");
+        createCommitment(planId1, "user-1", outcomeId1, "Task 2");
+
+        String planId2 = createPlan("user-2", "2026-03-30", "team-B");
+        createCommitment(planId2, "user-2", outcomeId2, "Task 3");
+
+        mockMvc.perform(get("/api/dashboard/executive")
+                        .param("date", "2026-03-30")
+                        .header("X-User-Id", "leader-1")
+                        .header("X-User-Role", "LEADERSHIP"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.focusWeekStart").value("2026-03-30"))
+                .andExpect(jsonPath("$.focusWeek.totalPlans").value(2))
+                .andExpect(jsonPath("$.focusWeek.distinctUsers").value(2))
+                .andExpect(jsonPath("$.focusWeek.totalCommitments").value(3))
+                .andExpect(jsonPath("$.eightWeekTrend", hasSize(8)))
+                .andExpect(jsonPath("$.rallyCryCommitmentMix", hasSize(2)))
+                .andExpect(jsonPath("$.rallyCryCommitmentMix[0].commitmentCount").value(2))
+                .andExpect(jsonPath("$.rallyCryCommitmentMix[1].commitmentCount").value(1));
+    }
+
+    @Test
+    void executiveForbiddenForManager() throws Exception {
+        mockMvc.perform(get("/api/dashboard/executive")
+                        .param("date", "2026-03-30")
+                        .header("X-User-Id", "manager-1")
+                        .header("X-User-Role", "MANAGER"))
+                .andExpect(status().isForbidden());
+    }
+
     // --- Helpers ---
 
     private String createRallyCry(String name) throws Exception {

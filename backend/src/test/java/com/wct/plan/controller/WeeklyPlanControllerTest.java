@@ -222,6 +222,48 @@ class WeeklyPlanControllerTest {
                 .andExpect(jsonPath("$[0].triggeredBy").value("user-1"));
     }
 
+    // --- List my plans (no auto-create) ---
+
+    @Test
+    void listMyPlans_returnsSummariesInRange() throws Exception {
+        createPlan("user-1", "2026-03-30");
+
+        mockMvc.perform(get(BASE_URL + "/me")
+                        .param("from", "2026-03-30")
+                        .param("to", "2026-03-30")
+                        .header("X-User-Id", "user-1")
+                        .header("X-User-Role", "IC")
+                        .header("X-Team-Id", "team-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].weekStartDate").value("2026-03-30"))
+                .andExpect(jsonPath("$[0].status").value("DRAFT"))
+                .andExpect(jsonPath("$[0].commitmentCount").value(0));
+    }
+
+    @Test
+    void listMyPlans_emptyWhenNoPlansInRange() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/me")
+                        .param("from", "2025-01-06")
+                        .param("to", "2025-01-06")
+                        .header("X-User-Id", "user-99")
+                        .header("X-User-Role", "IC")
+                        .header("X-Team-Id", "team-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void listMyPlans_rejectsInvertedRange() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/me")
+                        .param("from", "2026-04-06")
+                        .param("to", "2026-03-30")
+                        .header("X-User-Id", "user-1")
+                        .header("X-User-Role", "IC")
+                        .header("X-Team-Id", "team-1"))
+                .andExpect(status().isBadRequest());
+    }
+
     // --- Zero commitments lock test ---
 
     @Test
