@@ -2,59 +2,110 @@
 
 export interface RallyCry {
   id: string;
-  title: string;
+  name: string;
   description: string;
-  archived: boolean;
+  sortOrder: number;
+  archivedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface DefiningObjective {
   id: string;
   rallyCryId: string;
-  title: string;
+  name: string;
   description: string;
-  archived: boolean;
+  sortOrder: number;
+  archivedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Outcome {
   id: string;
   definingObjectiveId: string;
-  title: string;
+  name: string;
   description: string;
-  archived: boolean;
+  sortOrder: number;
+  archivedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ── RCDO Tree Types ──
 
 export interface RcdoTreeOutcome {
   id: string;
-  title: string;
-  archived: boolean;
+  name: string;
+  description: string;
+  archived?: boolean;
 }
 
 export interface RcdoTreeDefiningObjective {
   id: string;
-  title: string;
-  archived: boolean;
+  name: string;
+  description: string;
+  archived?: boolean;
   outcomes: RcdoTreeOutcome[];
 }
 
 export interface RcdoTreeRallyCry {
   id: string;
-  title: string;
-  archived: boolean;
+  name: string;
+  description: string;
+  archived?: boolean;
   definingObjectives: RcdoTreeDefiningObjective[];
 }
 
 export interface OutcomeSearchResult {
   outcomeId: string;
-  outcomeTitle: string;
-  definingObjectiveTitle: string;
-  rallyCryTitle: string;
+  outcomeName: string;
+  definingObjectiveId: string;
+  definingObjectiveName: string;
+  rallyCryId: string;
+  rallyCryName: string;
+}
+
+// ── RCDO Mutation Request Types ──
+
+export interface CreateRallyCryRequest {
+  name: string;
+  description: string;
+}
+
+export interface UpdateRallyCryRequest {
+  name: string;
+  description: string;
+  sortOrder?: number;
+}
+
+export interface CreateDefiningObjectiveRequest {
+  rallyCryId: string;
+  name: string;
+  description: string;
+}
+
+export interface UpdateDefiningObjectiveRequest {
+  name: string;
+  description: string;
+  sortOrder?: number;
+}
+
+export interface CreateOutcomeRequest {
+  definingObjectiveId: string;
+  name: string;
+  description: string;
+}
+
+export interface UpdateOutcomeRequest {
+  name: string;
+  description: string;
+  sortOrder?: number;
 }
 
 // ── Plan Types ──
 
-export type PlanStatus = 'DRAFT' | 'ACTIVE' | 'RECONCILING' | 'DONE';
+export type PlanStatus = 'DRAFT' | 'LOCKED' | 'RECONCILING' | 'RECONCILED';
 
 export interface WeeklyPlan {
   id: string;
@@ -76,15 +127,21 @@ export interface PlanTransition {
 
 // ── Commitment Types ──
 
-export type ActualStatus = 'DONE' | 'PARTIAL' | 'MISSED' | 'PENDING';
+/** Matches backend `ActualStatus` JSON (enum names). */
+export type ActualStatus =
+  | 'COMPLETED'
+  | 'PARTIALLY_COMPLETED'
+  | 'NOT_STARTED'
+  | 'DROPPED';
 
 export interface Commitment {
   id: string;
-  planId: string;
   outcomeId: string;
-  title: string;
-  sortOrder: number;
-  actualStatus: ActualStatus;
+  description: string;
+  priority: number;
+  notes: string | null;
+  /** Null when not yet reconciled (matches API). */
+  actualStatus: ActualStatus | null;
   carriedForward: boolean;
   outcomeArchived: boolean;
   createdAt: string;
@@ -93,11 +150,14 @@ export interface Commitment {
 
 export interface CreateCommitmentRequest {
   outcomeId: string;
-  title: string;
+  description: string;
+  notes?: string | null;
 }
 
 export interface UpdateCommitmentRequest {
-  title: string;
+  description?: string;
+  outcomeId?: string;
+  notes?: string | null;
 }
 
 export interface ReconcileItemRequest {

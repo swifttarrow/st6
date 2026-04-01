@@ -31,11 +31,11 @@ function getStatusBadge(status: PlanStatus): { label: string; variant: BadgeVari
   switch (status) {
     case 'DRAFT':
       return { label: 'Draft', variant: 'default' };
-    case 'ACTIVE':
+    case 'LOCKED':
       return { label: 'Locked', variant: 'active' };
     case 'RECONCILING':
       return { label: 'Reconciling', variant: 'alert' };
-    case 'DONE':
+    case 'RECONCILED':
       return { label: 'Done', variant: 'success' };
   }
 }
@@ -127,7 +127,7 @@ export const WeeklyPlanningPage: React.FC = () => {
 
     try {
       setLocking(true);
-      const updated = await api.plans.transitionPlan(plan.id, 'ACTIVE');
+      const updated = await api.plans.transitionPlan(plan.id, 'LOCKED');
       setPlan(updated);
     } catch (err) {
       setToastError(err instanceof Error ? err.message : 'Failed to lock plan');
@@ -184,17 +184,17 @@ export const WeeklyPlanningPage: React.FC = () => {
     }
   }, [api, plan]);
 
-  const handleFormSubmit = useCallback(async (data: { title: string; outcomeId: string }) => {
+  const handleFormSubmit = useCallback(async (data: { description: string; outcomeId: string }) => {
     if (!plan) return;
     try {
       setSaving(true);
       if (editingCommitment) {
         await api.commitments.updateCommitment(plan.id, editingCommitment.id, {
-          title: data.title,
+          description: data.description,
         });
       } else {
         await api.commitments.createCommitment(plan.id, {
-          title: data.title,
+          description: data.description,
           outcomeId: data.outcomeId,
         });
       }

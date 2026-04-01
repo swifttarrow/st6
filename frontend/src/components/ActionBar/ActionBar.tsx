@@ -31,12 +31,12 @@ export const ActionBar: React.FC<ActionBarProps> = ({
           </button>
         </>
       )}
-      {planStatus === 'ACTIVE' && (
+      {planStatus === 'LOCKED' && (
         <button className={styles.buttonFilled} onClick={onStartReconciliation} type="button">
           Begin Reconciliation
         </button>
       )}
-      {(planStatus === 'RECONCILING' || planStatus === 'DONE') && (
+      {(planStatus === 'RECONCILING' || planStatus === 'RECONCILED') && (
         <span className={styles.linkButton}>View Reconciliation</span>
       )}
     </div>

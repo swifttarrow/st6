@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import type { ActualStatus } from '../../api/types';
 import styles from './StatusSelect.module.css';
 
@@ -10,10 +11,10 @@ interface StatusOption {
 }
 
 const STATUS_OPTIONS: StatusOption[] = [
-  { value: 'DONE', label: 'Completed', styleClass: styles.completed, dotClass: styles.completedDot },
-  { value: 'PARTIAL', label: 'Partially Completed', styleClass: styles.partial, dotClass: styles.partialDot },
-  { value: 'PENDING', label: 'Not Started', styleClass: styles.notStarted, dotClass: styles.notStartedDot },
-  { value: 'MISSED', label: 'Dropped', styleClass: styles.dropped, dotClass: styles.droppedDot },
+  { value: 'COMPLETED', label: 'Completed', styleClass: styles.completed, dotClass: styles.completedDot },
+  { value: 'PARTIALLY_COMPLETED', label: 'Partially Completed', styleClass: styles.partial, dotClass: styles.partialDot },
+  { value: 'NOT_STARTED', label: 'Not Started', styleClass: styles.notStarted, dotClass: styles.notStartedDot },
+  { value: 'DROPPED', label: 'Dropped', styleClass: styles.dropped, dotClass: styles.droppedDot },
 ];
 
 interface StatusSelectProps {
@@ -25,12 +26,41 @@ interface StatusSelectProps {
 export const StatusSelect: React.FC<StatusSelectProps> = ({ value, onChange, disabled = false }) => {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuBox, setMenuBox] = useState({ top: 0, left: 0, width: 0 });
+
+  const updateMenuPosition = useCallback(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setMenuBox({
+      top: r.bottom + 4,
+      left: r.left,
+      width: Math.max(r.width, 170),
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open || disabled) return;
+    updateMenuPosition();
+  }, [open, disabled, updateMenuPosition]);
+
+  useEffect(() => {
+    if (!open || disabled) return;
+    window.addEventListener('scroll', updateMenuPosition, true);
+    window.addEventListener('resize', updateMenuPosition);
+    return () => {
+      window.removeEventListener('scroll', updateMenuPosition, true);
+      window.removeEventListener('resize', updateMenuPosition);
+    };
+  }, [open, disabled, updateMenuPosition]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const t = e.target as Node;
+      if (wrapperRef.current?.contains(t)) return;
+      if (menuRef.current?.contains(t)) return;
+      setOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -61,26 +91,39 @@ export const StatusSelect: React.FC<StatusSelectProps> = ({ value, onChange, dis
           </svg>
         )}
       </button>
-      {open && !disabled && (
-        <div className={styles.dropdown} role="listbox">
-          {STATUS_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              className={`${styles.option} ${opt.styleClass}`}
-              onClick={() => {
-                onChange(opt.value);
-                setOpen(false);
-              }}
-              role="option"
-              aria-selected={value === opt.value}
-            >
-              <span className={`${styles.dot} ${opt.dotClass}`} />
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {open &&
+        !disabled &&
+        createPortal(
+          <div
+            ref={menuRef}
+            className={styles.dropdown}
+            role="listbox"
+            style={{
+              position: 'fixed',
+              top: menuBox.top,
+              left: menuBox.left,
+              width: menuBox.width,
+            }}
+          >
+            {STATUS_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                className={`${styles.option} ${opt.styleClass}`}
+                onClick={() => {
+                  onChange(opt.value);
+                  setOpen(false);
+                }}
+                role="option"
+                aria-selected={value === opt.value}
+              >
+                <span className={`${styles.dot} ${opt.dotClass}`} />
+                {opt.label}
+              </button>
+            ))}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 };

@@ -1,6 +1,12 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Eye } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Eye,
+  List,
+  CalendarDays,
+  ClipboardCheck,
+} from 'lucide-react';
 import styles from './Sidebar.module.css';
 
 type UserRole = 'IC' | 'MANAGER' | 'LEADERSHIP';
@@ -9,24 +15,33 @@ interface NavItem {
   path: string;
   label: string;
   minRole?: UserRole;
-  icon?: React.ReactNode;
+  icon: React.ReactNode;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { path: '/my-week', label: 'My Week' },
-  { path: '/reconciliation', label: 'Reconciliation' },
-  { path: '/history', label: 'History' },
+  { path: '/my-week', label: 'My Week', icon: <CalendarDays size={16} strokeWidth={1.75} /> },
+  {
+    path: '/reconciliation',
+    label: 'Reconciliation',
+    icon: <ClipboardCheck size={16} strokeWidth={1.75} />,
+  },
   {
     path: '/team',
     label: 'Team Dashboard',
     minRole: 'MANAGER',
-    icon: <LayoutDashboard size={14} />,
+    icon: <LayoutDashboard size={16} strokeWidth={1.75} />,
   },
   {
     path: '/leadership',
     label: 'Leadership View',
     minRole: 'LEADERSHIP',
-    icon: <Eye size={14} />,
+    icon: <Eye size={16} strokeWidth={1.75} />,
+  },
+  {
+    path: '/strategy',
+    label: 'RCDO Management',
+    minRole: 'MANAGER',
+    icon: <List size={16} strokeWidth={1.75} />,
   },
 ];
 
@@ -65,8 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
               to={item.path}
               className={`${styles.navItem} ${isActive ? styles.active : ''}`}
             >
-              <span className={styles.dot} />
-              {item.icon && <span className={styles.icon}>{item.icon}</span>}
+              <span className={styles.icon}>{item.icon}</span>
               <span className={styles.label}>{item.label}</span>
             </NavLink>
           );

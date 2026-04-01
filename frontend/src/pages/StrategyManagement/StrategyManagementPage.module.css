@@ -1,0 +1,398 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  height: 100%;
+  min-height: 0;
+}
+
+.mainRow {
+  display: flex;
+  gap: var(--space-8);
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.treeColumn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 0;
+}
+
+.treeColumnHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.treeColumnTitle {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+  color: var(--color-black);
+}
+
+.treeColumnSubtitle {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-grey-500);
+}
+
+.treeScroll {
+  flex: 1;
+  min-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  background: var(--color-white);
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--color-grey-500);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+}
+
+.error {
+  color: var(--color-error);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  padding: var(--space-6) 0;
+}
+
+.treeContainer {
+  overflow: hidden;
+  flex: 1;
+}
+
+.rowLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.expandBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-grey-500);
+  flex-shrink: 0;
+}
+
+.expandBtn:hover {
+  color: var(--color-grey-700);
+}
+
+.rcRowSelected {
+  background: var(--color-grey-100);
+  box-shadow: inset 3px 0 0 var(--color-red-primary);
+}
+
+/* ── Rally Cry Row ── */
+.rcRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+}
+
+.rcRow:hover {
+  background: var(--color-grey-100);
+}
+
+.rcDot {
+  width: 8px;
+  height: 8px;
+  background: var(--color-red-primary);
+  flex-shrink: 0;
+}
+
+.rcName {
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-black);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rcDescription {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  color: var(--color-grey-500);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 300px;
+}
+
+/* ── Defining Objective Row ── */
+.doRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px 16px 10px 44px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+}
+
+.doRow:hover {
+  background: var(--color-grey-100);
+}
+
+.doDot {
+  width: 6px;
+  height: 6px;
+  background: var(--color-red-primary);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.doName {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: var(--weight-medium);
+  color: var(--color-black);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doDescription {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  color: var(--color-grey-500);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 240px;
+}
+
+/* ── Outcome Row ── */
+.outcomeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px 16px 10px 72px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.outcomeRow:hover {
+  background: var(--color-grey-100);
+}
+
+.outcomeDot {
+  width: 5px;
+  height: 5px;
+  background: var(--color-grey-500);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.outcomeName {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: var(--weight-regular);
+  color: var(--color-grey-500);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Chevron ── */
+.chevron {
+  flex-shrink: 0;
+  color: var(--color-grey-500);
+  transition: transform var(--transition-fast);
+}
+
+.chevronExpanded {
+  transform: rotate(90deg);
+}
+
+/* ── Actions ── */
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-grey-500);
+}
+
+.actionBtn:hover {
+  color: var(--color-grey-700);
+}
+
+/* ── New Rally Cry Button ── */
+.newRcBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px 20px;
+  background: var(--color-red-primary);
+  color: var(--color-white);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.newRcBtn:hover {
+  background: var(--color-red-dark);
+}
+
+/* ── Create Form ── */
+.createForm {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  background: var(--color-grey-100);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.createFormIndented1 {
+  margin-left: 44px;
+  margin-right: 16px;
+  margin-top: 0;
+  margin-bottom: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
+.createFormIndented2 {
+  margin-left: 72px;
+  margin-right: 16px;
+  margin-top: 0;
+  margin-bottom: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
+.formInput {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  border-radius: var(--radius-sm);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.formInput:focus {
+  border-color: var(--color-red-primary);
+}
+
+.formTextarea {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  border-radius: var(--radius-sm);
+  min-height: 60px;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.formTextarea:focus {
+  border-color: var(--color-red-primary);
+}
+
+.formActions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.formButtonPrimary {
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: var(--weight-medium);
+  background: var(--color-red-primary);
+  color: var(--color-white);
+  border: none;
+  cursor: pointer;
+}
+
+.formButtonPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.formButtonSecondary {
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: var(--weight-medium);
+  background: transparent;
+  color: var(--color-black);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+}
+
+.formButtonSecondary:hover {
+  background: var(--color-grey-100);
+}
+
+/* ── Archived Row ── */
+.archivedRow {
+  opacity: 0.5;
+  font-style: italic;
+}
+
+/* ── Show Archived Toggle ── */
+.toggleLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-grey-500);
+  cursor: pointer;
+  white-space: nowrap;
+}

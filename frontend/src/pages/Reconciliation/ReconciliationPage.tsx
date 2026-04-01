@@ -41,7 +41,7 @@ function getStatusBadge(status: PlanStatus): { label: string; variant: BadgeVari
   switch (status) {
     case 'RECONCILING':
       return { label: 'Reconciling', variant: 'alert' };
-    case 'DONE':
+    case 'RECONCILED':
       return { label: 'Reconciled', variant: 'success' };
     default:
       return { label: status, variant: 'default' };
@@ -76,8 +76,8 @@ export const ReconciliationPage: React.FC = () => {
         return;
       }
 
-      // If ACTIVE (locked), transition to RECONCILING
-      if (fetchedPlan.status === 'ACTIVE') {
+      // If locked, transition to RECONCILING
+      if (fetchedPlan.status === 'LOCKED') {
         fetchedPlan = await api.plans.transitionPlan(fetchedPlan.id, 'RECONCILING');
       }
 
@@ -87,8 +87,8 @@ export const ReconciliationPage: React.FC = () => {
         return;
       }
 
-      // Only RECONCILING and DONE are valid states for this page
-      if (fetchedPlan.status !== 'RECONCILING' && fetchedPlan.status !== 'DONE') {
+      // Only RECONCILING and RECONCILED are valid states for this page
+      if (fetchedPlan.status !== 'RECONCILING' && fetchedPlan.status !== 'RECONCILED') {
         navigate('/my-week', { replace: true });
         return;
       }
@@ -145,7 +145,7 @@ export const ReconciliationPage: React.FC = () => {
     setToastError(null);
 
     try {
-      const updated = await api.plans.transitionPlan(plan.id, 'DONE');
+      const updated = await api.plans.transitionPlan(plan.id, 'RECONCILED');
       setPlan(updated);
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
@@ -170,10 +170,8 @@ export const ReconciliationPage: React.FC = () => {
     return <div className={styles.error}>No plan found</div>;
   }
 
-  const isReconciled = plan.status === 'DONE';
-  const allAnnotated = commitments.length > 0 && commitments.every(
-    (c) => c.actualStatus !== 'PENDING',
-  );
+  const isReconciled = plan.status === 'RECONCILED';
+  const allAnnotated = commitments.length > 0 && commitments.every((c) => c.actualStatus != null);
 
   const badge = getStatusBadge(plan.status);
   const title = formatWeekRange(plan.weekStartDate);

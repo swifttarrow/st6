@@ -8,9 +8,9 @@ interface StatsBarProps {
 
 export const StatsBar: React.FC<StatsBarProps> = ({ commitments }) => {
   const total = commitments.length;
-  const completed = commitments.filter((c) => c.actualStatus === 'DONE').length;
-  const partial = commitments.filter((c) => c.actualStatus === 'PARTIAL').length;
-  const dropped = commitments.filter((c) => c.actualStatus === 'MISSED').length;
+  const completed = commitments.filter((c) => c.actualStatus === 'COMPLETED').length;
+  const partial = commitments.filter((c) => c.actualStatus === 'PARTIALLY_COMPLETED').length;
+  const dropped = commitments.filter((c) => c.actualStatus === 'DROPPED').length;
 
   return (
     <div className={styles.container} data-testid="stats-bar">

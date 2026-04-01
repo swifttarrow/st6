@@ -12,7 +12,7 @@ interface CommitmentFormProps {
   mode: 'create' | 'edit';
   commitment?: Commitment;
   tree: RcdoTreeRallyCry[];
-  onSubmit: (data: { title: string; outcomeId: string }) => void;
+  onSubmit: (data: { description: string; outcomeId: string }) => void;
   onCancel: () => void;
 }
 
@@ -23,10 +23,10 @@ export const CommitmentForm: React.FC<CommitmentFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const [title, setTitle] = useState(commitment?.title ?? '');
+  const [description, setDescription] = useState(commitment?.description ?? '');
   const [outcomeId, setOutcomeId] = useState(commitment?.outcomeId ?? '');
   const [outcomeSearch, setOutcomeSearch] = useState('');
-  const [errors, setErrors] = useState<{ title?: string; outcome?: string }>({});
+  const [errors, setErrors] = useState<{ description?: string; outcome?: string }>({});
 
   const allOutcomes = useMemo<OutcomeOption[]>(() => {
     const results: OutcomeOption[] = [];
@@ -35,8 +35,8 @@ export const CommitmentForm: React.FC<CommitmentFormProps> = ({
         d.outcomes.forEach(o => {
           results.push({
             id: o.id,
-            title: o.title,
-            path: `${rc.title} > ${d.title}`,
+            title: o.name,
+            path: `${rc.name} > ${d.name}`,
           });
         });
       });
@@ -54,14 +54,14 @@ export const CommitmentForm: React.FC<CommitmentFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newErrors: { title?: string; outcome?: string } = {};
-    if (!title.trim()) newErrors.title = 'Description is required';
+    const newErrors: { description?: string; outcome?: string } = {};
+    if (!description.trim()) newErrors.description = 'Description is required';
     if (!outcomeId) newErrors.outcome = 'Linked outcome is required';
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-    onSubmit({ title: title.trim(), outcomeId });
+    onSubmit({ description: description.trim(), outcomeId });
   };
 
   const handleOverlayClick = (e: React.MouseEvent) => {
@@ -82,11 +82,11 @@ export const CommitmentForm: React.FC<CommitmentFormProps> = ({
             <input
               className={styles.textInput}
               type="text"
-              value={title}
-              onChange={e => { setTitle(e.target.value); setErrors(prev => ({ ...prev, title: undefined })); }}
+              value={description}
+              onChange={e => { setDescription(e.target.value); setErrors(prev => ({ ...prev, description: undefined })); }}
               placeholder="What will you accomplish this week?"
             />
-            {errors.title && <div className={styles.errorText}>{errors.title}</div>}
+            {errors.description && <div className={styles.errorText}>{errors.description}</div>}
           </div>
 
           <div className={styles.field}>

@@ -17,7 +17,7 @@ function buildOutcomePath(outcomeId: string, tree: RcdoTreeRallyCry[]): string {
     for (const dObj of rc.definingObjectives) {
       for (const outcome of dObj.outcomes) {
         if (outcome.id === outcomeId) {
-          return `${rc.title} > ${dObj.title} > ${outcome.title}`;
+          return `${rc.name} > ${dObj.name} > ${outcome.name}`;
         }
       }
     }
@@ -33,7 +33,7 @@ export const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
   notes,
   onNotesChange,
 }) => {
-  const isReadOnly = planStatus === 'DONE';
+  const isReadOnly = planStatus === 'RECONCILED';
   const [localNotes, setLocalNotes] = useState<Record<string, string>>({});
 
   const handleStatusChange = (commitmentId: string, status: ActualStatus) => {
@@ -44,7 +44,7 @@ export const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
   const handleNotesBlur = (commitmentId: string, value: string) => {
     onNotesChange(commitmentId, value);
     const c = commitments.find((cm) => cm.id === commitmentId);
-    if (c) {
+    if (c?.actualStatus != null) {
       onReconcile(commitmentId, c.actualStatus, value);
     }
   };
@@ -75,12 +75,12 @@ export const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
           return (
             <tr key={commitment.id} className={styles.row}>
               <td><span className={styles.rank}>{index + 1}</span></td>
-              <td><span className={styles.description}>{commitment.title}</span></td>
+              <td><span className={styles.description}>{commitment.description}</span></td>
               <td><span className={styles.outcomePath}>{outcomePath || '-'}</span></td>
               <td><span className={styles.planned}>Planned</span></td>
               <td>
                 <StatusSelect
-                  value={commitment.actualStatus === 'PENDING' ? null : commitment.actualStatus}
+                  value={commitment.actualStatus}
                   onChange={(status) => handleStatusChange(commitment.id, status)}
                   disabled={isReadOnly}
                 />

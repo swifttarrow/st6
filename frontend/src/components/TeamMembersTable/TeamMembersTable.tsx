@@ -30,13 +30,13 @@ function getInitial(userId: string): string {
 function getStatusBadge(status: string | null): { label: string; variant: BadgeVariant } | null {
   if (!status) return null;
   switch (status) {
-    case 'ACTIVE':
+    case 'LOCKED':
       return { label: 'Locked', variant: 'success' };
     case 'DRAFT':
       return { label: 'Draft', variant: 'default' };
     case 'RECONCILING':
       return { label: 'Reconciling', variant: 'alert' };
-    case 'DONE':
+    case 'RECONCILED':
       return { label: 'Done', variant: 'success' };
     default:
       return { label: status, variant: 'default' };
@@ -67,7 +67,7 @@ export const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
           {members.map((member) => {
             const badge = getStatusBadge(member.planStatus);
             const avatarColor = getAvatarColor(member.userId);
-            const isLocked = member.planStatus === 'ACTIVE';
+            const isLocked = member.planStatus === 'LOCKED';
 
             return (
               <tr

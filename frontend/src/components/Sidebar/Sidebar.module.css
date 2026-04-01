@@ -60,22 +60,11 @@
   color: var(--color-red-primary);
 }
 
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-full);
-  background-color: var(--color-grey-300);
-  flex-shrink: 0;
-}
-
-.active .dot {
-  background-color: var(--color-red-primary);
-}
-
 .icon {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  color: inherit;
 }
 
 .label {

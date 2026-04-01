@@ -59,7 +59,7 @@ export const StrategyBrowser: React.FC<StrategyBrowserProps> = ({
         definingObjectives: rc.definingObjectives
           .map(d => ({
             ...d,
-            outcomes: d.outcomes.filter(o => o.title.toLowerCase().includes(query)),
+            outcomes: d.outcomes.filter(o => o.name.toLowerCase().includes(query)),
           }))
           .filter(d => d.outcomes.length > 0),
       }))
@@ -85,7 +85,7 @@ export const StrategyBrowser: React.FC<StrategyBrowserProps> = ({
           <li key={rc.id} className={styles.rcNode}>
             <div className={styles.rcHeader} onClick={() => toggleRC(rc.id)}>
               <ChevronIcon expanded={expandedRCs.has(rc.id)} />
-              <span className={styles.rcTitle}>{rc.title}</span>
+              <span className={styles.rcTitle}>{rc.name}</span>
             </div>
             {expandedRCs.has(rc.id) && (
               <ul className={styles.doList}>
@@ -93,7 +93,7 @@ export const StrategyBrowser: React.FC<StrategyBrowserProps> = ({
                   <li key={d.id} className={styles.doNode}>
                     <div className={styles.doHeader} onClick={() => toggleDO(d.id)}>
                       <ChevronIcon expanded={expandedDOs.has(d.id)} />
-                      <span className={styles.doTitle}>{d.title}</span>
+                      <span className={styles.doTitle}>{d.name}</span>
                     </div>
                     {expandedDOs.has(d.id) && (
                       <ul className={styles.outcomeList}>
@@ -110,7 +110,7 @@ export const StrategyBrowser: React.FC<StrategyBrowserProps> = ({
                               className={className}
                               onClick={interactive && onSelectOutcome ? () => onSelectOutcome(o.id) : undefined}
                             >
-                              {o.title}
+                              {o.name}
                             </li>
                           );
                         })}

@@ -20,7 +20,7 @@ function getOutcomePath(tree: RcdoTreeRallyCry[], outcomeId: string): string {
     for (const d of rc.definingObjectives) {
       for (const o of d.outcomes) {
         if (o.id === outcomeId) {
-          return `${rc.title} > ${d.title} > ${o.title}`;
+          return `${rc.name} > ${d.name} > ${o.name}`;
         }
       }
     }
@@ -33,7 +33,7 @@ function getOutcomeName(tree: RcdoTreeRallyCry[], outcomeId: string): string {
     for (const d of rc.definingObjectives) {
       for (const o of d.outcomes) {
         if (o.id === outcomeId) {
-          return o.title;
+          return o.name;
         }
       }
     }
@@ -82,7 +82,7 @@ export const CommitmentRow: React.FC<CommitmentRowProps> = ({
         </div>
         <div className={styles.descriptionCell}>
           <span className={styles.description}>
-            {commitment.title}
+            {commitment.description}
             {commitment.carriedForward && (
               <span className={styles.carriedForwardPill} data-testid="carried-forward-pill">Carried forward</span>
             )}
