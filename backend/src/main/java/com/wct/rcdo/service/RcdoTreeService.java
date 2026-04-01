@@ -30,10 +30,16 @@ public class RcdoTreeService {
         this.outcomeRepository = outcomeRepository;
     }
 
-    public List<RcdoTreeResponse> getTree() {
-        List<RallyCry> rallyCries = rallyCryRepository.findByArchivedAtIsNullOrderBySortOrder();
-        List<DefiningObjective> definingObjectives = definingObjectiveRepository.findByArchivedAtIsNullOrderBySortOrder();
-        List<Outcome> outcomes = outcomeRepository.findByArchivedAtIsNullOrderBySortOrder();
+    public List<RcdoTreeResponse> getTree(boolean includeArchived) {
+        List<RallyCry> rallyCries = includeArchived
+                ? rallyCryRepository.findAllByOrderBySortOrder()
+                : rallyCryRepository.findByArchivedAtIsNullOrderBySortOrder();
+        List<DefiningObjective> definingObjectives = includeArchived
+                ? definingObjectiveRepository.findAllByOrderBySortOrder()
+                : definingObjectiveRepository.findByArchivedAtIsNullOrderBySortOrder();
+        List<Outcome> outcomes = includeArchived
+                ? outcomeRepository.findAllByOrderBySortOrder()
+                : outcomeRepository.findByArchivedAtIsNullOrderBySortOrder();
 
         // Group outcomes by defining objective ID
         Map<UUID, List<Outcome>> outcomesByDoId = outcomes.stream()
@@ -51,15 +57,20 @@ public class RcdoTreeService {
                                         List<RcdoTreeResponse.OutcomeNode> outcomeNodes =
                                                 outcomesByDoId.getOrDefault(doEntity.getId(), List.of()).stream()
                                                         .map(o -> new RcdoTreeResponse.OutcomeNode(
-                                                                o.getId(), o.getName(), o.getDescription()))
+                                                                o.getId(), o.getName(), o.getDescription(),
+                                                                o.getArchivedAt() != null))
                                                         .toList();
                                         return new RcdoTreeResponse.DefiningObjectiveNode(
                                                 doEntity.getId(), doEntity.getName(),
-                                                doEntity.getDescription(), outcomeNodes);
+                                                doEntity.getDescription(),
+                                                doEntity.getArchivedAt() != null,
+                                                outcomeNodes);
                                     })
                                     .toList();
                     return new RcdoTreeResponse(rc.getId(), rc.getName(),
-                            rc.getDescription(), doNodes);
+                            rc.getDescription(),
+                            rc.getArchivedAt() != null,
+                            doNodes);
                 })
                 .toList();
     }

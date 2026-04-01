@@ -19,6 +19,8 @@ public interface OutcomeRepository extends JpaRepository<Outcome, UUID> {
 
     List<Outcome> findByArchivedAtIsNullOrderBySortOrder();
 
+    List<Outcome> findAllByOrderBySortOrder();
+
     @Query("SELECT new com.wct.rcdo.dto.RcdoSearchResult(o.id, o.name, d.id, d.name, rc.id, rc.name) " +
            "FROM Outcome o JOIN DefiningObjective d ON o.definingObjectiveId = d.id " +
            "JOIN RallyCry rc ON d.rallyCryId = rc.id " +

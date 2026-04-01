@@ -15,4 +15,6 @@ public interface DefiningObjectiveRepository extends JpaRepository<DefiningObjec
     List<DefiningObjective> findByRallyCryIdOrderBySortOrder(UUID rallyCryId);
 
     List<DefiningObjective> findByArchivedAtIsNullOrderBySortOrder();
+
+    List<DefiningObjective> findAllByOrderBySortOrder();
 }

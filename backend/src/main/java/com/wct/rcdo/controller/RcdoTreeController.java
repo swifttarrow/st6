@@ -19,8 +19,9 @@ public class RcdoTreeController {
     }
 
     @GetMapping("/tree")
-    public List<RcdoTreeResponse> getTree() {
-        return service.getTree();
+    public List<RcdoTreeResponse> getTree(
+            @RequestParam(defaultValue = "false") boolean includeArchived) {
+        return service.getTree(includeArchived);
     }
 
     @GetMapping("/outcomes/search")
