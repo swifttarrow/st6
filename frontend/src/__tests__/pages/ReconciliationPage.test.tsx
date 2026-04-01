@@ -31,15 +31,15 @@ const mockPlanDraft = {
 const mockTree = [
   {
     id: 'rc-1',
-    title: 'Rally Cry 1',
-    archived: false,
+    name: 'Rally Cry 1',
+    description: 'RC desc',
     definingObjectives: [
       {
         id: 'do-1',
-        title: 'Objective 1',
-        archived: false,
+        name: 'Objective 1',
+        description: 'DO desc',
         outcomes: [
-          { id: 'out-1', title: 'Outcome 1', archived: false },
+          { id: 'out-1', name: 'Outcome 1', description: 'OC desc' },
         ],
       },
     ],
@@ -49,11 +49,11 @@ const mockTree = [
 const mockCommitmentsPending = [
   {
     id: 'c-1',
-    planId: 'plan-1',
     outcomeId: 'out-1',
-    title: 'Write tests',
-    sortOrder: 1,
-    actualStatus: 'PENDING' as const,
+    description: 'Write tests',
+    priority: 1,
+    notes: null,
+    actualStatus: null,
     carriedForward: false,
     outcomeArchived: false,
     createdAt: '2026-03-23T00:00:00Z',
@@ -61,11 +61,11 @@ const mockCommitmentsPending = [
   },
   {
     id: 'c-2',
-    planId: 'plan-1',
     outcomeId: 'out-1',
-    title: 'Fix bugs',
-    sortOrder: 2,
-    actualStatus: 'PENDING' as const,
+    description: 'Fix bugs',
+    priority: 2,
+    notes: null,
+    actualStatus: null,
     carriedForward: false,
     outcomeArchived: false,
     createdAt: '2026-03-23T00:00:00Z',
@@ -74,8 +74,8 @@ const mockCommitmentsPending = [
 ];
 
 const mockCommitmentsAnnotated = [
-  { ...mockCommitmentsPending[0], actualStatus: 'DONE' as const },
-  { ...mockCommitmentsPending[1], actualStatus: 'MISSED' as const },
+  { ...mockCommitmentsPending[0], actualStatus: 'COMPLETED' as const },
+  { ...mockCommitmentsPending[1], actualStatus: 'DROPPED' as const },
 ];
 
 const mockApi = {

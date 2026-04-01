@@ -42,8 +42,8 @@ describe('createPlansApi', () => {
 
   it('transitionPlan calls POST /api/plans/{id}/transition with body', async () => {
     const api = createPlansApi(client);
-    await api.transitionPlan('plan-1', 'ACTIVE');
-    expect(client.post).toHaveBeenCalledWith('/api/plans/plan-1/transition', { targetStatus: 'ACTIVE' });
+    await api.transitionPlan('plan-1', 'LOCKED');
+    expect(client.post).toHaveBeenCalledWith('/api/plans/plan-1/transition', { targetStatus: 'LOCKED' });
   });
 
   it('unlockPlan calls POST /api/plans/{id}/unlock', async () => {

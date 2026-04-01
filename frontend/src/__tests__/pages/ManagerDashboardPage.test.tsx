@@ -16,7 +16,7 @@ const mockTeamOverview = {
     {
       userId: 'alice',
       planId: 'plan-1',
-      planStatus: 'ACTIVE',
+      planStatus: 'LOCKED',
       commitmentCount: 7,
       topRallyCry: 'RC #1',
       completionRate: 80,

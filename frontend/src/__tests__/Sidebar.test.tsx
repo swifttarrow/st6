@@ -17,14 +17,15 @@ describe('Sidebar', () => {
     renderSidebar('IC');
     expect(screen.getByText('My Week')).toBeDefined();
     expect(screen.getByText('Reconciliation')).toBeDefined();
-    expect(screen.getByText('History')).toBeDefined();
     expect(screen.queryByText('Team Dashboard')).toBeNull();
     expect(screen.queryByText('Leadership View')).toBeNull();
+    expect(screen.queryByText('RCDO Management')).toBeNull();
   });
 
-  it('shows Team Dashboard for MANAGER role', () => {
+  it('shows Team Dashboard and RCDO Management for MANAGER role', () => {
     renderSidebar('MANAGER');
     expect(screen.getByText('Team Dashboard')).toBeDefined();
+    expect(screen.getByText('RCDO Management')).toBeDefined();
     expect(screen.queryByText('Leadership View')).toBeNull();
   });
 
@@ -32,6 +33,7 @@ describe('Sidebar', () => {
     renderSidebar('LEADERSHIP');
     expect(screen.getByText('Team Dashboard')).toBeDefined();
     expect(screen.getByText('Leadership View')).toBeDefined();
+    expect(screen.getByText('RCDO Management')).toBeDefined();
   });
 
   it('renders WCT logo text', () => {

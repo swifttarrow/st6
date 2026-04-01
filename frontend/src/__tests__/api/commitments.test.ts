@@ -27,14 +27,14 @@ describe('createCommitmentsApi', () => {
 
   it('createCommitment calls POST /api/plans/{planId}/commitments', async () => {
     const api = createCommitmentsApi(client);
-    await api.createCommitment('plan-1', { outcomeId: 'o1', title: 'Do thing' });
-    expect(client.post).toHaveBeenCalledWith('/api/plans/plan-1/commitments', { outcomeId: 'o1', title: 'Do thing' });
+    await api.createCommitment('plan-1', { outcomeId: 'o1', description: 'Do thing' });
+    expect(client.post).toHaveBeenCalledWith('/api/plans/plan-1/commitments', { outcomeId: 'o1', description: 'Do thing' });
   });
 
   it('updateCommitment calls PUT /api/plans/{planId}/commitments/{id}', async () => {
     const api = createCommitmentsApi(client);
-    await api.updateCommitment('plan-1', 'c1', { title: 'Updated' });
-    expect(client.put).toHaveBeenCalledWith('/api/plans/plan-1/commitments/c1', { title: 'Updated' });
+    await api.updateCommitment('plan-1', 'c1', { description: 'Updated' });
+    expect(client.put).toHaveBeenCalledWith('/api/plans/plan-1/commitments/c1', { description: 'Updated' });
   });
 
   it('deleteCommitment calls DELETE /api/plans/{planId}/commitments/{id}', async () => {
@@ -53,17 +53,17 @@ describe('createCommitmentsApi', () => {
 
   it('reconcileCommitment calls PATCH /api/plans/{planId}/commitments/{id}/reconcile', async () => {
     const api = createCommitmentsApi(client);
-    await api.reconcileCommitment('plan-1', 'c1', { commitmentId: 'c1', actualStatus: 'DONE' });
+    await api.reconcileCommitment('plan-1', 'c1', { commitmentId: 'c1', actualStatus: 'COMPLETED' });
     expect(client.patch).toHaveBeenCalledWith('/api/plans/plan-1/commitments/c1/reconcile', {
       commitmentId: 'c1',
-      actualStatus: 'DONE',
+      actualStatus: 'COMPLETED',
     });
   });
 
   it('bulkReconcile calls PATCH /api/plans/{planId}/commitments/reconcile', async () => {
     const items = [
-      { commitmentId: 'c1', actualStatus: 'DONE' as const },
-      { commitmentId: 'c2', actualStatus: 'MISSED' as const },
+      { commitmentId: 'c1', actualStatus: 'COMPLETED' as const },
+      { commitmentId: 'c2', actualStatus: 'DROPPED' as const },
     ];
     const api = createCommitmentsApi(client);
     await api.bulkReconcile('plan-1', items);
