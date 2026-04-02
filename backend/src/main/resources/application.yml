@@ -35,3 +35,29 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: railway
+  datasource:
+    url: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}?sslmode=require
+    driver-class-name: org.postgresql.Driver
+    username: ${PGUSER}
+    password: ${PGPASSWORD}
+
+server:
+  port: ${PORT:${SERVER_PORT:8080}}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  web:
+    resources:
+      add-mappings: false
+
+server:
+  port: ${PORT:${SERVER_PORT:8080}}
