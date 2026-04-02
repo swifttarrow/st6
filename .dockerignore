@@ -1,0 +1,8 @@
+.git
+**/.gradle
+**/build
+**/node_modules
+**/.playwright-mcp
+frontend/dist
+*.md
+!README.md
