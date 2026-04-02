@@ -3,6 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Commitment, PlanStatus, RcdoTreeRallyCry } from '../../api/types';
 import { ArchivedOutcomeWarning } from '../ArchivedOutcomeWarning/ArchivedOutcomeWarning';
+import { buildOutcomePath, getOutcomeName } from '../../utils/rcdoTree';
 import styles from './CommitmentRow.module.css';
 
 interface CommitmentRowProps {
@@ -15,32 +16,6 @@ interface CommitmentRowProps {
   onRelink?: (commitmentId: string) => void;
   /** When true, hide reorder, edit, delete, and relink affordances. */
   readOnly?: boolean;
-}
-
-function getOutcomePath(tree: RcdoTreeRallyCry[], outcomeId: string): string {
-  for (const rc of tree) {
-    for (const d of rc.definingObjectives) {
-      for (const o of d.outcomes) {
-        if (o.id === outcomeId) {
-          return `${rc.name} > ${d.name} > ${o.name}`;
-        }
-      }
-    }
-  }
-  return '';
-}
-
-function getOutcomeName(tree: RcdoTreeRallyCry[], outcomeId: string): string {
-  for (const rc of tree) {
-    for (const d of rc.definingObjectives) {
-      for (const o of d.outcomes) {
-        if (o.id === outcomeId) {
-          return o.name;
-        }
-      }
-    }
-  }
-  return 'Unknown outcome';
 }
 
 export const CommitmentRow: React.FC<CommitmentRowProps> = ({
@@ -67,7 +42,7 @@ export const CommitmentRow: React.FC<CommitmentRowProps> = ({
     transition,
   };
 
-  const outcomePath = getOutcomePath(tree, commitment.outcomeId);
+  const outcomePath = buildOutcomePath(tree, commitment.outcomeId);
   const outcomePathClassName = commitment.outcomeArchived
     ? `${styles.outcomePath} ${styles.outcomePathArchived}`
     : styles.outcomePath;

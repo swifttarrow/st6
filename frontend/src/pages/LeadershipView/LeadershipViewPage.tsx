@@ -8,37 +8,8 @@ import { StatCard } from '../../components/StatCard/StatCard';
 import { HierarchyCoverageTable } from '../../components/HierarchyCoverageTable/HierarchyCoverageTable';
 import { ErrorToast } from '../../components/ErrorToast/ErrorToast';
 import { OrgOverviewResponse } from '../../api/types';
+import { getTodayDate, formatWeekRange } from '../../utils/weekDates';
 import styles from './LeadershipViewPage.module.css';
-
-function getTodayDate(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function getMonday(dateStr: string): string {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const d = new Date(year, month - 1, day);
-  const dayOfWeek = d.getDay();
-  const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-  const monday = new Date(year, month - 1, day + diff);
-  const y = monday.getFullYear();
-  const mm = String(monday.getMonth() + 1).padStart(2, '0');
-  const dd = String(monday.getDate()).padStart(2, '0');
-  return `${y}-${mm}-${dd}`;
-}
-
-function formatWeekRange(dateStr: string): string {
-  const monday = getMonday(dateStr);
-  const [year, month, day] = monday.split('-').map(Number);
-  const mon = new Date(year, month - 1, day);
-  const fri = new Date(year, month - 1, day + 4);
-  const monLabel = mon.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const friLabel = fri.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return `Week of ${monLabel} \u2013 ${friLabel}, ${year}`;
-}
 
 export const LeadershipViewPage: React.FC = () => {
   const api = useApi();

@@ -6,18 +6,8 @@ import { PageHeader } from '../../components/PageHeader/PageHeader';
 import { WeekNavigator } from '../../components/WeekNavigator/WeekNavigator';
 import { StatCard } from '../../components/StatCard/StatCard';
 import type { ExecutiveOverviewResponse } from '../../api/types';
-import { getMonday, getTodayDate } from '../../utils/weekDates';
+import { getMonday, getTodayDate, formatWeekRange } from '../../utils/weekDates';
 import styles from './ExecutiveOverviewPage.module.css';
-
-function formatWeekRange(dateStr: string): string {
-  const monday = getMonday(dateStr);
-  const [year, month, day] = monday.split('-').map(Number);
-  const mon = new Date(year, month - 1, day);
-  const fri = new Date(year, month - 1, day + 4);
-  const monLabel = mon.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const friLabel = fri.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return `Week of ${monLabel} \u2013 ${friLabel}, ${year}`;
-}
 
 function formatShortWeek(isoMonday: string): string {
   const [year, month, day] = isoMonday.split('-').map(Number);

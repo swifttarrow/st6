@@ -135,17 +135,17 @@ export const WeeklyPlanningPage: React.FC = () => {
       const loadTeamPicker =
         userContext.role === 'MANAGER' || userContext.role === 'LEADERSHIP';
 
-      const [fetchedTree, overview] = await Promise.all([
+      const [fetchedTree, overview, fetchedCommitments] = await Promise.all([
         api.rcdo.getTree(),
         loadTeamPicker
           ? api.dashboard.getTeamOverview(fetchedPlan.weekStartDate, memberIdsFromUrl).catch(() => null)
           : Promise.resolve(null),
+        api.commitments.listCommitments(fetchedPlan.id),
       ]);
 
       setPlan(fetchedPlan);
       setTree(fetchedTree);
       setTeamOverview(overview);
-      const fetchedCommitments = await api.commitments.listCommitments(fetchedPlan.id);
       setCommitments(fetchedCommitments);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');

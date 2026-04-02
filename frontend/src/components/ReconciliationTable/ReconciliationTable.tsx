@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Commitment, ActualStatus, PlanStatus, RcdoTreeRallyCry } from '../../api/types';
 import { StatusSelect } from '../StatusSelect/StatusSelect';
+import { buildOutcomePath } from '../../utils/rcdoTree';
 import styles from './ReconciliationTable.module.css';
 
 interface ReconciliationTableProps {
@@ -10,19 +11,6 @@ interface ReconciliationTableProps {
   onReconcile: (commitmentId: string, actualStatus: ActualStatus, notes: string) => void;
   notes: Record<string, string>;
   onNotesChange: (commitmentId: string, notes: string) => void;
-}
-
-function buildOutcomePath(outcomeId: string, tree: RcdoTreeRallyCry[]): string {
-  for (const rc of tree) {
-    for (const dObj of rc.definingObjectives) {
-      for (const outcome of dObj.outcomes) {
-        if (outcome.id === outcomeId) {
-          return `${rc.name} > ${dObj.name} > ${outcome.name}`;
-        }
-      }
-    }
-  }
-  return '';
 }
 
 export const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
@@ -67,7 +55,7 @@ export const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
       </thead>
       <tbody>
         {commitments.map((commitment, index) => {
-          const outcomePath = buildOutcomePath(commitment.outcomeId, tree);
+          const outcomePath = buildOutcomePath(tree, commitment.outcomeId);
           const noteValue = localNotes[commitment.id] !== undefined
             ? localNotes[commitment.id]
             : (notes[commitment.id] || '');
