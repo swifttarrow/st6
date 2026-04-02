@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
 # Seed script for Weekly Commitment Tracker
-# Prerequisites: backend running on localhost:8080, jq installed
+# Prerequisites: jq installed; backend reachable at BASE (default localhost:8080).
 #
 set -euo pipefail
 
-BASE="http://localhost:8080"
+BASE="${BASE:-http://localhost:8080}"
 MGR_HEADERS=(-H "Content-Type: application/json" -H "X-User-Id: mgr-1" -H "X-User-Role: MANAGER" -H "X-Team-Id: team-alpha" -H "X-Manager-Id: vp-1")
 IC1_HEADERS=(-H "Content-Type: application/json" -H "X-User-Id: ic-alice" -H "X-User-Role: IC" -H "X-Team-Id: team-alpha" -H "X-Manager-Id: mgr-1")
 IC2_HEADERS=(-H "Content-Type: application/json" -H "X-User-Id: ic-bob" -H "X-User-Role: IC" -H "X-Team-Id: team-alpha" -H "X-Manager-Id: mgr-1")
