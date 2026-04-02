@@ -59,11 +59,7 @@ export const DevLoginPage: React.FC<DevLoginPageProps> = ({ onLoggedIn }) => {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Sign in (dev)</h1>
-        <p className={styles.subtitle}>
-          Local demo only. Chooses the identity sent as{' '}
-          <code>X-User-Id</code> / <code>X-User-Role</code> to the API. No password.
-        </p>
+        <h1 className={styles.title}>Sign in</h1>
 
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.field}>
@@ -139,12 +135,6 @@ export const DevLoginPage: React.FC<DevLoginPageProps> = ({ onLoggedIn }) => {
             Continue
           </button>
         </form>
-
-        <p className={styles.hint}>
-          IC users <strong>alice</strong>–<strong>frank</strong> match seeded plans in{' '}
-          <code>backend/scripts/seed.sql</code>. Use <strong>team-alpha</strong> for them;{' '}
-          <strong>eve</strong> uses <strong>team-beta</strong>.
-        </p>
       </div>
     </div>
   );
