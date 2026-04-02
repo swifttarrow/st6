@@ -69,7 +69,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
   const location = useLocation();
   const { userId } = useUserContext();
   const reconciliationNav = useReconciliationNavAvailable();
-  const showDevSignOut = import.meta.env.DEV;
   const roleLevel = ROLE_HIERARCHY[userRole];
 
   const visibleItems = NAV_ITEMS.filter((item) => {
@@ -124,24 +123,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
       <div className={styles.spacer} />
 
       <div className={styles.userInfo}>
-        {showDevSignOut && (
-          <span className={styles.userId} title="Dev session user">
-            {userId}
-          </span>
-        )}
+        <span className={styles.userId} title="Signed-in user">
+          {userId}
+        </span>
         <span className={styles.userRole}>{userRole}</span>
-        {showDevSignOut && (
-          <button
-            type="button"
-            className={styles.devSignOut}
-            onClick={() => {
-              clearDevSession();
-              window.location.reload();
-            }}
-          >
-            Sign out
-          </button>
-        )}
+        <button
+          type="button"
+          className={styles.logoutButton}
+          onClick={() => {
+            clearDevSession();
+            window.location.reload();
+          }}
+        >
+          Log out
+        </button>
       </div>
     </aside>
   );

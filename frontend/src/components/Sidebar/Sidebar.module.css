@@ -107,7 +107,7 @@
   letter-spacing: var(--tracking-wide);
 }
 
-.devSignOut {
+.logoutButton {
   align-self: flex-start;
   margin-top: var(--space-1);
   font-family: var(--font-body);
@@ -121,7 +121,7 @@
   cursor: pointer;
 }
 
-.devSignOut:hover {
+.logoutButton:hover {
   color: var(--color-red-primary);
   border-color: var(--color-red-light);
 }
