@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import type { HostContext } from '../../types/host-context';
 import { saveDevSession } from '../../dev/devSession';
+import { APP_NAME, APP_SHORT } from '../../constants/app';
 import styles from './DevLoginPage.module.css';
 
 const SEED_IC_USERS = ['alice', 'bob', 'carol', 'diana', 'frank', 'eve'] as const;
@@ -59,7 +60,17 @@ export const DevLoginPage: React.FC<DevLoginPageProps> = ({ onLoggedIn }) => {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Sign in</h1>
+        <header className={styles.brand}>
+          <div className={styles.brandMarkWrap} aria-hidden="true">
+            <div className={styles.brandMark} />
+          </div>
+          <div className={styles.brandText}>
+            <h1 className={styles.appName}>{APP_NAME}</h1>
+            <p className={styles.appShort}>{APP_SHORT}</p>
+          </div>
+        </header>
+
+        <h2 className={styles.title}>Sign in</h2>
 
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.field}>

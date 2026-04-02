@@ -1,4 +1,7 @@
 import React, { useCallback, useState } from 'react';
+import './styles/tokens.css';
+import './styles/reset.css';
+import './styles/typography.css';
 import { AppProviders } from './AppProviders';
 import { Shell } from './components/Shell/Shell';
 import { AppRouter } from './router';
