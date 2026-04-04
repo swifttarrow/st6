@@ -3,6 +3,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ReconciliationPage } from '../../pages/Reconciliation/ReconciliationPage';
+import { ApiError } from '../../api/types';
 
 const mockNavigate = vi.fn();
 
@@ -268,6 +269,117 @@ describe('ReconciliationPage', () => {
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/commitments?week=2026-03-23', { replace: true });
+    });
+  });
+
+  it('submits reconciliation and transitions the plan to RECONCILED', async () => {
+    mockApi.commitments.listCommitments.mockResolvedValue(mockCommitmentsAnnotated);
+    mockApi.plans.transitionPlan.mockResolvedValue({
+      ...mockPlanReconciling,
+      status: 'RECONCILED' as const,
+    });
+
+    render(
+      <MemoryRouter {...routerOpts}>
+        <ReconciliationPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      const btn = screen.getByTestId('submit-reconciliation') as HTMLButtonElement;
+      expect(btn.disabled).toBe(false);
+    });
+
+    fireEvent.click(screen.getByTestId('submit-reconciliation'));
+
+    await waitFor(() => {
+      expect(mockApi.plans.transitionPlan).toHaveBeenCalledWith('plan-1', 'RECONCILED');
+    });
+  });
+
+  it('dismisses error toast when reconcileCommitment fails', async () => {
+    mockApi.commitments.reconcileCommitment.mockRejectedValue(new Error('Server conflict'));
+
+    render(
+      <MemoryRouter {...routerOpts}>
+        <ReconciliationPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('status-select').length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getAllByTestId('status-select')[0]);
+    fireEvent.click(screen.getByRole('option', { name: 'Completed' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Server conflict')).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByLabelText('Dismiss error'));
+    expect(screen.queryByTestId('error-toast')).toBeNull();
+  });
+
+  it('shows conflict message when submit returns HTTP 409', async () => {
+    mockApi.commitments.listCommitments.mockResolvedValue(mockCommitmentsAnnotated);
+    mockApi.plans.transitionPlan.mockRejectedValue(
+      new ApiError(409, 'Conflict', 'Plan already reconciled'),
+    );
+
+    render(
+      <MemoryRouter {...routerOpts}>
+        <ReconciliationPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('submit-reconciliation')).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByTestId('submit-reconciliation'));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('This plan has already been reconciled or is in a conflicting state.'),
+      ).toBeDefined();
+    });
+  });
+
+  it('reconciles again with updated notes when the notes field is blurred after status is set', async () => {
+    mockApi.commitments.reconcileCommitment.mockImplementation(async (_planId, id, body) => ({
+      ...mockCommitmentsPending.find((c) => c.id === id)!,
+      actualStatus: body.actualStatus,
+      reconciliationNotes: body.reconciliationNotes ?? null,
+    }));
+
+    render(
+      <MemoryRouter {...routerOpts}>
+        <ReconciliationPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('notes-c-1')).toBeDefined();
+    });
+
+    fireEvent.click(screen.getAllByTestId('status-select')[0]);
+    fireEvent.click(screen.getByRole('option', { name: 'Completed' }));
+
+    await waitFor(() => {
+      expect(mockApi.commitments.reconcileCommitment).toHaveBeenCalled();
+    });
+
+    mockApi.commitments.reconcileCommitment.mockClear();
+
+    fireEvent.change(screen.getByTestId('notes-c-1'), { target: { value: 'Shipped Tuesday' } });
+    fireEvent.blur(screen.getByTestId('notes-c-1'));
+
+    await waitFor(() => {
+      expect(mockApi.commitments.reconcileCommitment).toHaveBeenCalledWith('plan-1', 'c-1', {
+        actualStatus: 'COMPLETED',
+        reconciliationNotes: 'Shipped Tuesday',
+      });
     });
   });
 });

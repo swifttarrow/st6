@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { WeeklyPlanningPage } from '../../pages/WeeklyPlanning/WeeklyPlanningPage';
 
@@ -231,5 +231,357 @@ describe('WeeklyPlanningPage', () => {
     });
 
     expect(screen.getByTestId('prior-week-reconcile-banner').textContent).toContain("alice's prior week");
+  });
+
+  it('shows empty commitments state when the plan has no items', async () => {
+    mockApi.commitments.listCommitments.mockResolvedValue([]);
+
+    render(
+      <MemoryRouter>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('No commitments yet')).toBeDefined();
+    });
+
+    expect(
+      screen.getByText('Use Add Commitment in the toolbar to link an outcome to this week.'),
+    ).toBeDefined();
+  });
+
+  it('opens the commitment form when Add Commitment is clicked', async () => {
+    render(
+      <MemoryRouter>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Add Commitment' })).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add Commitment' }));
+
+    expect(screen.getByRole('heading', { name: 'Add Commitment' })).toBeDefined();
+  });
+
+  it('shows strategy empty state when the tree is empty', async () => {
+    mockApi.rcdo.getTree.mockResolvedValue([]);
+
+    render(
+      <MemoryRouter>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('No strategies found')).toBeDefined();
+    });
+  });
+
+  it('renders plan history rows when listMyPlans returns past weeks', async () => {
+    mockApi.plans.listMyPlans.mockImplementation((from: string, to: string) => {
+      if (from === to) {
+        return Promise.resolve([]);
+      }
+      return Promise.resolve([
+        {
+          id: 'hist-1',
+          weekStartDate: '2026-03-16',
+          status: 'RECONCILED' as const,
+          commitmentCount: 2,
+        },
+        {
+          id: 'hist-2',
+          weekStartDate: '2026-03-23',
+          status: 'LOCKED' as const,
+          commitmentCount: 1,
+        },
+      ]);
+    });
+
+    render(
+      <MemoryRouter>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Your plan history')).toBeDefined();
+    });
+
+    expect(screen.getAllByText('Open').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('Reconcile').length).toBeGreaterThan(0);
+  });
+
+  it('shows load error when getPlan fails', async () => {
+    mockApi.plans.getPlan.mockRejectedValue(new Error('Plan service down'));
+
+    render(
+      <MemoryRouter>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Plan service down')).toBeDefined();
+    });
+  });
+
+  it('shows carry-forward banner when draft plan has carried-forward commitments', async () => {
+    mockApi.commitments.listCommitments.mockResolvedValue([
+      {
+        ...mockCommitments[0],
+        carriedForward: true,
+      },
+    ]);
+
+    render(
+      <MemoryRouter>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('carry-forward-banner')).toBeDefined();
+    });
+  });
+
+  it('locks the plan when Lock Plan is clicked', async () => {
+    mockApi.plans.transitionPlan.mockResolvedValue({
+      ...mockPlan,
+      status: 'LOCKED' as const,
+    });
+
+    render(
+      <MemoryRouter>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Lock Plan' })).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lock Plan' }));
+
+    await waitFor(() => {
+      expect(mockApi.plans.transitionPlan).toHaveBeenCalledWith('plan-1', 'LOCKED');
+    });
+  });
+
+  it('begins reconciliation when the plan is locked', async () => {
+    mockApi.plans.getPlan.mockResolvedValue({ ...mockPlan, status: 'LOCKED' as const });
+    mockApi.plans.transitionPlan.mockResolvedValue({
+      ...mockPlan,
+      status: 'RECONCILING' as const,
+    });
+
+    render(
+      <MemoryRouter>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Begin Reconciliation' })).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Begin Reconciliation' }));
+
+    await waitFor(() => {
+      expect(mockApi.plans.transitionPlan).toHaveBeenCalledWith('plan-1', 'RECONCILING');
+    });
+  });
+
+  it('updates a commitment through the edit form', async () => {
+    mockApi.commitments.updateCommitment.mockResolvedValue({
+      ...mockCommitments[0],
+      description: 'Updated desc',
+    });
+
+    render(
+      <MemoryRouter>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Edit commitment' })).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit commitment' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Edit Commitment' })).toBeDefined();
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('What will you accomplish this week?'), {
+      target: { value: 'Updated desc' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    await waitFor(() => {
+      expect(mockApi.commitments.updateCommitment).toHaveBeenCalledWith('plan-1', 'c-1', {
+        description: 'Updated desc',
+        outcomeId: 'out-1',
+      });
+    });
+  });
+
+  it('deletes a commitment when delete is confirmed', async () => {
+    mockApi.commitments.deleteCommitment.mockResolvedValue(undefined);
+
+    render(
+      <MemoryRouter>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Delete commitment' })).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete commitment' }));
+
+    await waitFor(() => {
+      expect(mockApi.commitments.deleteCommitment).toHaveBeenCalledWith('plan-1', 'c-1');
+    });
+  });
+
+  it('loads the previous week when WeekNavigator prev is clicked', async () => {
+    render(
+      <MemoryRouter initialEntries={['/commitments?week=2026-03-30']}>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(mockApi.plans.getPlan).toHaveBeenCalledWith('2026-03-30');
+    });
+
+    mockApi.plans.getPlan.mockClear();
+    fireEvent.click(screen.getByTestId('week-nav-prev'));
+
+    await waitFor(() => {
+      expect(mockApi.plans.getPlan).toHaveBeenCalledWith('2026-03-23');
+    });
+  });
+
+  it('shows a dismissible toast when lock fails', async () => {
+    mockApi.plans.transitionPlan.mockRejectedValue(new Error('Lock service unavailable'));
+
+    render(
+      <MemoryRouter>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Lock Plan' })).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lock Plan' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Lock service unavailable')).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByLabelText('Dismiss error'));
+    expect(screen.queryByTestId('error-toast')).toBeNull();
+  });
+
+  it('blocks lock and shows a toast when commitments reference archived outcomes', async () => {
+    mockApi.commitments.listCommitments.mockResolvedValue([
+      { ...mockCommitments[0], outcomeArchived: true },
+    ]);
+
+    render(
+      <MemoryRouter>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Lock Plan' })).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lock Plan' }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Cannot lock: .* commitment\(s\) reference archived outcomes/),
+      ).toBeDefined();
+    });
+
+    expect(mockApi.plans.transitionPlan).not.toHaveBeenCalled();
+  });
+
+  it('shows a toast when begin reconciliation fails', async () => {
+    mockApi.plans.getPlan.mockResolvedValue({ ...mockPlan, status: 'LOCKED' as const });
+    mockApi.plans.transitionPlan.mockRejectedValue(new Error('Cannot enter reconciliation'));
+
+    render(
+      <MemoryRouter>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Begin Reconciliation' })).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Begin Reconciliation' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Cannot enter reconciliation')).toBeDefined();
+    });
+  });
+
+  it('closes the add-commitment form when Cancel is clicked', async () => {
+    render(
+      <MemoryRouter>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Add Commitment' })).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add Commitment' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Add Commitment' })).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('heading', { name: 'Add Commitment' })).toBeNull();
+  });
+
+  it('loads a direct report plan when manager selects them in the person picker', async () => {
+    mockRole = 'MANAGER';
+
+    render(
+      <MemoryRouter initialEntries={['/commitments?week=2026-03-30&memberIds=alice']}>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('commitments-person-picker')).toBeDefined();
+    });
+
+    mockApi.plans.getPlanById.mockClear();
+    fireEvent.change(screen.getByLabelText('Person'), {
+      target: { value: 'plan-readonly' },
+    });
+
+    await waitFor(() => {
+      expect(mockApi.plans.getPlanById).toHaveBeenCalledWith('plan-readonly');
+    });
   });
 });

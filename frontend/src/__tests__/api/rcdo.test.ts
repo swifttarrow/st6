@@ -39,6 +39,14 @@ describe('createRcdoApi', () => {
     expect(client.get).toHaveBeenCalledWith('/api/rcdo/tree');
   });
 
+  it('searchOutcomes encodes query in the path', async () => {
+    const api = createRcdoApi(client);
+    await api.searchOutcomes('foo bar');
+    expect(client.get).toHaveBeenCalledWith(
+      `/api/rcdo/outcomes/search?q=${encodeURIComponent('foo bar')}`,
+    );
+  });
+
   // ── Rally Cry mutations ──
 
   it('createRallyCry sends POST with body', async () => {

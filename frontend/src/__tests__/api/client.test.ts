@@ -92,6 +92,28 @@ describe('createApiClient', () => {
     expect(options.body).toBe(JSON.stringify({ title: 'hello' }));
   });
 
+  it('sends PUT with JSON body', async () => {
+    mockFetchResponse({ ok: true });
+    const client = createApiClient(BASE_URL, mockContext);
+    await client.put('/api/items/1', { title: 'updated' });
+
+    const fetchFn = globalThis.fetch as ReturnType<typeof vi.fn>;
+    const [, options] = fetchFn.mock.calls[0] as [string, RequestInit];
+    expect(options.method).toBe('PUT');
+    expect(options.body).toBe(JSON.stringify({ title: 'updated' }));
+  });
+
+  it('sends PATCH with JSON body', async () => {
+    mockFetchResponse({ ok: true });
+    const client = createApiClient(BASE_URL, mockContext);
+    await client.patch('/api/items/1', { status: 'archived' });
+
+    const fetchFn = globalThis.fetch as ReturnType<typeof vi.fn>;
+    const [, options] = fetchFn.mock.calls[0] as [string, RequestInit];
+    expect(options.method).toBe('PATCH');
+    expect(options.body).toBe(JSON.stringify({ status: 'archived' }));
+  });
+
   it('throws ApiError on non-2xx with JSON body', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: false,

@@ -4,6 +4,16 @@ import { render, screen, waitFor, fireEvent, within } from '@testing-library/rea
 import { MemoryRouter } from 'react-router-dom';
 import { ManagerDashboardPage } from '../../pages/ManagerDashboard/ManagerDashboardPage';
 
+const mockNavigate = vi.fn();
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 const mockTeamOverview = {
   weekStartDate: '2026-03-23',
   stats: {
@@ -119,6 +129,7 @@ vi.mock('../../context/UserContext', () => ({
 describe('ManagerDashboardPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockNavigate.mockClear();
     mockRole = 'MANAGER';
     mockApi.dashboard.getTeamOverview.mockResolvedValue(mockTeamOverview);
   });
@@ -225,6 +236,48 @@ describe('ManagerDashboardPage', () => {
 
     // Should also re-fetch data
     expect(mockApi.dashboard.getTeamOverview.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('shows dismissible error toast when unlock fails', async () => {
+    mockApi.plans.unlockPlan.mockRejectedValue(new Error('Cannot unlock'));
+
+    render(
+      <MemoryRouter>
+        <ManagerDashboardPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('unlock-alice')).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByTestId('unlock-alice'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('error-toast')).toBeDefined();
+    });
+
+    expect(screen.getByText('Cannot unlock')).toBeDefined();
+    fireEvent.click(screen.getByLabelText('Dismiss error'));
+    expect(screen.queryByTestId('error-toast')).toBeNull();
+  });
+
+  it('navigates to commitments when a member row is clicked', async () => {
+    render(
+      <MemoryRouter>
+        <ManagerDashboardPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('member-row-alice')).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByTestId('member-row-alice'));
+
+    expect(mockNavigate).toHaveBeenCalledWith(
+      expect.stringMatching(/^\/commitments\?.*planId=plan-1/),
+    );
   });
 
   it('renders week navigator', async () => {

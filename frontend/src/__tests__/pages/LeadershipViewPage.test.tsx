@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { LeadershipViewPage } from '../../pages/LeadershipView/LeadershipViewPage';
 
@@ -220,6 +220,25 @@ describe('LeadershipViewPage', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('week-navigator')).toBeDefined();
+    });
+  });
+
+  it('reloads org overview when the week navigator advances', async () => {
+    render(
+      <MemoryRouter>
+        <LeadershipViewPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('leadership-view')).toBeDefined();
+    });
+
+    const callsBefore = mockApi.dashboard.getOrgOverview.mock.calls.length;
+    fireEvent.click(screen.getByTestId('week-nav-prev'));
+
+    await waitFor(() => {
+      expect(mockApi.dashboard.getOrgOverview.mock.calls.length).toBeGreaterThan(callsBefore);
     });
   });
 

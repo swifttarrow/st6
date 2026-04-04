@@ -323,4 +323,137 @@ describe('StrategyManagementPage', () => {
       expect(screen.getByText('Server error')).toBeDefined();
     });
   });
+
+  it('selects a rally cry and saves changes from the detail panel', async () => {
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getAllByText('Revenue Growth').length).toBeGreaterThan(0);
+    });
+    fireEvent.click(screen.getAllByText('Revenue Growth')[0]);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('rc-detail-save')).toBeDefined();
+    });
+
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'RG Updated' } });
+    fireEvent.click(screen.getByTestId('rc-detail-save'));
+
+    await waitFor(() => {
+      expect(mockApi.rcdo.updateRallyCry).toHaveBeenCalledWith('rc-1', {
+        name: 'RG Updated',
+        description: 'Top-line revenue',
+      });
+    });
+  });
+
+  it('cancel inline edit closes the editor', async () => {
+    renderPage();
+    await waitFor(() => screen.getAllByTestId('edit-node-btn'));
+    fireEvent.click(screen.getAllByTestId('edit-node-btn')[0]);
+    expect(screen.getByTestId('inline-edit-name')).toBeDefined();
+
+    fireEvent.click(screen.getByText('Cancel'));
+    expect(screen.queryByTestId('inline-edit-name')).toBeNull();
+  });
+
+  it('archives a defining objective when confirmed', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderPage();
+    await waitFor(() => screen.getAllByTestId('archive-node-btn'));
+
+    const archiveBtns = screen.getAllByTestId('archive-node-btn');
+    fireEvent.click(archiveBtns[1]);
+
+    await waitFor(() => {
+      expect(mockApi.rcdo.archiveDefiningObjective).toHaveBeenCalledWith('do-1');
+    });
+    confirmSpy.mockRestore();
+  });
+
+  it('archives an outcome when confirmed', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderPage();
+    await waitFor(() => screen.getAllByTestId('archive-node-btn'));
+
+    const archiveBtns = screen.getAllByTestId('archive-node-btn');
+    fireEvent.click(archiveBtns[2]);
+
+    await waitFor(() => {
+      expect(mockApi.rcdo.archiveOutcome).toHaveBeenCalledWith('oc-1');
+    });
+    confirmSpy.mockRestore();
+  });
+
+  it('archives the selected rally cry from the detail panel when confirmed', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getAllByText('Revenue Growth').length).toBeGreaterThan(0);
+    });
+    fireEvent.click(screen.getAllByText('Revenue Growth')[0]);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('rc-detail-archive')).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByTestId('rc-detail-archive'));
+
+    await waitFor(() => {
+      expect(mockApi.rcdo.archiveRallyCry).toHaveBeenCalledWith('rc-1');
+    });
+    confirmSpy.mockRestore();
+  });
+
+  it('dismisses error toast when detail save fails', async () => {
+    mockApi.rcdo.updateRallyCry.mockRejectedValueOnce(new Error('save failed'));
+
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getAllByText('Revenue Growth').length).toBeGreaterThan(0);
+    });
+    fireEvent.click(screen.getAllByText('Revenue Growth')[0]);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('rc-detail-save')).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByTestId('rc-detail-save'));
+
+    await waitFor(() => {
+      expect(screen.getByText('save failed')).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByLabelText('Dismiss error'));
+    expect(screen.queryByTestId('error-toast')).toBeNull();
+  });
+
+  it('unarchives a rally cry after enabling show archived', async () => {
+    const archivedRc = {
+      id: 'rc-old',
+      name: 'Archived RC',
+      description: '',
+      archived: true,
+      definingObjectives: [] as { id: string; name: string; description: string; archived: boolean; outcomes: { id: string; name: string; description: string; archived: boolean }[] }[],
+    };
+
+    mockApi.rcdo.getTree.mockImplementation((inc?: boolean) =>
+      Promise.resolve(inc ? [...mockTree, archivedRc] : mockTree),
+    );
+
+    renderPage();
+    await waitFor(() => screen.getByTestId('show-archived-toggle'));
+    const checkbox = screen.getByTestId('show-archived-toggle').querySelector('input')!;
+    fireEvent.click(checkbox);
+
+    await waitFor(() => {
+      expect(screen.getByText('Archived RC')).toBeDefined();
+    });
+
+    const unarchiveBtns = screen.getAllByTestId('unarchive-node-btn');
+    fireEvent.click(unarchiveBtns[unarchiveBtns.length - 1]);
+
+    await waitFor(() => {
+      expect(mockApi.rcdo.unarchiveRallyCry).toHaveBeenCalledWith('rc-old');
+    });
+  });
 });
