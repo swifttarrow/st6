@@ -1,6 +1,7 @@
 import React from 'react';
 import { Badge, BadgeVariant } from '../Badge/Badge';
 import { TeamMemberSummary } from '../../api/types';
+import { formatWeekSpan } from '../../utils/weekDates';
 import styles from './TeamMembersTable.module.css';
 
 interface TeamMembersTableProps {
@@ -43,6 +44,22 @@ function getStatusBadge(status: string | null): { label: string; variant: BadgeV
   }
 }
 
+function formatPlanStatusLabel(status: string | null): string {
+  if (!status) return 'Unknown';
+  switch (status) {
+    case 'LOCKED':
+      return 'Locked';
+    case 'DRAFT':
+      return 'Draft';
+    case 'RECONCILING':
+      return 'Reconciling';
+    case 'RECONCILED':
+      return 'Reconciled';
+    default:
+      return status;
+  }
+}
+
 export const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
   members,
   onViewPlan,
@@ -68,11 +85,16 @@ export const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
             const badge = getStatusBadge(member.planStatus);
             const avatarColor = getAvatarColor(member.userId);
             const isLocked = member.planStatus === 'LOCKED';
+            const hasPriorWeekAttention =
+              member.priorWeekStatus != null && member.priorWeekStartDate != null;
+            const priorWeekLabel = hasPriorWeekAttention
+              ? `Prior week still ${formatPlanStatusLabel(member.priorWeekStatus)} (${formatWeekSpan(member.priorWeekStartDate!)})`
+              : null;
 
             return (
               <tr
                 key={member.userId}
-                className={styles.row}
+                className={`${styles.row} ${hasPriorWeekAttention ? styles.rowAttention : ''}`}
                 onClick={() => member.planId && onViewPlan(member.planId)}
                 data-testid={`member-row-${member.userId}`}
                 role="button"
@@ -86,7 +108,17 @@ export const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
                     >
                       {getInitial(member.userId)}
                     </div>
-                    <span className={styles.memberName}>{member.userId}</span>
+                    <div className={styles.memberCopy}>
+                      <span className={styles.memberName}>{member.userId}</span>
+                      {priorWeekLabel && (
+                        <span
+                          className={styles.memberAttention}
+                          data-testid={`prior-week-attention-${member.userId}`}
+                        >
+                          {priorWeekLabel}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </td>
                 <td className={styles.td}>

@@ -33,7 +33,7 @@
 }
 
 .colPlanned {
-  width: 80px;
+  width: 116px;
 }
 
 .colStatus {
@@ -69,9 +69,17 @@
   line-height: var(--leading-normal);
 }
 
-.planned {
+.plannedPriority {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-grey-100);
+  color: var(--color-grey-700);
   font-size: var(--text-xs);
-  color: var(--color-grey-500);
+  font-weight: var(--weight-semibold);
 }
 
 .notesInput {

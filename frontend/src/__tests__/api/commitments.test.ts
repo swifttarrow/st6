@@ -53,10 +53,13 @@ describe('createCommitmentsApi', () => {
 
   it('reconcileCommitment calls PATCH /api/plans/{planId}/commitments/{id}/reconcile', async () => {
     const api = createCommitmentsApi(client);
-    await api.reconcileCommitment('plan-1', 'c1', { commitmentId: 'c1', actualStatus: 'COMPLETED' });
-    expect(client.patch).toHaveBeenCalledWith('/api/plans/plan-1/commitments/c1/reconcile', {
-      commitmentId: 'c1',
+    await api.reconcileCommitment('plan-1', 'c1', {
       actualStatus: 'COMPLETED',
+      reconciliationNotes: 'Shipped Wednesday',
+    });
+    expect(client.patch).toHaveBeenCalledWith('/api/plans/plan-1/commitments/c1/reconcile', {
+      actualStatus: 'COMPLETED',
+      reconciliationNotes: 'Shipped Wednesday',
     });
   });
 

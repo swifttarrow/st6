@@ -1,6 +1,7 @@
 .container {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 24px;
   background: #FAFAFA;
   padding: 16px 24px;
@@ -35,6 +36,10 @@
 
 .dark {
   color: var(--color-black);
+}
+
+.warning {
+  color: var(--color-warning);
 }
 
 .red {

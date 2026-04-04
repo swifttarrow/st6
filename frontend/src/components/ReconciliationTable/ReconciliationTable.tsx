@@ -25,7 +25,7 @@ export const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
   const [localNotes, setLocalNotes] = useState<Record<string, string>>({});
 
   const handleStatusChange = (commitmentId: string, status: ActualStatus) => {
-    const currentNotes = notes[commitmentId] || '';
+    const currentNotes = localNotes[commitmentId] ?? notes[commitmentId] ?? '';
     onReconcile(commitmentId, status, currentNotes);
   };
 
@@ -48,7 +48,7 @@ export const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
           <th className={styles.colRank}>#</th>
           <th className={styles.colCommitment}>Commitment</th>
           <th className={styles.colOutcome}>Linked Outcome</th>
-          <th className={styles.colPlanned}>Planned</th>
+          <th className={styles.colPlanned}>Planned Priority</th>
           <th className={styles.colStatus}>Actual Status</th>
           <th className={styles.colNotes}>Notes</th>
         </tr>
@@ -58,14 +58,18 @@ export const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
           const outcomePath = buildOutcomePath(tree, commitment.outcomeId);
           const noteValue = localNotes[commitment.id] !== undefined
             ? localNotes[commitment.id]
-            : (notes[commitment.id] || '');
+            : (notes[commitment.id] ?? commitment.reconciliationNotes ?? '');
 
           return (
             <tr key={commitment.id} className={styles.row}>
               <td><span className={styles.rank}>{index + 1}</span></td>
               <td><span className={styles.description}>{commitment.description}</span></td>
               <td><span className={styles.outcomePath}>{outcomePath || '-'}</span></td>
-              <td><span className={styles.planned}>Planned</span></td>
+              <td>
+                <span className={styles.plannedPriority} title={`Planned priority ${commitment.priority}`}>
+                  P{commitment.priority}
+                </span>
+              </td>
               <td>
                 <StatusSelect
                   value={commitment.actualStatus}
@@ -75,7 +79,7 @@ export const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
               </td>
               <td>
                 {isReadOnly ? (
-                  <span className={styles.notesText}>{notes[commitment.id] || '-'}</span>
+                  <span className={styles.notesText}>{notes[commitment.id] || commitment.reconciliationNotes || '-'}</span>
                 ) : (
                   <input
                     type="text"

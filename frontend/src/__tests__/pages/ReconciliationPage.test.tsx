@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ReconciliationPage } from '../../pages/Reconciliation/ReconciliationPage';
 
@@ -26,6 +26,11 @@ const mockPlanReconciling = {
 const mockPlanDraft = {
   ...mockPlanReconciling,
   status: 'DRAFT' as const,
+};
+
+const mockPlanReconciled = {
+  ...mockPlanReconciling,
+  status: 'RECONCILED' as const,
 };
 
 const mockTree = [
@@ -54,6 +59,7 @@ const mockCommitmentsPending = [
     priority: 1,
     notes: null,
     actualStatus: null,
+    reconciliationNotes: null,
     carriedForward: false,
     outcomeArchived: false,
     createdAt: '2026-03-23T00:00:00Z',
@@ -66,6 +72,7 @@ const mockCommitmentsPending = [
     priority: 2,
     notes: null,
     actualStatus: null,
+    reconciliationNotes: null,
     carriedForward: false,
     outcomeArchived: false,
     createdAt: '2026-03-23T00:00:00Z',
@@ -75,7 +82,7 @@ const mockCommitmentsPending = [
 
 const mockCommitmentsAnnotated = [
   { ...mockCommitmentsPending[0], actualStatus: 'COMPLETED' as const },
-  { ...mockCommitmentsPending[1], actualStatus: 'DROPPED' as const },
+  { ...mockCommitmentsPending[1], actualStatus: 'NOT_STARTED' as const },
 ];
 
 const mockApi = {
@@ -148,6 +155,7 @@ describe('ReconciliationPage', () => {
 
     expect(screen.getByText('Reconciling')).toBeDefined();
     expect(screen.getByTestId('stats-bar')).toBeDefined();
+    expect(screen.getByText('Not started')).toBeDefined();
   });
 
   it('renders commitment rows', async () => {
@@ -194,6 +202,59 @@ describe('ReconciliationPage', () => {
 
     const submitBtn = screen.getByTestId('submit-reconciliation') as HTMLButtonElement;
     expect(submitBtn.disabled).toBe(false);
+  });
+
+  it('sends reconciliation notes with status updates', async () => {
+    mockApi.commitments.reconcileCommitment.mockResolvedValue({
+      ...mockCommitmentsPending[0],
+      actualStatus: 'COMPLETED',
+      reconciliationNotes: 'Shipped Wednesday',
+    });
+
+    render(
+      <MemoryRouter {...routerOpts}>
+        <ReconciliationPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Write tests')).toBeDefined();
+    });
+
+    fireEvent.change(screen.getByTestId('notes-c-1'), { target: { value: 'Shipped Wednesday' } });
+    fireEvent.click(screen.getAllByTestId('status-select')[0]);
+    fireEvent.click(screen.getByRole('option', { name: 'Completed' }));
+
+    await waitFor(() => {
+      expect(mockApi.commitments.reconcileCommitment).toHaveBeenCalledWith('plan-1', 'c-1', {
+        actualStatus: 'COMPLETED',
+        reconciliationNotes: 'Shipped Wednesday',
+      });
+    });
+  });
+
+  it('rehydrates reconciliation notes on reconciled plans', async () => {
+    mockApi.plans.getPlan.mockResolvedValue(mockPlanReconciled);
+    mockApi.commitments.listCommitments.mockResolvedValue([
+      {
+        ...mockCommitmentsPending[0],
+        actualStatus: 'COMPLETED' as const,
+        reconciliationNotes: 'Delivered on Wednesday',
+      },
+    ]);
+
+    render(
+      <MemoryRouter {...routerOpts}>
+        <ReconciliationPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Reconciled')).toBeDefined();
+    });
+
+    expect(screen.getByText('Delivered on Wednesday')).toBeDefined();
+    expect(screen.queryByTestId('submit-reconciliation')).toBeNull();
   });
 
   it('redirects to /commitments when plan is DRAFT', async () => {

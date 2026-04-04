@@ -7,6 +7,7 @@ import {
   CalendarDays,
   ClipboardCheck,
   TrendingUp,
+  History,
 } from 'lucide-react';
 import { useReconciliationNavAvailable } from '../../hooks/useReconciliationNavAvailable';
 import { useUserContext } from '../../context/UserContext';
@@ -27,6 +28,11 @@ const NAV_ITEMS: NavItem[] = [
     path: '/reconciliation',
     label: 'Reconciliation',
     icon: <ClipboardCheck size={16} strokeWidth={1.75} />,
+  },
+  {
+    path: '/history',
+    label: 'History',
+    icon: <History size={16} strokeWidth={1.75} />,
   },
   {
     path: '/team',

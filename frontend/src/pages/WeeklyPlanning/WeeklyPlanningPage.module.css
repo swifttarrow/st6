@@ -45,6 +45,14 @@
   border-top: 1px solid var(--color-grey-200, #e5e5e5);
 }
 
+.historyHeader {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+
 .historyTitle {
   font-family: var(--font-heading);
   font-size: var(--text-lg);
@@ -95,6 +103,16 @@
   font-weight: var(--weight-medium);
 }
 
+.historyRouteLink {
+  color: var(--color-accent, #2563eb);
+  text-decoration: none;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+}
+
+.historyRouteLink:hover,
 .historyLink:hover {
   text-decoration: underline;
 }
@@ -206,6 +224,7 @@
   margin-bottom: var(--space-4);
   font-family: var(--font-body);
   font-size: var(--text-sm);
+  line-height: 1.5;
   color: #1E3A8A;
 }
 

@@ -10,6 +10,7 @@ export const StatsBar: React.FC<StatsBarProps> = ({ commitments }) => {
   const total = commitments.length;
   const completed = commitments.filter((c) => c.actualStatus === 'COMPLETED').length;
   const partial = commitments.filter((c) => c.actualStatus === 'PARTIALLY_COMPLETED').length;
+  const notStarted = commitments.filter((c) => c.actualStatus === 'NOT_STARTED').length;
   const dropped = commitments.filter((c) => c.actualStatus === 'DROPPED').length;
 
   return (
@@ -22,6 +23,11 @@ export const StatsBar: React.FC<StatsBarProps> = ({ commitments }) => {
       <div className={styles.stat}>
         <span className={`${styles.count} ${styles.dark}`}>{partial}</span>
         <span className={styles.label}>Partial</span>
+      </div>
+      <div className={styles.divider} />
+      <div className={styles.stat}>
+        <span className={`${styles.count} ${styles.warning}`}>{notStarted}</span>
+        <span className={styles.label}>Not started</span>
       </div>
       <div className={styles.divider} />
       <div className={styles.stat}>

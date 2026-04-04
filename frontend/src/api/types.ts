@@ -150,6 +150,7 @@ export interface Commitment {
   notes: string | null;
   /** Null when not yet reconciled (matches API). */
   actualStatus: ActualStatus | null;
+  reconciliationNotes?: string | null;
   carriedForward: boolean;
   outcomeArchived: boolean;
   createdAt: string;
@@ -168,9 +169,13 @@ export interface UpdateCommitmentRequest {
   notes?: string | null;
 }
 
-export interface ReconcileItemRequest {
-  commitmentId: string;
+export interface ReconcileCommitmentRequest {
   actualStatus: ActualStatus;
+  reconciliationNotes?: string | null;
+}
+
+export interface ReconcileItemRequest extends ReconcileCommitmentRequest {
+  commitmentId: string;
 }
 
 // ── Dashboard Types ──
@@ -195,6 +200,8 @@ export interface TeamMemberSummary {
   commitmentCount: number;
   topRallyCry: string | null;
   completionRate: number | null;
+  priorWeekStartDate: string | null;
+  priorWeekStatus: string | null;
 }
 
 export interface RallyCryCoverage {

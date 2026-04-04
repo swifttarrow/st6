@@ -20,6 +20,8 @@ const mockTeamOverview = {
       commitmentCount: 7,
       topRallyCry: 'RC #1',
       completionRate: 80,
+      priorWeekStartDate: '2026-03-16',
+      priorWeekStatus: 'LOCKED',
     },
     {
       userId: 'bob',
@@ -28,6 +30,8 @@ const mockTeamOverview = {
       commitmentCount: 6,
       topRallyCry: null,
       completionRate: null,
+      priorWeekStartDate: null,
+      priorWeekStatus: null,
     },
   ],
   rallyCryCoverage: [
@@ -162,6 +166,7 @@ describe('ManagerDashboardPage', () => {
     expect(screen.getByText('bob')).toBeDefined();
     expect(screen.getByText('Locked')).toBeDefined();
     expect(screen.getByText('Draft')).toBeDefined();
+    expect(screen.getByTestId('prior-week-attention-alice').textContent).toContain('Prior week still Locked');
   });
 
   it('renders coverage panels with zero-coverage warning', async () => {

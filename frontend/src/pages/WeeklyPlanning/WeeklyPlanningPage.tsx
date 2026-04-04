@@ -135,10 +135,8 @@ export const WeeklyPlanningPage: React.FC = () => {
       const loadTeamPicker =
         userContext.role === 'MANAGER' || userContext.role === 'LEADERSHIP';
 
-      const checkPriorWeek =
-        !planIdParam
-        && fetchedPlan.userId === userContext.userId
-        && fetchedPlan.status === 'DRAFT';
+      const checkOwnPriorWeek = fetchedPlan.userId === userContext.userId;
+      const priorWeekMonday = addWeeks(fetchedPlan.weekStartDate, -1);
 
       const [fetchedTree, overview, fetchedCommitments, priorWeekRows] = await Promise.all([
         api.rcdo.getTree(),
@@ -146,10 +144,10 @@ export const WeeklyPlanningPage: React.FC = () => {
           ? api.dashboard.getTeamOverview(fetchedPlan.weekStartDate, memberIdsFromUrl).catch(() => null)
           : Promise.resolve(null),
         api.commitments.listCommitments(fetchedPlan.id),
-        checkPriorWeek
+        checkOwnPriorWeek
           ? api.plans.listMyPlans(
-              addWeeks(fetchedPlan.weekStartDate, -1),
-              addWeeks(fetchedPlan.weekStartDate, -1),
+              priorWeekMonday,
+              priorWeekMonday,
             ).catch(() => [] as MyPlanSummary[])
           : Promise.resolve(null),
       ]);
@@ -159,12 +157,25 @@ export const WeeklyPlanningPage: React.FC = () => {
       setTeamOverview(overview);
       setCommitments(fetchedCommitments);
 
+      let nextPriorWeekAttention: typeof priorWeekAttention = null;
       if (priorWeekRows) {
         const row = priorWeekRows[0];
         if (row && row.status !== 'RECONCILED') {
-          setPriorWeekAttention({ weekStartDate: row.weekStartDate, status: row.status });
+          nextPriorWeekAttention = { weekStartDate: row.weekStartDate, status: row.status };
         }
       }
+
+      if (!nextPriorWeekAttention && overview) {
+        const selectedMember = overview.members.find((member) => member.userId === fetchedPlan.userId);
+        if (selectedMember?.priorWeekStartDate && selectedMember.priorWeekStatus) {
+          nextPriorWeekAttention = {
+            weekStartDate: selectedMember.priorWeekStartDate,
+            status: selectedMember.priorWeekStatus as PlanStatus,
+          };
+        }
+      }
+
+      setPriorWeekAttention(nextPriorWeekAttention);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
@@ -372,8 +383,7 @@ export const WeeklyPlanningPage: React.FC = () => {
   const isDraft = plan.status === 'DRAFT';
   const showCarryForwardBanner =
     isDraft && carriedForwardCount > 0 && !bannerDismissed && !readOnly;
-  const showPriorWeekBanner =
-    isDraft && priorWeekAttention !== null && !readOnly;
+  const showPriorWeekBanner = priorWeekAttention !== null;
   const treeIsEmpty = tree.length === 0;
   const showHistoryBlock = !planIdParam && !readOnly;
 
@@ -445,15 +455,25 @@ export const WeeklyPlanningPage: React.FC = () => {
 
       {showPriorWeekBanner && priorWeekAttention && (
         <div className={styles.priorWeekBanner} data-testid="prior-week-reconcile-banner">
-          Your plan for the week of {formatWeekDate(priorWeekAttention.weekStartDate)} is still{' '}
-          <strong>{statusLabel(priorWeekAttention.status)}</strong>. Finish reconciliation for that week
-          before carry-forward can run.{' '}
-          <a
-            href={`/reconciliation?week=${encodeURIComponent(priorWeekAttention.weekStartDate)}`}
-            className={styles.priorWeekLink}
-          >
-            Reconcile prior week
-          </a>
+          {readOnly ? (
+            <>
+              {plan.userId}&apos;s prior week ({formatWeekDate(priorWeekAttention.weekStartDate)}) is still{' '}
+              <strong>{statusLabel(priorWeekAttention.status)}</strong>. Carry-forward into this week will
+              stay incomplete until they finish reconciliation.
+            </>
+          ) : (
+            <>
+              Your prior week ({formatWeekDate(priorWeekAttention.weekStartDate)}) is still{' '}
+              <strong>{statusLabel(priorWeekAttention.status)}</strong>. Carry-forward into this week
+              cannot finish until that plan is reconciled.{' '}
+              <a
+                href={`/reconciliation?week=${encodeURIComponent(priorWeekAttention.weekStartDate)}`}
+                className={styles.priorWeekLink}
+              >
+                Reconcile prior week
+              </a>
+            </>
+          )}
         </div>
       )}
 
@@ -510,12 +530,19 @@ export const WeeklyPlanningPage: React.FC = () => {
 
       {showHistoryBlock && (
         <section className={styles.historySection} aria-labelledby="plan-history-heading">
-          <h2 id="plan-history-heading" className={styles.historyTitle}>
-            Your plan history
-          </h2>
-          <p className={styles.historyHint}>
-            Weeks where you already have a plan (last 52 weeks). Open or reconcile without creating empty weeks.
-          </p>
+          <div className={styles.historyHeader}>
+            <div>
+              <h2 id="plan-history-heading" className={styles.historyTitle}>
+                Your plan history
+              </h2>
+              <p className={styles.historyHint}>
+                Weeks where you already have a plan (last 52 weeks). Open or reconcile without creating empty weeks.
+              </p>
+            </div>
+            <a href="/history" className={styles.historyRouteLink}>
+              Open full history
+            </a>
+          </div>
           {historyLoading ? (
             <p className={styles.historyHint}>Loading history…</p>
           ) : myPlanHistory.length === 0 ? (

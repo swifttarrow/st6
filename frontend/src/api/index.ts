@@ -19,6 +19,7 @@ export type {
   Commitment,
   CreateCommitmentRequest,
   UpdateCommitmentRequest,
+  ReconcileCommitmentRequest,
   ReconcileItemRequest,
   TeamOverviewResponse,
   TeamMemberSummary,

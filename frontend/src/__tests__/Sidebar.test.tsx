@@ -71,6 +71,7 @@ describe('Sidebar', () => {
     renderSidebar('IC');
     expect(screen.getByText('Commitments')).toBeDefined();
     await waitForReconciliationNavEnabled();
+    expect(screen.getByText('History')).toBeDefined();
     expect(screen.queryByText('Team Dashboard')).toBeNull();
     expect(screen.queryByText('Leadership View')).toBeNull();
     expect(screen.queryByText('RCDO Management')).toBeNull();

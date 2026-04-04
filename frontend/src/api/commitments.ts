@@ -1,5 +1,11 @@
 import { ApiClient } from './client';
-import { Commitment, CreateCommitmentRequest, UpdateCommitmentRequest, ReconcileItemRequest } from './types';
+import {
+  Commitment,
+  CreateCommitmentRequest,
+  UpdateCommitmentRequest,
+  ReconcileCommitmentRequest,
+  ReconcileItemRequest,
+} from './types';
 
 export interface CommitmentsApi {
   listCommitments(planId: string): Promise<Commitment[]>;
@@ -7,7 +13,7 @@ export interface CommitmentsApi {
   updateCommitment(planId: string, commitmentId: string, req: UpdateCommitmentRequest): Promise<Commitment>;
   deleteCommitment(planId: string, commitmentId: string): Promise<void>;
   reorderCommitments(planId: string, orderedIds: string[]): Promise<Commitment[]>;
-  reconcileCommitment(planId: string, commitmentId: string, req: ReconcileItemRequest): Promise<Commitment>;
+  reconcileCommitment(planId: string, commitmentId: string, req: ReconcileCommitmentRequest): Promise<Commitment>;
   bulkReconcile(planId: string, items: ReconcileItemRequest[]): Promise<Commitment[]>;
 }
 
@@ -28,7 +34,7 @@ export function createCommitmentsApi(client: ApiClient): CommitmentsApi {
     reorderCommitments(planId: string, orderedIds: string[]): Promise<Commitment[]> {
       return client.put<Commitment[]>(`/api/plans/${planId}/commitments/reorder`, { orderedCommitmentIds: orderedIds });
     },
-    reconcileCommitment(planId: string, commitmentId: string, req: ReconcileItemRequest): Promise<Commitment> {
+    reconcileCommitment(planId: string, commitmentId: string, req: ReconcileCommitmentRequest): Promise<Commitment> {
       return client.patch<Commitment>(`/api/plans/${planId}/commitments/${commitmentId}/reconcile`, req);
     },
     bulkReconcile(planId: string, items: ReconcileItemRequest[]): Promise<Commitment[]> {

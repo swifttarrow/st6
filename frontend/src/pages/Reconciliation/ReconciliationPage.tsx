@@ -45,6 +45,17 @@ function commitmentsQuery(weekStart: string): string {
   return `week=${encodeURIComponent(weekStart)}`;
 }
 
+function buildNotesMap(commitments: Commitment[]): Record<string, string> {
+  return Object.fromEntries(
+    commitments.map((commitment) => [commitment.id, commitment.reconciliationNotes ?? '']),
+  );
+}
+
+function normalizeNoteText(noteText: string): string | null {
+  const normalized = noteText.trim();
+  return normalized === '' ? null : normalized;
+}
+
 export const ReconciliationPage: React.FC = () => {
   const api = useApi();
   const navigate = useNavigate();
@@ -114,6 +125,7 @@ export const ReconciliationPage: React.FC = () => {
 
       setPlan(fetchedPlan);
       setCommitments(fetchedCommitments);
+      setNotes(buildNotesMap(fetchedCommitments));
       setTree(fetchedTree);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
@@ -128,22 +140,29 @@ export const ReconciliationPage: React.FC = () => {
 
   const handleReconcile = useCallback(async (commitmentId: string, actualStatus: ActualStatus, noteText: string) => {
     if (!plan) return;
+    const normalizedNotes = normalizeNoteText(noteText);
 
     setCommitments((prev) =>
       prev.map((c) =>
-        c.id === commitmentId ? { ...c, actualStatus } : c,
+        c.id === commitmentId ? { ...c, actualStatus, reconciliationNotes: normalizedNotes } : c,
       ),
     );
+    setNotes((prev) => ({ ...prev, [commitmentId]: normalizedNotes ?? '' }));
 
     try {
-      await api.commitments.reconcileCommitment(plan.id, commitmentId, {
-        commitmentId,
+      const updated = await api.commitments.reconcileCommitment(plan.id, commitmentId, {
         actualStatus,
+        reconciliationNotes: normalizedNotes,
       });
+      setCommitments((prev) =>
+        prev.map((c) => (c.id === commitmentId ? updated : c)),
+      );
+      setNotes((prev) => ({ ...prev, [commitmentId]: updated.reconciliationNotes ?? '' }));
     } catch (err) {
       setToastError(err instanceof Error ? err.message : 'Failed to update commitment status');
       const refreshed = await api.commitments.listCommitments(plan.id);
       setCommitments(refreshed);
+      setNotes(buildNotesMap(refreshed));
     }
   }, [api, plan]);
 
