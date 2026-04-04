@@ -50,12 +50,13 @@ public class ManagerDashboardService {
         LocalDate weekStart = WeekDateUtil.toMonday(date);
 
         if (memberIds == null || memberIds.isEmpty()) {
+            List<RallyCry> emptyRCs = rallyCryRepository.findByArchivedAtIsNullOrderBySortOrder();
             return new TeamOverviewResponse(
                     weekStart,
                     new TeamOverviewResponse.Stats(0, 0, 0, null),
                     List.of(),
-                    buildRallyCryCoverage(List.of(), weekStart),
-                    buildDefiningObjectiveCoverage(List.of(), weekStart)
+                    buildRallyCryCoverage(emptyRCs, List.of(), weekStart),
+                    buildDefiningObjectiveCoverage(emptyRCs, List.of(), weekStart)
             );
         }
 
@@ -123,9 +124,10 @@ public class ManagerDashboardService {
             ));
         }
 
-        // Rally Cry coverage
-        List<RallyCryCoverage> rallyCryCoverage = buildRallyCryCoverage(memberIds, weekStart);
-        List<DefiningObjectiveCoverage> definingObjectiveCoverage = buildDefiningObjectiveCoverage(memberIds, weekStart);
+        // Rally Cry & Defining Objective coverage (share the RC list to avoid duplicate fetch)
+        List<RallyCry> activeRCs = rallyCryRepository.findByArchivedAtIsNullOrderBySortOrder();
+        List<RallyCryCoverage> rallyCryCoverage = buildRallyCryCoverage(activeRCs, memberIds, weekStart);
+        List<DefiningObjectiveCoverage> definingObjectiveCoverage = buildDefiningObjectiveCoverage(activeRCs, memberIds, weekStart);
 
         return new TeamOverviewResponse(
                 weekStart,
@@ -183,11 +185,9 @@ public class ManagerDashboardService {
         return rates.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
     }
 
-    private List<RallyCryCoverage> buildRallyCryCoverage(List<String> memberIds, LocalDate weekStart) {
-        List<RallyCry> activeRCs = rallyCryRepository.findByArchivedAtIsNullOrderBySortOrder();
+    private List<RallyCryCoverage> buildRallyCryCoverage(List<RallyCry> activeRCs, List<String> memberIds, LocalDate weekStart) {
         if (activeRCs.isEmpty()) return List.of();
 
-        // For the current week, get commitment counts and member counts per RC
         Map<UUID, Integer> commitmentCountByRC = new HashMap<>();
         Map<UUID, Integer> memberCountByRC = new HashMap<>();
 
@@ -213,11 +213,14 @@ public class ManagerDashboardService {
             }
         }
 
+        List<UUID> rcIds = activeRCs.stream().map(RallyCry::getId).toList();
+        Map<UUID, Integer> consecutiveZeroByRC = batchConsecutiveZeroWeeksForRCs(rcIds, memberIds, weekStart);
+
         List<RallyCryCoverage> result = new ArrayList<>();
         for (RallyCry rc : activeRCs) {
             int commitmentCount = commitmentCountByRC.getOrDefault(rc.getId(), 0);
             int memberCount = memberCountByRC.getOrDefault(rc.getId(), 0);
-            int consecutiveZeroWeeks = computeConsecutiveZeroWeeks(rc.getId(), memberIds, weekStart);
+            int consecutiveZeroWeeks = consecutiveZeroByRC.getOrDefault(rc.getId(), 0);
 
             result.add(new RallyCryCoverage(
                     rc.getId(),
@@ -230,37 +233,59 @@ public class ManagerDashboardService {
         return result;
     }
 
-    private int computeConsecutiveZeroWeeks(UUID rallyCryId, List<String> memberIds, LocalDate weekStart) {
-        if (memberIds == null || memberIds.isEmpty()) return 0;
+    /**
+     * Batch query: for each RC, count commitments per prior week (up to 10 weeks back),
+     * then compute consecutive zero-weeks in Java instead of N+1 individual queries.
+     */
+    private Map<UUID, Integer> batchConsecutiveZeroWeeksForRCs(List<UUID> rcIds, List<String> memberIds, LocalDate weekStart) {
+        if (memberIds == null || memberIds.isEmpty() || rcIds.isEmpty()) return Map.of();
 
-        int count = 0;
+        List<LocalDate> priorWeeks = new ArrayList<>();
         for (int i = 1; i <= 10; i++) {
-            LocalDate priorWeek = weekStart.minusWeeks(i);
-            Long commitments = entityManager.createQuery(
-                    "SELECT COUNT(c) FROM Commitment c " +
-                    "JOIN WeeklyPlan wp ON c.weeklyPlanId = wp.id " +
-                    "JOIN Outcome o ON c.outcomeId = o.id " +
-                    "JOIN DefiningObjective d ON o.definingObjectiveId = d.id " +
-                    "WHERE d.rallyCryId = :rcId " +
-                    "AND wp.userId IN :memberIds " +
-                    "AND wp.weekStartDate = :weekStart",
-                    Long.class
-            ).setParameter("rcId", rallyCryId)
-             .setParameter("memberIds", memberIds)
-             .setParameter("weekStart", priorWeek)
-             .getSingleResult();
-
-            if (commitments == 0) {
-                count++;
-            } else {
-                break;
-            }
+            priorWeeks.add(weekStart.minusWeeks(i));
         }
-        return count;
+
+        // Single query: get (rcId, weekStartDate) pairs that have commitments
+        List<Object[]> rows = entityManager.createQuery(
+                "SELECT d.rallyCryId, wp.weekStartDate " +
+                "FROM Commitment c " +
+                "JOIN WeeklyPlan wp ON c.weeklyPlanId = wp.id " +
+                "JOIN Outcome o ON c.outcomeId = o.id " +
+                "JOIN DefiningObjective d ON o.definingObjectiveId = d.id " +
+                "WHERE d.rallyCryId IN :rcIds " +
+                "AND wp.userId IN :memberIds " +
+                "AND wp.weekStartDate IN :weeks " +
+                "GROUP BY d.rallyCryId, wp.weekStartDate",
+                Object[].class
+        ).setParameter("rcIds", rcIds)
+         .setParameter("memberIds", memberIds)
+         .setParameter("weeks", priorWeeks)
+         .getResultList();
+
+        // Build set of (rcId, weekStart) pairs that have > 0 commitments
+        Set<String> nonZeroPairs = new HashSet<>();
+        for (Object[] row : rows) {
+            UUID rcId = (UUID) row[0];
+            LocalDate week = (LocalDate) row[1];
+            nonZeroPairs.add(rcId + "|" + week);
+        }
+
+        // Compute consecutive zero weeks per RC
+        Map<UUID, Integer> result = new HashMap<>();
+        for (UUID rcId : rcIds) {
+            int count = 0;
+            for (LocalDate pw : priorWeeks) {
+                if (nonZeroPairs.contains(rcId + "|" + pw)) {
+                    break;
+                }
+                count++;
+            }
+            result.put(rcId, count);
+        }
+        return result;
     }
 
-    private List<DefiningObjectiveCoverage> buildDefiningObjectiveCoverage(List<String> memberIds, LocalDate weekStart) {
-        List<RallyCry> activeRCs = rallyCryRepository.findByArchivedAtIsNullOrderBySortOrder();
+    private List<DefiningObjectiveCoverage> buildDefiningObjectiveCoverage(List<RallyCry> activeRCs, List<String> memberIds, LocalDate weekStart) {
         if (activeRCs.isEmpty()) {
             return List.of();
         }
@@ -290,55 +315,81 @@ public class ManagerDashboardService {
             }
         }
 
-        List<DefiningObjectiveCoverage> result = new ArrayList<>();
+        // Collect all DO IDs first, then batch the consecutive-zero-weeks query
+        List<DefiningObjective> allDOs = new ArrayList<>();
+        Map<UUID, RallyCry> rcByDoId = new HashMap<>();
         for (RallyCry rc : activeRCs) {
             List<DefiningObjective> dos = definingObjectiveRepository
                     .findByRallyCryIdAndArchivedAtIsNullOrderBySortOrder(rc.getId());
             for (DefiningObjective d : dos) {
-                int commitmentCount = commitmentCountByDO.getOrDefault(d.getId(), 0);
-                int memberCount = memberCountByDO.getOrDefault(d.getId(), 0);
-                int consecutiveZeroWeeks = computeConsecutiveZeroWeeksForDO(d.getId(), memberIds, weekStart);
-                result.add(new DefiningObjectiveCoverage(
-                        d.getId(),
-                        d.getName(),
-                        rc.getId(),
-                        rc.getName(),
-                        commitmentCount,
-                        memberCount,
-                        consecutiveZeroWeeks
-                ));
+                allDOs.add(d);
+                rcByDoId.put(d.getId(), rc);
             }
+        }
+
+        List<UUID> doIds = allDOs.stream().map(DefiningObjective::getId).toList();
+        Map<UUID, Integer> consecutiveZeroByDO = batchConsecutiveZeroWeeksForDOs(doIds, memberIds, weekStart);
+
+        List<DefiningObjectiveCoverage> result = new ArrayList<>();
+        for (DefiningObjective d : allDOs) {
+            RallyCry rc = rcByDoId.get(d.getId());
+            int commitmentCount = commitmentCountByDO.getOrDefault(d.getId(), 0);
+            int memberCount = memberCountByDO.getOrDefault(d.getId(), 0);
+            int consecutiveZeroWeeks = consecutiveZeroByDO.getOrDefault(d.getId(), 0);
+            result.add(new DefiningObjectiveCoverage(
+                    d.getId(),
+                    d.getName(),
+                    rc.getId(),
+                    rc.getName(),
+                    commitmentCount,
+                    memberCount,
+                    consecutiveZeroWeeks
+            ));
         }
         return result;
     }
 
-    private int computeConsecutiveZeroWeeksForDO(UUID definingObjectiveId, List<String> memberIds, LocalDate weekStart) {
-        if (memberIds == null || memberIds.isEmpty()) {
-            return 0;
-        }
+    private Map<UUID, Integer> batchConsecutiveZeroWeeksForDOs(List<UUID> doIds, List<String> memberIds, LocalDate weekStart) {
+        if (memberIds == null || memberIds.isEmpty() || doIds.isEmpty()) return Map.of();
 
-        int count = 0;
+        List<LocalDate> priorWeeks = new ArrayList<>();
         for (int i = 1; i <= 10; i++) {
-            LocalDate priorWeek = weekStart.minusWeeks(i);
-            Long commitments = entityManager.createQuery(
-                    "SELECT COUNT(c) FROM Commitment c " +
-                    "JOIN WeeklyPlan wp ON c.weeklyPlanId = wp.id " +
-                    "JOIN Outcome o ON c.outcomeId = o.id " +
-                    "WHERE o.definingObjectiveId = :doId " +
-                    "AND wp.userId IN :memberIds " +
-                    "AND wp.weekStartDate = :weekStart",
-                    Long.class
-            ).setParameter("doId", definingObjectiveId)
-                    .setParameter("memberIds", memberIds)
-                    .setParameter("weekStart", priorWeek)
-                    .getSingleResult();
-
-            if (commitments == 0) {
-                count++;
-            } else {
-                break;
-            }
+            priorWeeks.add(weekStart.minusWeeks(i));
         }
-        return count;
+
+        List<Object[]> rows = entityManager.createQuery(
+                "SELECT o.definingObjectiveId, wp.weekStartDate " +
+                "FROM Commitment c " +
+                "JOIN WeeklyPlan wp ON c.weeklyPlanId = wp.id " +
+                "JOIN Outcome o ON c.outcomeId = o.id " +
+                "WHERE o.definingObjectiveId IN :doIds " +
+                "AND wp.userId IN :memberIds " +
+                "AND wp.weekStartDate IN :weeks " +
+                "GROUP BY o.definingObjectiveId, wp.weekStartDate",
+                Object[].class
+        ).setParameter("doIds", doIds)
+         .setParameter("memberIds", memberIds)
+         .setParameter("weeks", priorWeeks)
+         .getResultList();
+
+        Set<String> nonZeroPairs = new HashSet<>();
+        for (Object[] row : rows) {
+            UUID doId = (UUID) row[0];
+            LocalDate week = (LocalDate) row[1];
+            nonZeroPairs.add(doId + "|" + week);
+        }
+
+        Map<UUID, Integer> result = new HashMap<>();
+        for (UUID doId : doIds) {
+            int count = 0;
+            for (LocalDate pw : priorWeeks) {
+                if (nonZeroPairs.contains(doId + "|" + pw)) {
+                    break;
+                }
+                count++;
+            }
+            result.put(doId, count);
+        }
+        return result;
     }
 }
