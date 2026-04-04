@@ -64,6 +64,11 @@ public class ManagerDashboardService {
         List<WeeklyPlan> plans = weeklyPlanRepository.findByUserIdInAndWeekStartDate(memberIds, weekStart);
         Map<String, WeeklyPlan> planByUser = plans.stream()
                 .collect(Collectors.toMap(WeeklyPlan::getUserId, p -> p));
+        LocalDate priorWeekStart = weekStart.minusWeeks(1);
+        Map<String, WeeklyPlan> priorPlanByUser = weeklyPlanRepository
+                .findByUserIdInAndWeekStartDate(memberIds, priorWeekStart)
+                .stream()
+                .collect(Collectors.toMap(WeeklyPlan::getUserId, p -> p));
 
         // Fetch all commitments for these plans in one query
         List<UUID> planIds = plans.stream().map(WeeklyPlan::getId).toList();
@@ -97,8 +102,26 @@ public class ManagerDashboardService {
         List<TeamMemberSummary> members = new ArrayList<>();
         for (String memberId : memberIds) {
             WeeklyPlan plan = planByUser.get(memberId);
+            WeeklyPlan priorPlan = priorPlanByUser.get(memberId);
+            LocalDate priorWeekAttentionDate =
+                    priorPlan != null && priorPlan.getStatus() != PlanStatus.RECONCILED
+                            ? priorPlan.getWeekStartDate()
+                            : null;
+            String priorWeekAttentionStatus =
+                    priorPlan != null && priorPlan.getStatus() != PlanStatus.RECONCILED
+                            ? priorPlan.getStatus().name()
+                            : null;
             if (plan == null) {
-                members.add(new TeamMemberSummary(memberId, null, null, 0, null, null));
+                members.add(new TeamMemberSummary(
+                        memberId,
+                        null,
+                        null,
+                        0,
+                        null,
+                        null,
+                        priorWeekAttentionDate,
+                        priorWeekAttentionStatus
+                ));
                 continue;
             }
 
@@ -120,7 +143,9 @@ public class ManagerDashboardService {
                     plan.getStatus().name(),
                     commitmentCount,
                     topRallyCry,
-                    completionRate
+                    completionRate,
+                    priorWeekAttentionDate,
+                    priorWeekAttentionStatus
             ));
         }
 

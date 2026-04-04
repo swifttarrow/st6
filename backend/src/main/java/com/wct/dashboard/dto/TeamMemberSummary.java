@@ -8,5 +8,7 @@ public record TeamMemberSummary(
         String planStatus,
         int commitmentCount,
         String topRallyCry,
-        Double completionRate
+        Double completionRate,
+        java.time.LocalDate priorWeekStartDate,
+        String priorWeekStatus
 ) {}

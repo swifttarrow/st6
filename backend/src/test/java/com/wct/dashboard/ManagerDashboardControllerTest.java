@@ -129,6 +129,31 @@ class ManagerDashboardControllerTest {
     }
 
     @Test
+    void memberSummaries_surfacePriorWeekAttention() throws Exception {
+        String currentPlan = createPlan("user-1", "2026-03-30");
+        createCommitment(currentPlan, "user-1", outcomeId1, "Current task");
+
+        String priorPlan = createPlan("user-1", "2026-03-23");
+        transitionPlan(priorPlan, "user-1", "LOCKED");
+
+        String priorOnlyPlan = createPlan("user-2", "2026-03-23");
+        transitionPlan(priorOnlyPlan, "user-2", "LOCKED");
+
+        mockMvc.perform(get("/api/dashboard/team")
+                        .param("date", "2026-03-30")
+                        .param("memberIds", "user-1", "user-2")
+                        .with(jwtAuth("manager-1", "MANAGER", "team-1", "user-1", "user-2")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.members[0].userId").value("user-1"))
+                .andExpect(jsonPath("$.members[0].priorWeekStartDate").value("2026-03-23"))
+                .andExpect(jsonPath("$.members[0].priorWeekStatus").value("LOCKED"))
+                .andExpect(jsonPath("$.members[1].userId").value("user-2"))
+                .andExpect(jsonPath("$.members[1].planId").isEmpty())
+                .andExpect(jsonPath("$.members[1].priorWeekStartDate").value("2026-03-23"))
+                .andExpect(jsonPath("$.members[1].priorWeekStatus").value("LOCKED"));
+    }
+
+    @Test
     void rallyCryCoverage_correctCounts() throws Exception {
         // user-1: 2 commitments to RC Alpha
         String planId1 = createPlan("user-1", "2026-03-30");
