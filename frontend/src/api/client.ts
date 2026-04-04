@@ -9,18 +9,23 @@ export interface ApiClient {
   delete(path: string): Promise<void>;
 }
 
+function requireAccessToken(userContext: HostContext): string {
+  const accessToken = userContext.accessToken.trim();
+  if (!accessToken) {
+    throw new Error('HostContext.accessToken is required for authenticated API requests');
+  }
+  return accessToken;
+}
+
 export function createApiClient(baseUrl: string, userContext: HostContext): ApiClient {
+  const accessToken = requireAccessToken(userContext);
+
   async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const url = `${baseUrl}${path}`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'X-User-Id': userContext.userId,
-      'X-User-Role': userContext.role,
-      'X-Team-Id': userContext.teamId,
+      Authorization: `Bearer ${accessToken}`,
     };
-    if (userContext.managerId) {
-      headers['X-Manager-Id'] = userContext.managerId;
-    }
 
     let response: Response;
     try {

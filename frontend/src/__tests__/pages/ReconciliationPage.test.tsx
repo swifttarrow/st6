@@ -107,6 +107,7 @@ vi.mock('../../context/ApiContext', () => ({
 
 vi.mock('../../context/UserContext', () => ({
   useUserContext: () => ({
+    accessToken: 'test-token',
     userId: 'user-1',
     role: 'IC',
     teamId: 'team-1',

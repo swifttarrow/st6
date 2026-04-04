@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:host-demo": "vite --open /host-demo.html",
     "build": "tsc && vite build",
+    "build:host-demo": "tsc && BUILD_SPA=1 vite build",
     "preview": "vite preview",
     "test": "vitest run"
   },

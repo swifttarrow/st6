@@ -47,7 +47,7 @@ const mockPlanReconciling = {
 function renderSidebar(role: 'IC' | 'MANAGER' | 'LEADERSHIP') {
   return render(
     <MemoryRouter initialEntries={['/commitments']}>
-      <UserContextProvider context={{ userId: 'test-user', role, teamId: 'team-test' }}>
+      <UserContextProvider context={{ accessToken: 'test-token', userId: 'test-user', role, teamId: 'team-test' }}>
         <Sidebar userRole={role} />
       </UserContextProvider>
     </MemoryRouter>,

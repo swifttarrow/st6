@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -6,6 +7,10 @@ const spa = process.env.BUILD_SPA === '1';
 const sharedServer = {
   proxy: {
     '/api': {
+      target: process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:8080',
+      changeOrigin: true,
+    },
+    '/demo-host': {
       target: process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:8080',
       changeOrigin: true,
     },
@@ -21,6 +26,12 @@ export default defineConfig(() => {
       build: {
         outDir: 'dist',
         emptyOutDir: true,
+        rollupOptions: {
+          input: {
+            standalone: resolve(__dirname, 'index.html'),
+            hostDemo: resolve(__dirname, 'host-demo.html'),
+          },
+        },
       },
     };
   }

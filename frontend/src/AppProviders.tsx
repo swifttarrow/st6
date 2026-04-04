@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import { HostContext } from './types/host-context';
 import { UserContextProvider } from './context/UserContext';
 import { ApiProvider } from './context/ApiContext';
@@ -14,13 +14,38 @@ const API_BASE_URL =
 export interface AppProvidersProps {
   context: HostContext;
   children: React.ReactNode;
+  router?: AppRouterConfig;
 }
 
-export function AppProviders({ context, children }: AppProvidersProps): React.ReactElement {
+export type AppRouterConfig =
+  | {
+      type?: 'browser';
+      basename?: string;
+    }
+  | {
+      type: 'memory';
+      initialEntries?: string[];
+      initialIndex?: number;
+    };
+
+function renderWithinRouter(children: React.ReactNode, router: AppRouterConfig | undefined): React.ReactElement {
+  if (router?.type === 'memory') {
+    return (
+      <MemoryRouter initialEntries={router.initialEntries} initialIndex={router.initialIndex}>
+        {children}
+      </MemoryRouter>
+    );
+  }
+
+  const basename = router?.type === 'browser' ? router.basename : undefined;
+  return <BrowserRouter basename={basename}>{children}</BrowserRouter>;
+}
+
+export function AppProviders({ context, children, router }: AppProvidersProps): React.ReactElement {
   return (
     <UserContextProvider context={context}>
       <ApiProvider baseUrl={API_BASE_URL} userContext={context}>
-        <BrowserRouter>{children}</BrowserRouter>
+        {renderWithinRouter(children, router)}
       </ApiProvider>
     </UserContextProvider>
   );

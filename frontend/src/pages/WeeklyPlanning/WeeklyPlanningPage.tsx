@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useApi } from '../../context/ApiContext';
 import { useUserContext } from '../../context/UserContext';
-import { DEFAULT_TEAM_MEMBER_IDS } from '../../constants/teamMemberIds';
 import { Badge } from '../../components/Badge/Badge';
 import { ActionBar } from '../../components/ActionBar/ActionBar';
 import { WeekNavigator } from '../../components/WeekNavigator/WeekNavigator';
@@ -82,8 +81,12 @@ export const WeeklyPlanningPage: React.FC = () => {
 
   const memberIdsFromUrl = useMemo(() => {
     const ids = searchParams.getAll('memberIds');
-    return ids.length > 0 ? ids : DEFAULT_TEAM_MEMBER_IDS;
-  }, [searchParams]);
+    if (ids.length > 0) return ids;
+    if (userContext.directReportIds && userContext.directReportIds.length > 0) {
+      return userContext.directReportIds;
+    }
+    return [];
+  }, [searchParams, userContext.directReportIds]);
 
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
   const [commitments, setCommitments] = useState<Commitment[]>([]);

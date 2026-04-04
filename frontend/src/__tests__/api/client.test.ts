@@ -4,10 +4,12 @@ import { ApiError } from '../../api/types';
 import { HostContext } from '../../types/host-context';
 
 const mockContext: HostContext = {
+  accessToken: 'test-jwt-token',
   userId: 'user-1',
   role: 'IC',
   teamId: 'team-1',
   managerId: 'mgr-1',
+  directReportIds: ['alice', 'bob'],
 };
 
 const BASE_URL = 'http://localhost:8080';
@@ -39,7 +41,7 @@ describe('createApiClient', () => {
     vi.restoreAllMocks();
   });
 
-  it('sets auth headers on every request', async () => {
+  it('sends bearer auth for authenticated requests', async () => {
     mockFetchResponse({ data: 'ok' });
     const client = createApiClient(BASE_URL, mockContext);
     await client.get('/api/test');
@@ -48,23 +50,17 @@ describe('createApiClient', () => {
     expect(fetchFn).toHaveBeenCalledOnce();
     const [, options] = fetchFn.mock.calls[0] as [string, RequestInit];
     const headers = options.headers as Record<string, string>;
-    expect(headers['X-User-Id']).toBe('user-1');
-    expect(headers['X-User-Role']).toBe('IC');
-    expect(headers['X-Team-Id']).toBe('team-1');
-    expect(headers['X-Manager-Id']).toBe('mgr-1');
+    expect(headers.Authorization).toBe('Bearer test-jwt-token');
     expect(headers['Content-Type']).toBe('application/json');
   });
 
-  it('omits X-Manager-Id when managerId is undefined', async () => {
-    mockFetchResponse({ data: 'ok' });
-    const ctx: HostContext = { userId: 'u1', role: 'IC', teamId: 't1' };
-    const client = createApiClient(BASE_URL, ctx);
-    await client.get('/api/test');
-
-    const fetchFn = globalThis.fetch as ReturnType<typeof vi.fn>;
-    const [, options] = fetchFn.mock.calls[0] as [string, RequestInit];
-    const headers = options.headers as Record<string, string>;
-    expect(headers['X-Manager-Id']).toBeUndefined();
+  it('throws when accessToken is missing', () => {
+    expect(() => createApiClient(BASE_URL, {
+      userId: 'u1',
+      role: 'IC',
+      teamId: 't1',
+      accessToken: '   ',
+    })).toThrow('HostContext.accessToken is required for authenticated API requests');
   });
 
   it('prepends base URL to the path', async () => {

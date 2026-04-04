@@ -1,11 +1,15 @@
+/* Flex row: sidebar stays in document flow so embedded mounts (e.g. host demo) are not
+   covered by a viewport-fixed rail. */
 .shell {
   display: flex;
+  align-items: stretch;
   min-height: 100vh;
+  width: 100%;
 }
 
 .content {
   flex: 1;
-  margin-left: var(--sidebar-width);
+  min-width: 0;
   padding: var(--content-padding);
   max-width: var(--content-max-width);
 }

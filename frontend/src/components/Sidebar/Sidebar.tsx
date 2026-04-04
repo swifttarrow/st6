@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { useReconciliationNavAvailable } from '../../hooks/useReconciliationNavAvailable';
 import { useUserContext } from '../../context/UserContext';
-import { clearDevSession } from '../../dev/devSession';
 import styles from './Sidebar.module.css';
 
 type UserRole = 'IC' | 'MANAGER' | 'LEADERSHIP';
@@ -127,16 +126,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
           {userId}
         </span>
         <span className={styles.userRole}>{userRole}</span>
-        <button
-          type="button"
-          className={styles.logoutButton}
-          onClick={() => {
-            clearDevSession();
-            window.location.reload();
-          }}
-        >
-          Log out
-        </button>
       </div>
     </aside>
   );

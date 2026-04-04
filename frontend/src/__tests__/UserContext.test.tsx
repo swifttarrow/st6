@@ -11,7 +11,7 @@ const TestConsumer: React.FC = () => {
 describe('UserContext', () => {
   it('provides context values to children', () => {
     render(
-      <UserContextProvider context={{ userId: '1', role: 'IC', teamId: 't1' }}>
+      <UserContextProvider context={{ accessToken: 'test-token', userId: '1', role: 'IC', teamId: 't1' }}>
         <TestConsumer />
       </UserContextProvider>
     );

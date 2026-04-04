@@ -2,14 +2,14 @@ import { ApiClient } from './client';
 import { TeamOverviewResponse, OrgOverviewResponse, ExecutiveOverviewResponse } from './types';
 
 export interface DashboardApi {
-  getTeamOverview(date: string, memberIds: string[]): Promise<TeamOverviewResponse>;
+  getTeamOverview(date: string, memberIds?: string[]): Promise<TeamOverviewResponse>;
   getOrgOverview(date: string): Promise<OrgOverviewResponse>;
   getExecutiveOverview(date: string): Promise<ExecutiveOverviewResponse>;
 }
 
 export function createDashboardApi(client: ApiClient): DashboardApi {
   return {
-    getTeamOverview(date: string, memberIds: string[]): Promise<TeamOverviewResponse> {
+    getTeamOverview(date: string, memberIds: string[] = []): Promise<TeamOverviewResponse> {
       const params = new URLSearchParams();
       params.set('date', date);
       for (const id of memberIds) {

@@ -10,7 +10,6 @@ import { CoveragePanel } from '../../components/CoveragePanel/CoveragePanel';
 import { ErrorToast } from '../../components/ErrorToast/ErrorToast';
 import { TeamOverviewResponse } from '../../api/types';
 import type { CoveragePanelItem } from '../../components/CoveragePanel/CoveragePanel';
-import { DEFAULT_TEAM_MEMBER_IDS } from '../../constants/teamMemberIds';
 import { getTodayDate, formatWeekRange } from '../../utils/weekDates';
 import styles from './ManagerDashboardPage.module.css';
 
@@ -22,8 +21,12 @@ export const ManagerDashboardPage: React.FC = () => {
 
   const memberIds = useMemo(() => {
     const ids = searchParams.getAll('memberIds');
-    return ids.length > 0 ? ids : DEFAULT_TEAM_MEMBER_IDS;
-  }, [searchParams]);
+    if (ids.length > 0) return ids;
+    if (userContext.directReportIds && userContext.directReportIds.length > 0) {
+      return userContext.directReportIds;
+    }
+    return [];
+  }, [searchParams, userContext.directReportIds]);
 
   const [currentDate, setCurrentDate] = useState(getTodayDate);
   const [data, setData] = useState<TeamOverviewResponse | null>(null);

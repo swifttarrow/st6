@@ -94,6 +94,8 @@ const mockApi = {
   },
 };
 
+const mockDirectReportIds = ['alice', 'bob'];
+
 vi.mock('../../context/ApiContext', () => ({
   useApi: () => mockApi,
 }));
@@ -102,9 +104,11 @@ let mockRole = 'MANAGER';
 
 vi.mock('../../context/UserContext', () => ({
   useUserContext: () => ({
+    accessToken: 'test-token',
     userId: 'manager-1',
     role: mockRole,
     teamId: 'team-1',
+    directReportIds: mockDirectReportIds,
   }),
 }));
 

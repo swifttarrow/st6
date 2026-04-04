@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { HostContext } from './types/host-context';
-import { AppProviders } from './AppProviders';
+import { AppProviders, AppRouterConfig } from './AppProviders';
 import { Shell } from './components/Shell/Shell';
 import { AppRouter } from './router';
 
@@ -13,13 +13,23 @@ export { PageHeader } from './components/PageHeader/PageHeader';
 export { Badge } from './components/Badge/Badge';
 export type { BadgeVariant } from './components/Badge/Badge';
 export { AppProviders } from './AppProviders';
+export type { AppRouterConfig };
 
 let root: Root | null = null;
 
-export function mount(container: HTMLElement, context: HostContext): void {
+export interface MountOptions {
+  router?: AppRouterConfig;
+}
+
+export function mount(container: HTMLElement, context: HostContext, options: MountOptions = {}): void {
+  if (root) {
+    root.unmount();
+    root = null;
+  }
+
   root = createRoot(container);
   root.render(
-    <AppProviders context={context}>
+    <AppProviders context={context} router={options.router}>
       <Shell>
         <AppRouter />
       </Shell>

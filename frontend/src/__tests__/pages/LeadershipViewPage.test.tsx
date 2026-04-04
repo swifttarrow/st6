@@ -89,6 +89,7 @@ let mockRole = 'LEADERSHIP';
 
 vi.mock('../../context/UserContext', () => ({
   useUserContext: () => ({
+    accessToken: 'test-token',
     userId: 'leader-1',
     role: mockRole,
     teamId: 'team-1',
