@@ -7,7 +7,8 @@ public record TeamOverviewResponse(
         LocalDate weekStartDate,
         Stats stats,
         List<TeamMemberSummary> members,
-        List<RallyCryCoverage> rallyCryCoverage
+        List<RallyCryCoverage> rallyCryCoverage,
+        List<DefiningObjectiveCoverage> definingObjectiveCoverage
 ) {
 
     public record Stats(

@@ -154,7 +154,14 @@ class ManagerDashboardControllerTest {
                 .andExpect(jsonPath("$.rallyCryCoverage[0].memberCount").value(2))
                 .andExpect(jsonPath("$.rallyCryCoverage[1].rallyCryName").value("Rally Cry Beta"))
                 .andExpect(jsonPath("$.rallyCryCoverage[1].commitmentCount").value(1))
-                .andExpect(jsonPath("$.rallyCryCoverage[1].memberCount").value(1));
+                .andExpect(jsonPath("$.rallyCryCoverage[1].memberCount").value(1))
+                .andExpect(jsonPath("$.definingObjectiveCoverage", hasSize(2)))
+                .andExpect(jsonPath("$.definingObjectiveCoverage[0].definingObjectiveName").value("DO Alpha"))
+                .andExpect(jsonPath("$.definingObjectiveCoverage[0].commitmentCount").value(3))
+                .andExpect(jsonPath("$.definingObjectiveCoverage[0].memberCount").value(2))
+                .andExpect(jsonPath("$.definingObjectiveCoverage[1].definingObjectiveName").value("DO Beta"))
+                .andExpect(jsonPath("$.definingObjectiveCoverage[1].commitmentCount").value(1))
+                .andExpect(jsonPath("$.definingObjectiveCoverage[1].memberCount").value(1));
     }
 
     @Test
@@ -173,7 +180,9 @@ class ManagerDashboardControllerTest {
                         .header("X-User-Role", "MANAGER"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.rallyCryCoverage[0].rallyCryName").value("Rally Cry Alpha"))
-                .andExpect(jsonPath("$.rallyCryCoverage[0].consecutiveZeroWeeks").value(2));
+                .andExpect(jsonPath("$.rallyCryCoverage[0].consecutiveZeroWeeks").value(2))
+                .andExpect(jsonPath("$.definingObjectiveCoverage[0].definingObjectiveName").value("DO Alpha"))
+                .andExpect(jsonPath("$.definingObjectiveCoverage[0].consecutiveZeroWeeks").value(2));
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.wct.dashboard.service;
 import com.wct.commitment.ActualStatus;
 import com.wct.commitment.entity.Commitment;
 import com.wct.commitment.repository.CommitmentRepository;
+import com.wct.dashboard.dto.DefiningObjectiveCoverage;
 import com.wct.dashboard.dto.RallyCryCoverage;
 import com.wct.dashboard.dto.TeamMemberSummary;
 import com.wct.dashboard.dto.TeamOverviewResponse;
@@ -10,7 +11,9 @@ import com.wct.plan.PlanStatus;
 import com.wct.plan.WeekDateUtil;
 import com.wct.plan.entity.WeeklyPlan;
 import com.wct.plan.repository.WeeklyPlanRepository;
+import com.wct.rcdo.entity.DefiningObjective;
 import com.wct.rcdo.entity.RallyCry;
+import com.wct.rcdo.repository.DefiningObjectiveRepository;
 import com.wct.rcdo.repository.RallyCryRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
@@ -28,15 +31,18 @@ public class ManagerDashboardService {
     private final WeeklyPlanRepository weeklyPlanRepository;
     private final CommitmentRepository commitmentRepository;
     private final RallyCryRepository rallyCryRepository;
+    private final DefiningObjectiveRepository definingObjectiveRepository;
     private final EntityManager entityManager;
 
     public ManagerDashboardService(WeeklyPlanRepository weeklyPlanRepository,
                                    CommitmentRepository commitmentRepository,
                                    RallyCryRepository rallyCryRepository,
+                                   DefiningObjectiveRepository definingObjectiveRepository,
                                    EntityManager entityManager) {
         this.weeklyPlanRepository = weeklyPlanRepository;
         this.commitmentRepository = commitmentRepository;
         this.rallyCryRepository = rallyCryRepository;
+        this.definingObjectiveRepository = definingObjectiveRepository;
         this.entityManager = entityManager;
     }
 
@@ -48,7 +54,8 @@ public class ManagerDashboardService {
                     weekStart,
                     new TeamOverviewResponse.Stats(0, 0, 0, null),
                     List.of(),
-                    buildRallyCryCoverage(List.of(), weekStart)
+                    buildRallyCryCoverage(List.of(), weekStart),
+                    buildDefiningObjectiveCoverage(List.of(), weekStart)
             );
         }
 
@@ -118,12 +125,14 @@ public class ManagerDashboardService {
 
         // Rally Cry coverage
         List<RallyCryCoverage> rallyCryCoverage = buildRallyCryCoverage(memberIds, weekStart);
+        List<DefiningObjectiveCoverage> definingObjectiveCoverage = buildDefiningObjectiveCoverage(memberIds, weekStart);
 
         return new TeamOverviewResponse(
                 weekStart,
                 new TeamOverviewResponse.Stats(memberIds.size(), plansLocked, totalCommitments, avgCompletionRate),
                 members,
-                rallyCryCoverage
+                rallyCryCoverage,
+                definingObjectiveCoverage
         );
     }
 
@@ -240,6 +249,89 @@ public class ManagerDashboardService {
              .setParameter("memberIds", memberIds)
              .setParameter("weekStart", priorWeek)
              .getSingleResult();
+
+            if (commitments == 0) {
+                count++;
+            } else {
+                break;
+            }
+        }
+        return count;
+    }
+
+    private List<DefiningObjectiveCoverage> buildDefiningObjectiveCoverage(List<String> memberIds, LocalDate weekStart) {
+        List<RallyCry> activeRCs = rallyCryRepository.findByArchivedAtIsNullOrderBySortOrder();
+        if (activeRCs.isEmpty()) {
+            return List.of();
+        }
+
+        Map<UUID, Integer> commitmentCountByDO = new HashMap<>();
+        Map<UUID, Integer> memberCountByDO = new HashMap<>();
+
+        if (!memberIds.isEmpty()) {
+            List<Object[]> coverageResults = entityManager.createQuery(
+                    "SELECT d.id, COUNT(c), COUNT(DISTINCT wp.userId) " +
+                    "FROM Commitment c " +
+                    "JOIN WeeklyPlan wp ON c.weeklyPlanId = wp.id " +
+                    "JOIN Outcome o ON c.outcomeId = o.id " +
+                    "JOIN DefiningObjective d ON o.definingObjectiveId = d.id " +
+                    "WHERE wp.userId IN :memberIds AND wp.weekStartDate = :weekStart " +
+                    "AND d.archivedAt IS NULL " +
+                    "GROUP BY d.id",
+                    Object[].class
+            ).setParameter("memberIds", memberIds)
+                    .setParameter("weekStart", weekStart)
+                    .getResultList();
+
+            for (Object[] row : coverageResults) {
+                UUID doId = (UUID) row[0];
+                commitmentCountByDO.put(doId, ((Long) row[1]).intValue());
+                memberCountByDO.put(doId, ((Long) row[2]).intValue());
+            }
+        }
+
+        List<DefiningObjectiveCoverage> result = new ArrayList<>();
+        for (RallyCry rc : activeRCs) {
+            List<DefiningObjective> dos = definingObjectiveRepository
+                    .findByRallyCryIdAndArchivedAtIsNullOrderBySortOrder(rc.getId());
+            for (DefiningObjective d : dos) {
+                int commitmentCount = commitmentCountByDO.getOrDefault(d.getId(), 0);
+                int memberCount = memberCountByDO.getOrDefault(d.getId(), 0);
+                int consecutiveZeroWeeks = computeConsecutiveZeroWeeksForDO(d.getId(), memberIds, weekStart);
+                result.add(new DefiningObjectiveCoverage(
+                        d.getId(),
+                        d.getName(),
+                        rc.getId(),
+                        rc.getName(),
+                        commitmentCount,
+                        memberCount,
+                        consecutiveZeroWeeks
+                ));
+            }
+        }
+        return result;
+    }
+
+    private int computeConsecutiveZeroWeeksForDO(UUID definingObjectiveId, List<String> memberIds, LocalDate weekStart) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return 0;
+        }
+
+        int count = 0;
+        for (int i = 1; i <= 10; i++) {
+            LocalDate priorWeek = weekStart.minusWeeks(i);
+            Long commitments = entityManager.createQuery(
+                    "SELECT COUNT(c) FROM Commitment c " +
+                    "JOIN WeeklyPlan wp ON c.weeklyPlanId = wp.id " +
+                    "JOIN Outcome o ON c.outcomeId = o.id " +
+                    "WHERE o.definingObjectiveId = :doId " +
+                    "AND wp.userId IN :memberIds " +
+                    "AND wp.weekStartDate = :weekStart",
+                    Long.class
+            ).setParameter("doId", definingObjectiveId)
+                    .setParameter("memberIds", memberIds)
+                    .setParameter("weekStart", priorWeek)
+                    .getSingleResult();
 
             if (commitments == 0) {
                 count++;
