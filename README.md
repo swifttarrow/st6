@@ -20,8 +20,37 @@ A narrated walkthrough of the product is in the repo root:
 
 ## Local development
 
-1. **Backend** (from `backend/`): run the Spring Boot app (default API on port `8080`).
-2. **Frontend** (from `frontend/`): `npm install` then `npm run dev`, with the API proxied to `http://localhost:8080` (see `frontend/vite.config.ts`).
-3. Optional: with the backend up, run `./seed.sh` from the repo root to load sample RCDO data and plans (requires `curl` and `jq`).
+1. **Backend** (from `backend/`): run the Spring Boot app on port `8080`.
+2. **Frontend remote** (from `frontend/`): `npm install` then `npm run dev`.
+3. **Host-shell demo** (from `frontend/`): `npm run dev:host-demo` to open the host integration page at `/host-demo.html`.
+4. Optional richer sample data: use PostgreSQL plus [`backend/scripts/seed.sh`](./backend/scripts/seed.sh). The old repo-root `seed.sh` is from the earlier header-auth prototype and is no longer the recommended path.
+
+## Authentication
+
+- **All environments:** the backend now authenticates API requests with Bearer JWTs only. Browser-supplied identity headers are no longer accepted.
+- **Local development:** the standalone Vite page no longer offers a local login picker. Mount the micro-frontend from a host app or inject `window.__WCT_HOST_CONTEXT__` with a valid JWT-backed context before loading [frontend/index.html](/Users/swifttarrow/learning/gauntlet/hiring-partners/st6/frontend/index.html).
+- **Backend JWT config:** provide either standard Spring resource-server JWT configuration (`issuer-uri` / `jwk-set-uri`) or an `app.auth.hmac-secret` value for local/test signing.
+- **Host-shell demo mode:** set `APP_DEMO_HOST_ENABLED=true` alongside `APP_AUTH_HMAC_SECRET=...` to expose a demo-only `/demo-host/context` endpoint that mints local review tokens for the host shell.
+- **Expected JWT claims by default:** `sub` (user ID), `role`, `team_id`, `manager_id`, and `direct_reports`. Claim names are configurable in [backend/src/main/resources/application.yml](./backend/src/main/resources/application.yml).
+- **Micro-frontend host contract:** the exported `HostContext` now requires an `accessToken` for authenticated API calls and supports optional `directReportIds` for manager UI defaults.
+
+## Host demo
+
+This repo includes a lightweight host-shell demonstration so reviewers can see the micro-frontend mounted the way a real PA host app would.
+
+1. Start the backend:
+   `cd backend && APP_AUTH_HMAC_SECRET=local-dev-jwt-secret-0123456789abcdef APP_DEMO_HOST_ENABLED=true ./gradlew bootRun`
+2. Start the frontend host demo:
+   `cd frontend && npm install && npm run dev:host-demo`
+3. Open `http://localhost:5173/host-demo.html`
+
+What the demo shows:
+
+- The host shell requests `/demo-host/context?persona=...`
+- The backend returns a JWT-backed host context for IC, manager, or leadership review personas
+- The host shell calls the exported `mount(container, context)` contract
+- The remote runs inside a memory router so the host keeps control of the top-level URL
+
+The demo endpoint is intentionally local-only scaffolding for assignment review. It is not part of the production auth story.
 
 Product context and specs live under `docs/prds/` and `docs/specs/`.
