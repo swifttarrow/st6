@@ -197,8 +197,10 @@ public class CommitmentService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Commitment not found in this plan");
         }
 
-        commitment.setActualStatus(req.actualStatus());
-        commitment.setReconciliationNotes(req.reconciliationNotes());
+        commitment.setActualStatus(req.getActualStatus());
+        if (req.hasReconciliationNotes()) {
+            commitment.setReconciliationNotes(req.getReconciliationNotes());
+        }
 
         commitment = commitmentRepository.saveAndFlush(commitment);
         entityManager.refresh(commitment);
@@ -212,18 +214,20 @@ public class CommitmentService {
         verifyReconciling(plan);
 
         List<CommitmentResponse> results = new ArrayList<>();
-        for (BulkReconcileRequest.BulkReconcileItem item : req.items()) {
-            Commitment commitment = commitmentRepository.findById(item.commitmentId())
+        for (BulkReconcileRequest.BulkReconcileItem item : req.getItems()) {
+            Commitment commitment = commitmentRepository.findById(item.getCommitmentId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                            "Commitment not found: " + item.commitmentId()));
+                            "Commitment not found: " + item.getCommitmentId()));
 
             if (!commitment.getWeeklyPlanId().equals(planId)) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Commitment not found in this plan: " + item.commitmentId());
+                        "Commitment not found in this plan: " + item.getCommitmentId());
             }
 
-            commitment.setActualStatus(item.actualStatus());
-            commitment.setReconciliationNotes(item.reconciliationNotes());
+            commitment.setActualStatus(item.getActualStatus());
+            if (item.hasReconciliationNotes()) {
+                commitment.setReconciliationNotes(item.getReconciliationNotes());
+            }
             commitment = commitmentRepository.saveAndFlush(commitment);
             entityManager.refresh(commitment);
             results.add(buildResponse(commitment));

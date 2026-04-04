@@ -214,6 +214,25 @@ class ReconciliationTest {
     }
 
     @Test
+    void omittedReconciliationNotes_doNotClearExistingNotes() throws Exception {
+        String planId = createPlan("user-1", "2026-03-30");
+        String outcomeId = createFullRcdoPath();
+        String commitmentId = createCommitment(planId, "user-1", "Task A", outcomeId);
+        transitionPlan(planId, "user-1", "LOCKED");
+        transitionPlan(planId, "user-1", "RECONCILING");
+
+        reconcileCommitment(planId, "user-1", commitmentId, ActualStatus.COMPLETED, "Original note");
+
+        mockMvc.perform(patch("/api/plans/" + planId + "/commitments/" + commitmentId + "/reconcile")
+                        .with(jwtAuth("user-1", "IC"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"actualStatus\":\"PARTIALLY_COMPLETED\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.actualStatus").value("PARTIALLY_COMPLETED"))
+                .andExpect(jsonPath("$.reconciliationNotes").value("Original note"));
+    }
+
+    @Test
     void nonOwnerIC_returns403() throws Exception {
         String planId = createPlan("user-1", "2026-03-30");
         String outcomeId = createFullRcdoPath();
