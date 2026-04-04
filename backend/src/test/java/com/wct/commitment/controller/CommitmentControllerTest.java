@@ -255,6 +255,39 @@ class CommitmentControllerTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void nonOwnerIC_listCommitments_returns403() throws Exception {
+        String planId = createPlan("user-1", "2026-03-30");
+
+        mockMvc.perform(get("/api/plans/" + planId + "/commitments")
+                        .header("X-User-Id", "user-2")
+                        .header("X-User-Role", "IC"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void manager_listCommitments_forOtherUserPlan_returns200() throws Exception {
+        String planId = createPlan("user-1", "2026-03-30");
+
+        mockMvc.perform(get("/api/plans/" + planId + "/commitments")
+                        .header("X-User-Id", "manager-1")
+                        .header("X-User-Role", "MANAGER"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    void nonOwnerIC_getCommitment_returns403() throws Exception {
+        String planId = createPlan("user-1", "2026-03-30");
+        String outcomeId = createFullRcdoPath();
+        String commitmentId = createCommitment(planId, "user-1", "Task", outcomeId);
+
+        mockMvc.perform(get("/api/plans/" + planId + "/commitments/" + commitmentId)
+                        .header("X-User-Id", "user-2")
+                        .header("X-User-Role", "IC"))
+                .andExpect(status().isForbidden());
+    }
+
     // --- RCDO path tests ---
 
     @Test

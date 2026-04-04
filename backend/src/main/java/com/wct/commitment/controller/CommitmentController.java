@@ -31,14 +31,16 @@ public class CommitmentController {
 
     @GetMapping
     public ResponseEntity<List<CommitmentResponse>> list(@PathVariable UUID planId) {
-        List<CommitmentResponse> responses = commitmentService.listByPlan(planId);
+        UserContext user = UserContextHolder.get();
+        List<CommitmentResponse> responses = commitmentService.listByPlan(planId, user);
         return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/{commitmentId}")
     public ResponseEntity<CommitmentResponse> getById(@PathVariable UUID planId,
                                                       @PathVariable UUID commitmentId) {
-        CommitmentResponse response = commitmentService.getById(planId, commitmentId);
+        UserContext user = UserContextHolder.get();
+        CommitmentResponse response = commitmentService.getById(planId, commitmentId, user);
         return ResponseEntity.ok(response);
     }
 

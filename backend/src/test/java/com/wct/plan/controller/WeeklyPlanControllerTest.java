@@ -222,6 +222,17 @@ class WeeklyPlanControllerTest {
                 .andExpect(jsonPath("$[0].triggeredBy").value("user-1"));
     }
 
+    @Test
+    void getTransitions_nonOwnerIC_returns403() throws Exception {
+        String planId = createPlan("user-1", "2026-03-30");
+        transitionPlan(planId, "user-1", "LOCKED");
+
+        mockMvc.perform(get(BASE_URL + "/" + planId + "/transitions")
+                        .header("X-User-Id", "user-2")
+                        .header("X-User-Role", "IC"))
+                .andExpect(status().isForbidden());
+    }
+
     // --- List my plans (no auto-create) ---
 
     @Test

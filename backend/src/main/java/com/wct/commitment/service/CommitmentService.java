@@ -77,12 +77,14 @@ public class CommitmentService {
         return buildResponse(commitment);
     }
 
-    public List<CommitmentResponse> listByPlan(UUID planId) {
+    public List<CommitmentResponse> listByPlan(UUID planId, UserContext user) {
+        weeklyPlanService.getPlanWithAuthCheck(planId, user);
         List<Commitment> commitments = commitmentRepository.findByWeeklyPlanIdOrderByPriority(planId);
         return commitments.stream().map(this::buildResponse).collect(Collectors.toList());
     }
 
-    public CommitmentResponse getById(UUID planId, UUID commitmentId) {
+    public CommitmentResponse getById(UUID planId, UUID commitmentId, UserContext user) {
+        weeklyPlanService.getPlanWithAuthCheck(planId, user);
         Commitment commitment = commitmentRepository.findById(commitmentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Commitment not found"));
 

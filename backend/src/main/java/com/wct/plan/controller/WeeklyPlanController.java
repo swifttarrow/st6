@@ -111,6 +111,8 @@ public class WeeklyPlanController {
 
     @GetMapping("/{id}/transitions")
     public ResponseEntity<List<PlanTransitionResponse>> getTransitions(@PathVariable UUID id) {
+        UserContext user = UserContextHolder.get();
+        weeklyPlanService.getPlanWithAuthCheck(id, user);
         return ResponseEntity.ok(
                 weeklyPlanService.getTransitions(id).stream()
                         .map(PlanTransitionResponse::from)
