@@ -33,12 +33,16 @@ export function isCurrentWeekMonday(dateStr: string): boolean {
   return getMonday(getTodayDate()) === getMonday(dateStr);
 }
 
-export function formatWeekRange(dateStr: string): string {
+export function formatWeekSpan(dateStr: string): string {
   const monday = getMonday(dateStr);
   const [year, month, day] = monday.split('-').map(Number);
   const mon = new Date(year, month - 1, day);
   const fri = new Date(year, month - 1, day + 4);
   const monLabel = mon.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const friLabel = fri.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return `Week of ${monLabel} \u2013 ${friLabel}, ${year}`;
+  return `${monLabel} – ${friLabel}, ${year}`;
+}
+
+export function formatWeekRange(dateStr: string): string {
+  return `Week of ${formatWeekSpan(dateStr)}`;
 }

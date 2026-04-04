@@ -8,12 +8,8 @@ interface WeekNavigatorProps {
   onWeekChange: (date: string) => void;
 }
 
-function isCurrentWeek(dateStr: string): boolean {
-  return isCurrentWeekMonday(dateStr);
-}
-
 function formatWeekLabel(dateStr: string): string {
-  if (isCurrentWeek(dateStr)) {
+  if (isCurrentWeekMonday(dateStr)) {
     return 'This Week';
   }
   const monday = getMonday(dateStr);
@@ -27,7 +23,7 @@ function formatWeekLabel(dateStr: string): string {
 }
 
 export const WeekNavigator: React.FC<WeekNavigatorProps> = ({ currentDate, onWeekChange }) => {
-  const isCurrentWk = useMemo(() => isCurrentWeek(currentDate), [currentDate]);
+  const isCurrentWk = useMemo(() => isCurrentWeekMonday(currentDate), [currentDate]);
   const label = useMemo(() => formatWeekLabel(currentDate), [currentDate]);
 
   const handlePrev = useCallback(() => {

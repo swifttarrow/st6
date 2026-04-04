@@ -21,7 +21,7 @@ import {
   MyPlanSummary,
 } from '../../api/types';
 import type { BadgeVariant } from '../../components/Badge/Badge';
-import { addWeeks, getMonday, getTodayDate } from '../../utils/weekDates';
+import { addWeeks, formatWeekSpan, getMonday, getTodayDate } from '../../utils/weekDates';
 import styles from './WeeklyPlanningPage.module.css';
 
 function formatWeekDate(dateStr: string): string {
@@ -34,14 +34,6 @@ function formatWeekDate(dateStr: string): string {
   });
 }
 
-function formatHistoryWeekLabel(weekStartDate: string): string {
-  const [year, month, day] = weekStartDate.split('-').map(Number);
-  const mon = new Date(year, month - 1, day);
-  const fri = new Date(year, month - 1, day + 4);
-  const a = mon.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const b = fri.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return `${a} – ${b}, ${year}`;
-}
 
 function getStatusBadge(status: PlanStatus): { label: string; variant: BadgeVariant } {
   switch (status) {
@@ -140,12 +132,23 @@ export const WeeklyPlanningPage: React.FC = () => {
       const loadTeamPicker =
         userContext.role === 'MANAGER' || userContext.role === 'LEADERSHIP';
 
-      const [fetchedTree, overview, fetchedCommitments] = await Promise.all([
+      const checkPriorWeek =
+        !planIdParam
+        && fetchedPlan.userId === userContext.userId
+        && fetchedPlan.status === 'DRAFT';
+
+      const [fetchedTree, overview, fetchedCommitments, priorWeekRows] = await Promise.all([
         api.rcdo.getTree(),
         loadTeamPicker
           ? api.dashboard.getTeamOverview(fetchedPlan.weekStartDate, memberIdsFromUrl).catch(() => null)
           : Promise.resolve(null),
         api.commitments.listCommitments(fetchedPlan.id),
+        checkPriorWeek
+          ? api.plans.listMyPlans(
+              addWeeks(fetchedPlan.weekStartDate, -1),
+              addWeeks(fetchedPlan.weekStartDate, -1),
+            ).catch(() => [] as MyPlanSummary[])
+          : Promise.resolve(null),
       ]);
 
       setPlan(fetchedPlan);
@@ -153,20 +156,10 @@ export const WeeklyPlanningPage: React.FC = () => {
       setTeamOverview(overview);
       setCommitments(fetchedCommitments);
 
-      if (
-        !planIdParam
-        && fetchedPlan.userId === userContext.userId
-        && fetchedPlan.status === 'DRAFT'
-      ) {
-        const priorMonday = addWeeks(fetchedPlan.weekStartDate, -1);
-        try {
-          const rows = await api.plans.listMyPlans(priorMonday, priorMonday);
-          const row = rows[0];
-          if (row && row.status !== 'RECONCILED') {
-            setPriorWeekAttention({ weekStartDate: row.weekStartDate, status: row.status });
-          }
-        } catch {
-          setPriorWeekAttention(null);
+      if (priorWeekRows) {
+        const row = priorWeekRows[0];
+        if (row && row.status !== 'RECONCILED') {
+          setPriorWeekAttention({ weekStartDate: row.weekStartDate, status: row.status });
         }
       }
     } catch (err) {
@@ -544,7 +537,7 @@ export const WeeklyPlanningPage: React.FC = () => {
                       key={row.id}
                       className={isCurrent ? styles.historyRowCurrent : undefined}
                     >
-                      <td>{formatHistoryWeekLabel(row.weekStartDate)}</td>
+                      <td>{formatWeekSpan(row.weekStartDate)}</td>
                       <td>{statusLabel(row.status)}</td>
                       <td>{row.commitmentCount}</td>
                       <td>
