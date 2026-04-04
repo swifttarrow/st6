@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ManagerDashboardPage } from '../../pages/ManagerDashboard/ManagerDashboardPage';
 
@@ -39,6 +39,26 @@ const mockTeamOverview = {
       consecutiveZeroWeeks: 0,
     },
     {
+      rallyCryId: 'rc-2',
+      rallyCryName: 'Rally Cry Beta',
+      commitmentCount: 0,
+      memberCount: 0,
+      consecutiveZeroWeeks: 4,
+    },
+  ],
+  definingObjectiveCoverage: [
+    {
+      definingObjectiveId: 'do-1',
+      definingObjectiveName: 'DO Alpha',
+      rallyCryId: 'rc-1',
+      rallyCryName: 'Rally Cry Alpha',
+      commitmentCount: 10,
+      memberCount: 4,
+      consecutiveZeroWeeks: 0,
+    },
+    {
+      definingObjectiveId: 'do-2',
+      definingObjectiveName: 'DO Beta',
       rallyCryId: 'rc-2',
       rallyCryName: 'Rally Cry Beta',
       commitmentCount: 0,
@@ -140,7 +160,7 @@ describe('ManagerDashboardPage', () => {
     expect(screen.getByText('Draft')).toBeDefined();
   });
 
-  it('renders coverage panel with zero-coverage warning', async () => {
+  it('renders coverage panels with zero-coverage warning', async () => {
     render(
       <MemoryRouter>
         <ManagerDashboardPage />
@@ -148,12 +168,16 @@ describe('ManagerDashboardPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('coverage-panel')).toBeDefined();
+      expect(screen.getByTestId('rally-cry-coverage-panel')).toBeDefined();
     });
 
-    expect(screen.getByText('Rally Cry Alpha')).toBeDefined();
-    expect(screen.getByText('Rally Cry Beta')).toBeDefined();
-    expect(screen.getByText('No coverage - 4 week running')).toBeDefined();
+    const rcPanel = screen.getByTestId('rally-cry-coverage-panel');
+    const doPanel = screen.getByTestId('defining-objective-coverage-panel');
+    expect(within(rcPanel).getByText('Rally Cry Alpha')).toBeDefined();
+    expect(within(rcPanel).getByText('Rally Cry Beta')).toBeDefined();
+    expect(within(doPanel).getByText('DO Alpha')).toBeDefined();
+    expect(within(doPanel).getByText('DO Beta')).toBeDefined();
+    expect(screen.getAllByText('No coverage - 4 week running').length).toBeGreaterThanOrEqual(2);
   });
 
   it('shows unlock button for locked plans', async () => {

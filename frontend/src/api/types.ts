@@ -185,6 +185,7 @@ export interface TeamOverviewResponse {
   };
   members: TeamMemberSummary[];
   rallyCryCoverage: RallyCryCoverage[];
+  definingObjectiveCoverage: DefiningObjectiveCoverage[];
 }
 
 export interface TeamMemberSummary {
@@ -197,6 +198,16 @@ export interface TeamMemberSummary {
 }
 
 export interface RallyCryCoverage {
+  rallyCryId: string;
+  rallyCryName: string;
+  commitmentCount: number;
+  memberCount: number;
+  consecutiveZeroWeeks: number;
+}
+
+export interface DefiningObjectiveCoverage {
+  definingObjectiveId: string;
+  definingObjectiveName: string;
   rallyCryId: string;
   rallyCryName: string;
   commitmentCount: number;

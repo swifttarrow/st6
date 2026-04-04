@@ -107,6 +107,10 @@ export const WeeklyPlanningPage: React.FC = () => {
   const [teamOverview, setTeamOverview] = useState<TeamOverviewResponse | null>(null);
   const [myPlanHistory, setMyPlanHistory] = useState<MyPlanSummary[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [priorWeekAttention, setPriorWeekAttention] = useState<{
+    weekStartDate: string;
+    status: PlanStatus;
+  } | null>(null);
 
   const handleWeekChange = useCallback(
     (nextDate: string) => {
@@ -128,6 +132,7 @@ export const WeeklyPlanningPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
+      setPriorWeekAttention(null);
       const fetchedPlan = planIdParam
         ? await api.plans.getPlanById(planIdParam)
         : await api.plans.getPlan(weekMonday);
@@ -147,12 +152,29 @@ export const WeeklyPlanningPage: React.FC = () => {
       setTree(fetchedTree);
       setTeamOverview(overview);
       setCommitments(fetchedCommitments);
+
+      if (
+        !planIdParam
+        && fetchedPlan.userId === userContext.userId
+        && fetchedPlan.status === 'DRAFT'
+      ) {
+        const priorMonday = addWeeks(fetchedPlan.weekStartDate, -1);
+        try {
+          const rows = await api.plans.listMyPlans(priorMonday, priorMonday);
+          const row = rows[0];
+          if (row && row.status !== 'RECONCILED') {
+            setPriorWeekAttention({ weekStartDate: row.weekStartDate, status: row.status });
+          }
+        } catch {
+          setPriorWeekAttention(null);
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
       setLoading(false);
     }
-  }, [api, planIdParam, weekMonday, userContext.role, memberIdsFromUrl]);
+  }, [api, planIdParam, weekMonday, userContext.role, userContext.userId, memberIdsFromUrl]);
 
   useEffect(() => {
     loadData();
@@ -279,6 +301,7 @@ export const WeeklyPlanningPage: React.FC = () => {
       if (editingCommitment) {
         await api.commitments.updateCommitment(plan.id, editingCommitment.id, {
           description: data.description,
+          outcomeId: data.outcomeId,
         });
       } else {
         await api.commitments.createCommitment(plan.id, {
@@ -353,6 +376,8 @@ export const WeeklyPlanningPage: React.FC = () => {
   const isDraft = plan.status === 'DRAFT';
   const showCarryForwardBanner =
     isDraft && carriedForwardCount > 0 && !bannerDismissed && !readOnly;
+  const showPriorWeekBanner =
+    isDraft && priorWeekAttention !== null && !readOnly;
   const treeIsEmpty = tree.length === 0;
   const showHistoryBlock = !planIdParam && !readOnly;
 
@@ -418,6 +443,20 @@ export const WeeklyPlanningPage: React.FC = () => {
             className={styles.staleLink}
           >
             Go to Reconciliation
+          </a>
+        </div>
+      )}
+
+      {showPriorWeekBanner && priorWeekAttention && (
+        <div className={styles.priorWeekBanner} data-testid="prior-week-reconcile-banner">
+          Your plan for the week of {formatWeekDate(priorWeekAttention.weekStartDate)} is still{' '}
+          <strong>{statusLabel(priorWeekAttention.status)}</strong>. Finish reconciliation for that week
+          before carry-forward can run.{' '}
+          <a
+            href={`/reconciliation?week=${encodeURIComponent(priorWeekAttention.weekStartDate)}`}
+            className={styles.priorWeekLink}
+          >
+            Reconcile prior week
           </a>
         </div>
       )}
@@ -540,6 +579,7 @@ export const WeeklyPlanningPage: React.FC = () => {
           mode={editingCommitment ? 'edit' : 'create'}
           commitment={editingCommitment ?? undefined}
           tree={tree}
+          searchOutcomes={(q) => api.rcdo.searchOutcomes(q)}
           onSubmit={handleFormSubmit}
           onCancel={handleFormCancel}
         />

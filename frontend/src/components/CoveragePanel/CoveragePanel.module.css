@@ -40,20 +40,33 @@
 
 .itemMain {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
 }
 
-.rcName {
+.labelBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.itemLabel {
   font-family: var(--font-body);
   font-size: 13px;
   font-weight: var(--weight-semibold);
   color: var(--color-grey-900);
 }
 
-.rcNameZero {
+.itemLabelZero {
   color: #DC2626;
+}
+
+.itemSubtitle {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--color-grey-500);
 }
 
 .badge {

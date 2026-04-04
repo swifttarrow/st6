@@ -198,6 +198,23 @@
   text-decoration: underline;
 }
 
+.priorWeekBanner {
+  padding: 12px 16px;
+  background: #EFF6FF;
+  border: 1px solid #3B82F6;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: #1E3A8A;
+}
+
+.priorWeekLink {
+  color: #1D4ED8;
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+}
+
 .readOnlyNote {
   font-family: var(--font-body);
   font-size: var(--text-sm);

@@ -9,6 +9,7 @@ import { TeamMembersTable } from '../../components/TeamMembersTable/TeamMembersT
 import { CoveragePanel } from '../../components/CoveragePanel/CoveragePanel';
 import { ErrorToast } from '../../components/ErrorToast/ErrorToast';
 import { TeamOverviewResponse } from '../../api/types';
+import type { CoveragePanelItem } from '../../components/CoveragePanel/CoveragePanel';
 import { DEFAULT_TEAM_MEMBER_IDS } from '../../constants/teamMemberIds';
 import { getTodayDate, formatWeekRange } from '../../utils/weekDates';
 import styles from './ManagerDashboardPage.module.css';
@@ -87,6 +88,23 @@ export const ManagerDashboardPage: React.FC = () => {
     return <div className={styles.error}>No data available</div>;
   }
 
+  const rallyCryItems: CoveragePanelItem[] = data.rallyCryCoverage.map((rc) => ({
+    id: rc.rallyCryId,
+    label: rc.rallyCryName,
+    commitmentCount: rc.commitmentCount,
+    memberCount: rc.memberCount,
+    consecutiveZeroWeeks: rc.consecutiveZeroWeeks,
+  }));
+
+  const definingObjectiveItems: CoveragePanelItem[] = data.definingObjectiveCoverage.map((d) => ({
+    id: d.definingObjectiveId,
+    label: d.definingObjectiveName,
+    subtitle: d.rallyCryName,
+    commitmentCount: d.commitmentCount,
+    memberCount: d.memberCount,
+    consecutiveZeroWeeks: d.consecutiveZeroWeeks,
+  }));
+
   const subtitle = formatWeekRange(currentDate);
   const completionDisplay = data.stats.avgCompletionRate !== null
     ? `${Math.round(data.stats.avgCompletionRate)}%`
@@ -116,7 +134,19 @@ export const ManagerDashboardPage: React.FC = () => {
           onViewPlan={handleViewPlan}
           onUnlock={handleUnlock}
         />
-        <CoveragePanel coverage={data.rallyCryCoverage} />
+        <div className={styles.coverageColumn}>
+          <CoveragePanel
+            title="Rally cry coverage"
+            items={rallyCryItems}
+            testId="rally-cry-coverage-panel"
+          />
+          <CoveragePanel
+            title="Defining objective coverage"
+            items={definingObjectiveItems}
+            itemTestIdPrefix="do-coverage-item"
+            testId="defining-objective-coverage-panel"
+          />
+        </div>
       </div>
 
       {toastError && (

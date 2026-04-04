@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Commitment, RcdoTreeRallyCry } from '../../api/types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Commitment, RcdoTreeRallyCry, OutcomeSearchResult } from '../../api/types';
 import styles from './CommitmentForm.module.css';
 
 interface OutcomeOption {
@@ -14,6 +14,28 @@ interface CommitmentFormProps {
   tree: RcdoTreeRallyCry[];
   onSubmit: (data: { description: string; outcomeId: string }) => void;
   onCancel: () => void;
+  /** When set, non-empty search text uses the API (debounced) in addition to the local tree filter. */
+  searchOutcomes?: (query: string) => Promise<OutcomeSearchResult[]>;
+}
+
+function outcomeResultsToOptions(results: OutcomeSearchResult[]): OutcomeOption[] {
+  return results.map((r) => ({
+    id: r.outcomeId,
+    title: r.outcomeName,
+    path: `${r.rallyCryName} > ${r.definingObjectiveName}`,
+  }));
+}
+
+function mergeSelectedOption(
+  options: OutcomeOption[],
+  selectedId: string,
+  fallback: OutcomeOption[],
+): OutcomeOption[] {
+  if (!selectedId || options.some((o) => o.id === selectedId)) {
+    return options;
+  }
+  const sel = fallback.find((o) => o.id === selectedId);
+  return sel ? [sel, ...options] : options;
 }
 
 export const CommitmentForm: React.FC<CommitmentFormProps> = ({
@@ -22,17 +44,20 @@ export const CommitmentForm: React.FC<CommitmentFormProps> = ({
   tree,
   onSubmit,
   onCancel,
+  searchOutcomes,
 }) => {
   const [description, setDescription] = useState(commitment?.description ?? '');
   const [outcomeId, setOutcomeId] = useState(commitment?.outcomeId ?? '');
   const [outcomeSearch, setOutcomeSearch] = useState('');
   const [errors, setErrors] = useState<{ description?: string; outcome?: string }>({});
+  const [remoteOptions, setRemoteOptions] = useState<OutcomeOption[] | null>(null);
+  const [remoteLoading, setRemoteLoading] = useState(false);
 
   const allOutcomes = useMemo<OutcomeOption[]>(() => {
     const results: OutcomeOption[] = [];
-    tree.forEach(rc => {
-      rc.definingObjectives.forEach(d => {
-        d.outcomes.forEach(o => {
+    tree.forEach((rc) => {
+      rc.definingObjectives.forEach((d) => {
+        d.outcomes.forEach((o) => {
           results.push({
             id: o.id,
             title: o.name,
@@ -44,13 +69,66 @@ export const CommitmentForm: React.FC<CommitmentFormProps> = ({
     return results;
   }, [tree]);
 
-  const filteredOutcomes = useMemo(() => {
+  const filteredLocal = useMemo(() => {
     if (!outcomeSearch.trim()) return allOutcomes;
     const query = outcomeSearch.toLowerCase();
     return allOutcomes.filter(
-      o => o.title.toLowerCase().includes(query) || o.path.toLowerCase().includes(query),
+      (o) => o.title.toLowerCase().includes(query) || o.path.toLowerCase().includes(query),
     );
   }, [allOutcomes, outcomeSearch]);
+
+  useEffect(() => {
+    if (!searchOutcomes) {
+      setRemoteOptions(null);
+      setRemoteLoading(false);
+      return;
+    }
+
+    const q = outcomeSearch.trim();
+    if (q.length === 0) {
+      setRemoteOptions(null);
+      setRemoteLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const handle = window.setTimeout(() => {
+      setRemoteLoading(true);
+      searchOutcomes(q)
+        .then((results) => {
+          if (!cancelled) {
+            setRemoteOptions(outcomeResultsToOptions(results));
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setRemoteOptions([]);
+          }
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setRemoteLoading(false);
+          }
+        });
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
+  }, [outcomeSearch, searchOutcomes]);
+
+  const useRemoteList = Boolean(searchOutcomes) && outcomeSearch.trim().length > 0;
+
+  const displayOutcomes = useMemo(() => {
+    if (!useRemoteList) {
+      return filteredLocal;
+    }
+    const base = remoteOptions ?? [];
+    return mergeSelectedOption(base, outcomeId, allOutcomes);
+  }, [useRemoteList, filteredLocal, remoteOptions, outcomeId, allOutcomes]);
+
+  const showRemoteLoading = useRemoteList && remoteLoading && remoteOptions === null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,7 +161,10 @@ export const CommitmentForm: React.FC<CommitmentFormProps> = ({
               className={styles.textInput}
               type="text"
               value={description}
-              onChange={e => { setDescription(e.target.value); setErrors(prev => ({ ...prev, description: undefined })); }}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                setErrors((prev) => ({ ...prev, description: undefined }));
+              }}
               placeholder="What will you accomplish this week?"
             />
             {errors.description && <div className={styles.errorText}>{errors.description}</div>}
@@ -99,21 +180,30 @@ export const CommitmentForm: React.FC<CommitmentFormProps> = ({
                 type="text"
                 placeholder="Search outcomes..."
                 value={outcomeSearch}
-                onChange={e => setOutcomeSearch(e.target.value)}
+                onChange={(e) => setOutcomeSearch(e.target.value)}
               />
-              {filteredOutcomes.length === 0 && (
+              {showRemoteLoading && (
+                <div className={styles.noOutcomes} data-testid="outcome-search-loading">
+                  Searching…
+                </div>
+              )}
+              {!showRemoteLoading && displayOutcomes.length === 0 && (
                 <div className={styles.noOutcomes}>No outcomes found</div>
               )}
-              {filteredOutcomes.map(o => (
-                <div
-                  key={o.id}
-                  className={`${styles.outcomeOption} ${outcomeId === o.id ? styles.outcomeOptionSelected : ''}`}
-                  onClick={() => { setOutcomeId(o.id); setErrors(prev => ({ ...prev, outcome: undefined })); }}
-                >
-                  <div>{o.title}</div>
-                  <div className={styles.outcomePath}>{o.path}</div>
-                </div>
-              ))}
+              {!showRemoteLoading
+                && displayOutcomes.map((o) => (
+                  <div
+                    key={o.id}
+                    className={`${styles.outcomeOption} ${outcomeId === o.id ? styles.outcomeOptionSelected : ''}`}
+                    onClick={() => {
+                      setOutcomeId(o.id);
+                      setErrors((prev) => ({ ...prev, outcome: undefined }));
+                    }}
+                  >
+                    <div>{o.title}</div>
+                    <div className={styles.outcomePath}>{o.path}</div>
+                  </div>
+                ))}
             </div>
             {errors.outcome && <div className={styles.errorText}>{errors.outcome}</div>}
           </div>

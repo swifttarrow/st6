@@ -1,41 +1,65 @@
 import React from 'react';
 import { Info } from 'lucide-react';
-import { RallyCryCoverage } from '../../api/types';
 import styles from './CoveragePanel.module.css';
 
-interface CoveragePanelProps {
-  coverage: RallyCryCoverage[];
+export interface CoveragePanelItem {
+  id: string;
+  label: string;
+  /** Optional context line (e.g. parent rally cry for a defining objective). */
+  subtitle?: string;
+  commitmentCount: number;
+  memberCount: number;
+  consecutiveZeroWeeks: number;
 }
 
-export const CoveragePanel: React.FC<CoveragePanelProps> = ({ coverage }) => {
+interface CoveragePanelProps {
+  title: string;
+  items: CoveragePanelItem[];
+  /** Prefix for data-testid on each row (default `coverage-item`). */
+  itemTestIdPrefix?: string;
+  /** Root `data-testid` for this panel (default `coverage-panel`). */
+  testId?: string;
+}
+
+export const CoveragePanel: React.FC<CoveragePanelProps> = ({
+  title,
+  items,
+  itemTestIdPrefix = 'coverage-item',
+  testId = 'coverage-panel',
+}) => {
   return (
-    <div className={styles.container} data-testid="coverage-panel">
+    <div className={styles.container} data-testid={testId}>
       <div className={styles.header}>
-        <span className={styles.headerTitle}>Rally Cry Coverage</span>
+        <span className={styles.headerTitle}>{title}</span>
       </div>
       <div className={styles.list}>
-        {coverage.map((rc) => {
-          const isZero = rc.commitmentCount === 0;
-          const showWarning = isZero && rc.consecutiveZeroWeeks >= 3;
+        {items.map((item) => {
+          const isZero = item.commitmentCount === 0;
+          const showWarning = isZero && item.consecutiveZeroWeeks >= 3;
 
           return (
             <div
-              key={rc.rallyCryId}
+              key={item.id}
               className={`${styles.item} ${isZero ? styles.itemZero : ''}`}
-              data-testid={`coverage-item-${rc.rallyCryId}`}
+              data-testid={`${itemTestIdPrefix}-${item.id}`}
             >
               <div className={styles.itemMain}>
-                <span className={`${styles.rcName} ${isZero ? styles.rcNameZero : ''}`}>
-                  {rc.rallyCryName}
-                </span>
+                <div className={styles.labelBlock}>
+                  <span className={`${styles.itemLabel} ${isZero ? styles.itemLabelZero : ''}`}>
+                    {item.label}
+                  </span>
+                  {item.subtitle ? (
+                    <span className={styles.itemSubtitle}>{item.subtitle}</span>
+                  ) : null}
+                </div>
                 <span className={`${styles.badge} ${isZero ? styles.badgeZero : styles.badgeNormal}`}>
-                  {rc.commitmentCount} commit{rc.commitmentCount !== 1 ? 's' : ''}
+                  {item.commitmentCount} commit{item.commitmentCount !== 1 ? 's' : ''}
                 </span>
               </div>
               {showWarning && (
-                <div className={styles.warning} data-testid={`coverage-warning-${rc.rallyCryId}`}>
+                <div className={styles.warning} data-testid={`coverage-warning-${item.id}`}>
                   <Info size={14} className={styles.warningIcon} />
-                  <span>No coverage - {rc.consecutiveZeroWeeks} week running</span>
+                  <span>No coverage - {item.consecutiveZeroWeeks} week running</span>
                 </div>
               )}
             </div>
