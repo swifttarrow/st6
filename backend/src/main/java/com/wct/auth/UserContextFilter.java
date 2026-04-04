@@ -4,16 +4,22 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-@Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
 public class UserContextFilter extends OncePerRequestFilter {
+
+    private final AuthenticatedUserContextMapper contextMapper;
+
+    public UserContextFilter(AuthenticatedUserContextMapper contextMapper) {
+        this.contextMapper = contextMapper;
+    }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -25,33 +31,48 @@ public class UserContextFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
-
-        String userId = request.getHeader("X-User-Id");
-        String userRole = request.getHeader("X-User-Role");
-
-        if (userId == null || userId.isBlank() || userRole == null || userRole.isBlank()) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing required headers");
-            return;
-        }
-
-        Role role;
         try {
-            role = Role.valueOf(userRole.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid role");
-            return;
-        }
+            UserContext userContext = resolveUserContext();
+            if (userContext == null) {
+                filterChain.doFilter(request, response);
+                return;
+            }
 
-        String teamId = request.getHeader("X-Team-Id");
-        String managerId = request.getHeader("X-Manager-Id");
-
-        UserContext context = new UserContext(userId, role, teamId, managerId);
-        UserContextHolder.set(context);
-
-        try {
+            UserContextHolder.set(userContext);
             filterChain.doFilter(request, response);
+        } catch (RuntimeException ex) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, ex.getMessage());
         } finally {
             UserContextHolder.clear();
         }
+    }
+
+    private UserContext resolveUserContext() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            return null;
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserContext context) {
+            return context;
+        }
+        if (principal instanceof Jwt jwt) {
+            return contextMapper.fromJwt(jwt);
+        }
+        if (authentication instanceof JwtAuthenticationToken jwtAuthenticationToken) {
+            return contextMapper.fromJwt(jwtAuthenticationToken.getToken());
+        }
+        if (authentication.getCredentials() instanceof Jwt jwt) {
+            return contextMapper.fromJwt(jwt);
+        }
+        if (authentication.getDetails() instanceof Jwt jwt) {
+            return contextMapper.fromJwt(jwt);
+        }
+        if (principal != null) {
+            throw new IllegalStateException("Unsupported authenticated principal: " + principal.getClass().getName());
+        }
+        return null;
     }
 }

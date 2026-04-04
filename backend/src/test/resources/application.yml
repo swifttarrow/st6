@@ -11,3 +11,7 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+
+app:
+  auth:
+    hmac-secret: test-jwt-signing-secret-0123456789abcdef

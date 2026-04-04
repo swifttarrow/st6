@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.UUID;
 
+import static com.wct.support.TestJwtAuth.jwtAuth;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -66,8 +67,7 @@ class ManagerDashboardControllerTest {
         mockMvc.perform(get("/api/dashboard/team")
                         .param("date", "2026-03-30")
                         .param("memberIds", "user-1", "user-2")
-                        .header("X-User-Id", "manager-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("manager-1", "MANAGER", "team-1", "user-1", "user-2")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.weekStartDate").value("2026-03-30"))
                 .andExpect(jsonPath("$.stats.directReports").value(2))
@@ -97,8 +97,7 @@ class ManagerDashboardControllerTest {
         mockMvc.perform(get("/api/dashboard/team")
                         .param("date", "2026-03-30")
                         .param("memberIds", "user-1", "user-2")
-                        .header("X-User-Id", "manager-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("manager-1", "MANAGER", "team-1", "user-1", "user-2")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.stats.plansLocked").value(2))
                 .andExpect(jsonPath("$.stats.totalCommitments").value(3))
@@ -117,8 +116,7 @@ class ManagerDashboardControllerTest {
         mockMvc.perform(get("/api/dashboard/team")
                         .param("date", "2026-03-30")
                         .param("memberIds", "user-1", "user-2")
-                        .header("X-User-Id", "manager-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("manager-1", "MANAGER", "team-1", "user-1", "user-2")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.members[0].userId").value("user-1"))
                 .andExpect(jsonPath("$.members[0].planStatus").value("LOCKED"))
@@ -145,8 +143,7 @@ class ManagerDashboardControllerTest {
         mockMvc.perform(get("/api/dashboard/team")
                         .param("date", "2026-03-30")
                         .param("memberIds", "user-1", "user-2")
-                        .header("X-User-Id", "manager-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("manager-1", "MANAGER", "team-1", "user-1", "user-2")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.rallyCryCoverage", hasSize(2)))
                 .andExpect(jsonPath("$.rallyCryCoverage[0].rallyCryName").value("Rally Cry Alpha"))
@@ -176,8 +173,7 @@ class ManagerDashboardControllerTest {
         mockMvc.perform(get("/api/dashboard/team")
                         .param("date", "2026-03-30")
                         .param("memberIds", "user-1")
-                        .header("X-User-Id", "manager-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("manager-1", "MANAGER", "team-1", "user-1")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.rallyCryCoverage[0].rallyCryName").value("Rally Cry Alpha"))
                 .andExpect(jsonPath("$.rallyCryCoverage[0].consecutiveZeroWeeks").value(2))
@@ -190,8 +186,7 @@ class ManagerDashboardControllerTest {
         mockMvc.perform(get("/api/dashboard/team")
                         .param("date", "2026-03-30")
                         .param("memberIds", "user-1")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isForbidden());
     }
 
@@ -200,8 +195,7 @@ class ManagerDashboardControllerTest {
         mockMvc.perform(get("/api/dashboard/team")
                         .param("date", "2026-03-30")
                         .param("memberIds", "nonexistent-user")
-                        .header("X-User-Id", "manager-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("manager-1", "MANAGER", "team-1", "nonexistent-user")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.stats.directReports").value(1))
                 .andExpect(jsonPath("$.stats.plansLocked").value(0))
@@ -215,8 +209,7 @@ class ManagerDashboardControllerTest {
 
     private String createRallyCry(String name) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/rcdo/rally-cries")
-                        .header("X-User-Id", "admin")
-                        .header("X-User-Role", "LEADERSHIP")
+                        .with(jwtAuth("admin", "LEADERSHIP"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new CreateRallyCryRequest(name, "desc"))))
                 .andExpect(status().isCreated())
@@ -226,8 +219,7 @@ class ManagerDashboardControllerTest {
 
     private String createDefiningObjective(String rallyCryId, String name) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/rcdo/defining-objectives")
-                        .header("X-User-Id", "admin")
-                        .header("X-User-Role", "LEADERSHIP")
+                        .with(jwtAuth("admin", "LEADERSHIP"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateDefiningObjectiveRequest(UUID.fromString(rallyCryId), name, "desc"))))
@@ -238,8 +230,7 @@ class ManagerDashboardControllerTest {
 
     private String createOutcome(String doId, String name) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/rcdo/outcomes")
-                        .header("X-User-Id", "admin")
-                        .header("X-User-Role", "LEADERSHIP")
+                        .with(jwtAuth("admin", "LEADERSHIP"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateOutcomeRequest(UUID.fromString(doId), name, "desc"))))
@@ -251,9 +242,7 @@ class ManagerDashboardControllerTest {
     private String createPlan(String userId, String date) throws Exception {
         MvcResult result = mockMvc.perform(get("/api/plans")
                         .param("date", date)
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth(userId, "IC", "team-1")))
                 .andExpect(status().isOk())
                 .andReturn();
         return objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
@@ -261,8 +250,7 @@ class ManagerDashboardControllerTest {
 
     private String createCommitment(String planId, String userId, String outcomeId, String description) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/plans/" + planId + "/commitments")
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth(userId, "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateCommitmentRequest(description, UUID.fromString(outcomeId), null))))
@@ -273,8 +261,7 @@ class ManagerDashboardControllerTest {
 
     private void transitionPlan(String planId, String userId, String targetStatus) throws Exception {
         mockMvc.perform(post("/api/plans/" + planId + "/transition")
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth(userId, "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest(targetStatus))))
                 .andExpect(status().isOk());
@@ -282,8 +269,7 @@ class ManagerDashboardControllerTest {
 
     private void reconcileCommitment(String planId, String commitmentId, String userId, ActualStatus status) throws Exception {
         mockMvc.perform(patch("/api/plans/" + planId + "/commitments/" + commitmentId + "/reconcile")
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth(userId, "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new ReconcileCommitmentRequest(status, null))))
                 .andExpect(status().isOk());

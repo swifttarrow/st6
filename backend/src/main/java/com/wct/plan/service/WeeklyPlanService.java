@@ -69,20 +69,7 @@ public class WeeklyPlanService {
 
     public WeeklyPlan getPlanWithAuthCheck(UUID planId, UserContext user) {
         WeeklyPlan plan = getPlanById(planId);
-
-        if (user.role() == Role.LEADERSHIP) {
-            return plan;
-        }
-
-        if (user.role() == Role.MANAGER) {
-            return plan;
-        }
-
-        // IC: must own the plan
-        if (!plan.getUserId().equals(user.userId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
-        }
-
+        verifyPlanAccess(plan, user);
         return plan;
     }
 
@@ -149,6 +136,7 @@ public class WeeklyPlanService {
 
         // Load plan
         WeeklyPlan plan = getPlanById(planId);
+        verifyPlanAccess(plan, managerContext);
 
         // Verify plan is LOCKED
         if (plan.getStatus() != PlanStatus.LOCKED) {
@@ -200,5 +188,29 @@ public class WeeklyPlanService {
                     wp.getId(), wp.getWeekStartDate(), wp.getStatus().name(), cc));
         }
         return out;
+    }
+
+    private void verifyPlanAccess(WeeklyPlan plan, UserContext user) {
+        if (user.role() == Role.LEADERSHIP) {
+            return;
+        }
+
+        if (user.role() == Role.MANAGER) {
+            if (!user.directReportIds().isEmpty()) {
+                if (user.directReportIds().contains(plan.getUserId())) {
+                    return;
+                }
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            }
+
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Manager access requires direct-report scope in the auth token"
+            );
+        }
+
+        if (!plan.getUserId().equals(user.userId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
     }
 }

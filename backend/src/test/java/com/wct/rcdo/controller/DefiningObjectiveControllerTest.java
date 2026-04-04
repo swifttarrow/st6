@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.UUID;
 
+import static com.wct.support.TestJwtAuth.jwtAuth;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -40,8 +41,7 @@ class DefiningObjectiveControllerTest {
                 UUID.fromString(rcId), "DO1", "objective desc");
 
         mockMvc.perform(post(DO_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -57,8 +57,7 @@ class DefiningObjectiveControllerTest {
                 UUID.fromString(rcId), "DO1", "desc");
 
         mockMvc.perform(post(DO_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
@@ -70,8 +69,7 @@ class DefiningObjectiveControllerTest {
                 UUID.randomUUID(), "DO1", "desc");
 
         mockMvc.perform(post(DO_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound());
@@ -84,8 +82,7 @@ class DefiningObjectiveControllerTest {
                 UUID.fromString(rcId), "", "desc");
 
         mockMvc.perform(post(DO_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -100,8 +97,7 @@ class DefiningObjectiveControllerTest {
 
         mockMvc.perform(get(DO_URL)
                         .param("rallyCryId", rcId1)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name").value("DO1"));
@@ -113,22 +109,19 @@ class DefiningObjectiveControllerTest {
         String doId = createDefiningObjective(rcId, "DO1", "desc");
 
         mockMvc.perform(patch(DO_URL + "/" + doId + "/archive")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("user-1", "MANAGER")))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get(DO_URL)
                         .param("rallyCryId", rcId)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
 
         mockMvc.perform(get(DO_URL)
                         .param("rallyCryId", rcId)
                         .param("includeArchived", "true")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
     }
@@ -139,8 +132,7 @@ class DefiningObjectiveControllerTest {
         String doId = createDefiningObjective(rcId, "DO1", "desc");
 
         mockMvc.perform(get(DO_URL + "/" + doId)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("DO1"));
     }
@@ -148,8 +140,7 @@ class DefiningObjectiveControllerTest {
     @Test
     void findById_notFound_returns404() throws Exception {
         mockMvc.perform(get(DO_URL + "/" + UUID.randomUUID())
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isNotFound());
     }
 
@@ -160,8 +151,7 @@ class DefiningObjectiveControllerTest {
         UpdateDefiningObjectiveRequest updateReq = new UpdateDefiningObjectiveRequest("Updated DO", "new desc", 3);
 
         mockMvc.perform(put(DO_URL + "/" + doId)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateReq)))
                 .andExpect(status().isOk())
@@ -175,14 +165,12 @@ class DefiningObjectiveControllerTest {
         String doId = createDefiningObjective(rcId, "DO1", "desc");
 
         mockMvc.perform(patch(DO_URL + "/" + doId + "/archive")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("user-1", "MANAGER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.archivedAt").isNotEmpty());
 
         mockMvc.perform(patch(DO_URL + "/" + doId + "/unarchive")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("user-1", "MANAGER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.archivedAt").isEmpty());
     }
@@ -190,8 +178,7 @@ class DefiningObjectiveControllerTest {
     private String createRallyCry(String name, String description) throws Exception {
         CreateRallyCryRequest request = new CreateRallyCryRequest(name, description);
         MvcResult result = mockMvc.perform(post(RC_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -203,8 +190,7 @@ class DefiningObjectiveControllerTest {
         CreateDefiningObjectiveRequest request = new CreateDefiningObjectiveRequest(
                 UUID.fromString(rallyCryId), name, description);
         MvcResult result = mockMvc.perform(post(DO_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())

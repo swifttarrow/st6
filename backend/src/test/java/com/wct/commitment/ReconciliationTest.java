@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.util.List;
 import java.util.UUID;
 
+import static com.wct.support.TestJwtAuth.jwtAuth;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -46,8 +47,7 @@ class ReconciliationTest {
         ReconcileCommitmentRequest req = new ReconcileCommitmentRequest(ActualStatus.COMPLETED, "Done well");
 
         mockMvc.perform(patch("/api/plans/" + planId + "/commitments/" + commitmentId + "/reconcile")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
@@ -70,8 +70,7 @@ class ReconciliationTest {
         ));
 
         mockMvc.perform(patch("/api/plans/" + planId + "/commitments/reconcile")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
@@ -91,8 +90,7 @@ class ReconciliationTest {
         ReconcileCommitmentRequest req = new ReconcileCommitmentRequest(ActualStatus.COMPLETED, null);
 
         mockMvc.perform(patch("/api/plans/" + planId + "/commitments/" + commitmentId + "/reconcile")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isConflict());
@@ -108,8 +106,7 @@ class ReconciliationTest {
         ReconcileCommitmentRequest req = new ReconcileCommitmentRequest(ActualStatus.COMPLETED, null);
 
         mockMvc.perform(patch("/api/plans/" + planId + "/commitments/" + commitmentId + "/reconcile")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isConflict());
@@ -130,8 +127,7 @@ class ReconciliationTest {
 
         // Transition to RECONCILED
         mockMvc.perform(post("/api/plans/" + planId + "/transition")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest("RECONCILED"))))
                 .andExpect(status().isOk())
@@ -152,8 +148,7 @@ class ReconciliationTest {
 
         // Try to transition to RECONCILED - should fail
         mockMvc.perform(post("/api/plans/" + planId + "/transition")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest("RECONCILED"))))
                 .andExpect(status().isConflict())
@@ -169,8 +164,7 @@ class ReconciliationTest {
         transitionPlan(planId, "user-1", "RECONCILING");
 
         mockMvc.perform(post("/api/plans/" + planId + "/transition")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest("RECONCILED"))))
                 .andExpect(status().isOk())
@@ -188,8 +182,7 @@ class ReconciliationTest {
         ReconcileCommitmentRequest req = new ReconcileCommitmentRequest(ActualStatus.COMPLETED, null);
 
         mockMvc.perform(patch("/api/plans/" + planId + "/commitments/" + commitmentId + "/reconcile")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
@@ -212,8 +205,7 @@ class ReconciliationTest {
         ReconcileCommitmentRequest req2 = new ReconcileCommitmentRequest(ActualStatus.PARTIALLY_COMPLETED, "Changed my mind");
 
         mockMvc.perform(patch("/api/plans/" + planId + "/commitments/" + commitmentId + "/reconcile")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req2)))
                 .andExpect(status().isOk())
@@ -232,8 +224,7 @@ class ReconciliationTest {
         ReconcileCommitmentRequest req = new ReconcileCommitmentRequest(ActualStatus.COMPLETED, null);
 
         mockMvc.perform(patch("/api/plans/" + planId + "/commitments/" + commitmentId + "/reconcile")
-                        .header("X-User-Id", "user-2")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-2", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isForbidden());
@@ -244,9 +235,7 @@ class ReconciliationTest {
     private String createPlan(String userId, String date) throws Exception {
         MvcResult result = mockMvc.perform(get("/api/plans")
                         .param("date", date)
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth(userId, "IC", "team-1")))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -255,8 +244,7 @@ class ReconciliationTest {
 
     private void transitionPlan(String planId, String userId, String targetStatus) throws Exception {
         mockMvc.perform(post("/api/plans/" + planId + "/transition")
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth(userId, "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest(targetStatus))))
                 .andExpect(status().isOk());
@@ -267,8 +255,7 @@ class ReconciliationTest {
 
     private String createFullRcdoPath() throws Exception {
         MvcResult rcResult = mockMvc.perform(post("/api/rcdo/rally-cries")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("mgr-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new CreateRallyCryRequest("Test RC", "RC desc"))))
                 .andExpect(status().isCreated())
@@ -276,8 +263,7 @@ class ReconciliationTest {
         lastRallyCryId = objectMapper.readTree(rcResult.getResponse().getContentAsString()).get("id").asText();
 
         MvcResult doResult = mockMvc.perform(post("/api/rcdo/defining-objectives")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("mgr-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateDefiningObjectiveRequest(UUID.fromString(lastRallyCryId), "Test DO", "DO desc"))))
@@ -286,8 +272,7 @@ class ReconciliationTest {
         lastDefObjId = objectMapper.readTree(doResult.getResponse().getContentAsString()).get("id").asText();
 
         MvcResult outcomeResult = mockMvc.perform(post("/api/rcdo/outcomes")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("mgr-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateOutcomeRequest(UUID.fromString(lastDefObjId), "Test Outcome", "Outcome desc"))))
@@ -301,8 +286,7 @@ class ReconciliationTest {
         CreateCommitmentRequest req = new CreateCommitmentRequest(description, UUID.fromString(outcomeId), null);
 
         MvcResult result = mockMvc.perform(post("/api/plans/" + planId + "/commitments")
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth(userId, "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
@@ -316,8 +300,7 @@ class ReconciliationTest {
         ReconcileCommitmentRequest req = new ReconcileCommitmentRequest(status, notes);
 
         mockMvc.perform(patch("/api/plans/" + planId + "/commitments/" + commitmentId + "/reconcile")
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth(userId, "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk());

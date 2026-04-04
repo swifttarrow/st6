@@ -18,6 +18,17 @@ spring:
     console:
       enabled: true
 
+app:
+  auth:
+    claims:
+      user-id: sub
+      role: role
+      team-id: team_id
+      manager-id: manager_id
+      direct-reports: direct_reports
+  demo-host:
+    enabled: false
+
 ---
 spring:
   config:

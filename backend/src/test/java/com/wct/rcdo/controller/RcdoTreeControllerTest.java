@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.UUID;
 
+import static com.wct.support.TestJwtAuth.jwtAuth;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -46,8 +47,7 @@ class RcdoTreeControllerTest {
         createOutcome(doId, "Outcome 1", "oc desc");
 
         mockMvc.perform(get(TREE_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name").value("Rally 1"))
@@ -66,8 +66,7 @@ class RcdoTreeControllerTest {
         archiveRallyCry(rcId);
 
         mockMvc.perform(get(TREE_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
     }
@@ -79,8 +78,7 @@ class RcdoTreeControllerTest {
         archiveDefiningObjective(doId);
 
         mockMvc.perform(get(TREE_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].definingObjectives", hasSize(0)));
@@ -94,8 +92,7 @@ class RcdoTreeControllerTest {
         archiveOutcome(ocId);
 
         mockMvc.perform(get(TREE_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].definingObjectives[0].outcomes", hasSize(0)));
     }
@@ -118,8 +115,7 @@ class RcdoTreeControllerTest {
         updateOutcomeSortOrder(oc2Id, "OC B", 1);
 
         mockMvc.perform(get(TREE_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Rally A"))
                 .andExpect(jsonPath("$[1].name").value("Rally B"))
@@ -138,8 +134,7 @@ class RcdoTreeControllerTest {
 
         mockMvc.perform(get(SEARCH_URL)
                         .param("q", "Revenue")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].outcomeName").value("Revenue Growth"))
@@ -155,8 +150,7 @@ class RcdoTreeControllerTest {
 
         mockMvc.perform(get(SEARCH_URL)
                         .param("q", "revenue")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].outcomeName").value("Revenue Growth"));
@@ -171,8 +165,7 @@ class RcdoTreeControllerTest {
 
         mockMvc.perform(get(SEARCH_URL)
                         .param("q", "Revenue")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
     }
@@ -186,8 +179,7 @@ class RcdoTreeControllerTest {
 
         mockMvc.perform(get(SEARCH_URL)
                         .param("q", "Revenue")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
     }
@@ -201,8 +193,7 @@ class RcdoTreeControllerTest {
 
         mockMvc.perform(get(SEARCH_URL)
                         .param("q", "Revenue")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
     }
@@ -211,16 +202,14 @@ class RcdoTreeControllerTest {
     void search_withEmptyQuery_returns400() throws Exception {
         mockMvc.perform(get(SEARCH_URL)
                         .param("q", "")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void search_withMissingQuery_returns400() throws Exception {
         mockMvc.perform(get(SEARCH_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isBadRequest());
     }
 
@@ -228,8 +217,7 @@ class RcdoTreeControllerTest {
     void search_withWhitespaceQuery_returns400() throws Exception {
         mockMvc.perform(get(SEARCH_URL)
                         .param("q", "   ")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isBadRequest());
     }
 
@@ -248,8 +236,7 @@ class RcdoTreeControllerTest {
 
         mockMvc.perform(get(SEARCH_URL)
                         .param("q", "Target")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].outcomeName").value("Target Alpha"))
@@ -261,8 +248,7 @@ class RcdoTreeControllerTest {
     private String createRallyCry(String name, String description) throws Exception {
         CreateRallyCryRequest request = new CreateRallyCryRequest(name, description);
         MvcResult result = mockMvc.perform(post(RC_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -274,8 +260,7 @@ class RcdoTreeControllerTest {
         CreateDefiningObjectiveRequest request = new CreateDefiningObjectiveRequest(
                 UUID.fromString(rallyCryId), name, description);
         MvcResult result = mockMvc.perform(post(DO_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -287,8 +272,7 @@ class RcdoTreeControllerTest {
         CreateOutcomeRequest request = new CreateOutcomeRequest(
                 UUID.fromString(definingObjectiveId), name, description);
         MvcResult result = mockMvc.perform(post(OC_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -298,30 +282,26 @@ class RcdoTreeControllerTest {
 
     private void archiveRallyCry(String id) throws Exception {
         mockMvc.perform(patch(RC_URL + "/" + id + "/archive")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("user-1", "MANAGER")))
                 .andExpect(status().isOk());
     }
 
     private void archiveDefiningObjective(String id) throws Exception {
         mockMvc.perform(patch(DO_URL + "/" + id + "/archive")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("user-1", "MANAGER")))
                 .andExpect(status().isOk());
     }
 
     private void archiveOutcome(String id) throws Exception {
         mockMvc.perform(patch(OC_URL + "/" + id + "/archive")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("user-1", "MANAGER")))
                 .andExpect(status().isOk());
     }
 
     private void updateRallyCrySortOrder(String id, String name, int sortOrder) throws Exception {
         UpdateRallyCryRequest request = new UpdateRallyCryRequest(name, "desc", sortOrder);
         mockMvc.perform(put(RC_URL + "/" + id)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
@@ -330,8 +310,7 @@ class RcdoTreeControllerTest {
     private void updateDefiningObjectiveSortOrder(String id, String name, int sortOrder) throws Exception {
         UpdateDefiningObjectiveRequest request = new UpdateDefiningObjectiveRequest(name, "desc", sortOrder);
         mockMvc.perform(put(DO_URL + "/" + id)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
@@ -340,8 +319,7 @@ class RcdoTreeControllerTest {
     private void updateOutcomeSortOrder(String id, String name, int sortOrder) throws Exception {
         UpdateOutcomeRequest request = new UpdateOutcomeRequest(name, "desc", sortOrder);
         mockMvc.perform(put(OC_URL + "/" + id)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());

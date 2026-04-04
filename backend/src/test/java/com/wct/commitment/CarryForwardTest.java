@@ -26,6 +26,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static com.wct.support.TestJwtAuth.jwtAuth;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -71,8 +72,7 @@ class CarryForwardTest {
 
         // List commitments on week 2 plan
         mockMvc.perform(get("/api/plans/" + plan2Id + "/commitments")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].description").value("Task B"))
@@ -108,8 +108,7 @@ class CarryForwardTest {
         String plan2Id = createPlan("user-1", "2026-03-30");
 
         mockMvc.perform(get("/api/plans/" + plan2Id + "/commitments")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].description").value("Partial task"))
@@ -131,8 +130,7 @@ class CarryForwardTest {
         String plan2Id = createPlan("user-1", "2026-03-30");
 
         mockMvc.perform(get("/api/plans/" + plan2Id + "/commitments")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].carriedForwardFromId").value(c1))
@@ -161,8 +159,7 @@ class CarryForwardTest {
         assert plan2Id.equals(plan2IdAgain);
 
         mockMvc.perform(get("/api/plans/" + plan2Id + "/commitments")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
     }
@@ -180,8 +177,7 @@ class CarryForwardTest {
         String plan2Id = createPlan("user-1", "2026-03-30");
 
         mockMvc.perform(get("/api/plans/" + plan2Id + "/commitments")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
     }
@@ -192,8 +188,7 @@ class CarryForwardTest {
         String plan2Id = createPlan("user-1", "2026-03-30");
 
         mockMvc.perform(get("/api/plans/" + plan2Id + "/commitments")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
     }
@@ -212,16 +207,14 @@ class CarryForwardTest {
 
         // Archive the outcome after reconciliation
         mockMvc.perform(patch("/api/rcdo/outcomes/" + outcomeId + "/archive")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("mgr-1", "MANAGER")))
                 .andExpect(status().isOk());
 
         // Access next week
         String plan2Id = createPlan("user-1", "2026-03-30");
 
         mockMvc.perform(get("/api/plans/" + plan2Id + "/commitments")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].outcomeArchived").value(true));
@@ -241,8 +234,7 @@ class CarryForwardTest {
 
         // Try to lock - should fail
         mockMvc.perform(post("/api/plans/" + planId + "/transition")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest("LOCKED"))))
                 .andExpect(status().isConflict())
@@ -265,8 +257,7 @@ class CarryForwardTest {
 
         // Try to lock - should fail
         mockMvc.perform(post("/api/plans/" + planId + "/transition")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest("LOCKED"))))
                 .andExpect(status().isConflict());
@@ -274,16 +265,14 @@ class CarryForwardTest {
         // Re-link commitment to active outcome
         UpdateCommitmentRequest updateReq = new UpdateCommitmentRequest(null, UUID.fromString(outcomeId2), null);
         mockMvc.perform(put("/api/plans/" + planId + "/commitments/" + commitmentId)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateReq)))
                 .andExpect(status().isOk());
 
         // Now locking should succeed
         mockMvc.perform(post("/api/plans/" + planId + "/transition")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest("LOCKED"))))
                 .andExpect(status().isOk())
@@ -295,9 +284,7 @@ class CarryForwardTest {
     private String createPlan(String userId, String date) throws Exception {
         MvcResult result = mockMvc.perform(get("/api/plans")
                         .param("date", date)
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth(userId, "IC", "team-1")))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -306,8 +293,7 @@ class CarryForwardTest {
 
     private void transitionPlan(String planId, String userId, String targetStatus) throws Exception {
         mockMvc.perform(post("/api/plans/" + planId + "/transition")
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth(userId, "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest(targetStatus))))
                 .andExpect(status().isOk());
@@ -318,8 +304,7 @@ class CarryForwardTest {
 
     private String createFullRcdoPath() throws Exception {
         MvcResult rcResult = mockMvc.perform(post("/api/rcdo/rally-cries")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("mgr-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new CreateRallyCryRequest("Test RC", "RC desc"))))
                 .andExpect(status().isCreated())
@@ -327,8 +312,7 @@ class CarryForwardTest {
         lastRallyCryId = objectMapper.readTree(rcResult.getResponse().getContentAsString()).get("id").asText();
 
         MvcResult doResult = mockMvc.perform(post("/api/rcdo/defining-objectives")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("mgr-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateDefiningObjectiveRequest(UUID.fromString(lastRallyCryId), "Test DO", "DO desc"))))
@@ -337,8 +321,7 @@ class CarryForwardTest {
         lastDefObjId = objectMapper.readTree(doResult.getResponse().getContentAsString()).get("id").asText();
 
         MvcResult outcomeResult = mockMvc.perform(post("/api/rcdo/outcomes")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("mgr-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateOutcomeRequest(UUID.fromString(lastDefObjId), "Test Outcome", "Outcome desc"))))
@@ -350,8 +333,7 @@ class CarryForwardTest {
 
     private String createOutcomeOnExistingPath() throws Exception {
         MvcResult outcomeResult = mockMvc.perform(post("/api/rcdo/outcomes")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("mgr-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateOutcomeRequest(UUID.fromString(lastDefObjId), "Second Outcome", "desc"))))
@@ -365,8 +347,7 @@ class CarryForwardTest {
         CreateCommitmentRequest req = new CreateCommitmentRequest(description, UUID.fromString(outcomeId), null);
 
         MvcResult result = mockMvc.perform(post("/api/plans/" + planId + "/commitments")
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth(userId, "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
@@ -380,8 +361,7 @@ class CarryForwardTest {
         ReconcileCommitmentRequest req = new ReconcileCommitmentRequest(status, notes);
 
         mockMvc.perform(patch("/api/plans/" + planId + "/commitments/" + commitmentId + "/reconcile")
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth(userId, "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk());

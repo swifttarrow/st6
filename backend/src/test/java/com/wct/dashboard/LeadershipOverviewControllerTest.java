@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.UUID;
 
+import static com.wct.support.TestJwtAuth.jwtAuth;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -62,8 +63,7 @@ class LeadershipOverviewControllerTest {
 
         mockMvc.perform(get("/api/dashboard/leadership")
                         .param("date", "2026-03-30")
-                        .header("X-User-Id", "leader-1")
-                        .header("X-User-Role", "LEADERSHIP"))
+                        .with(jwtAuth("leader-1", "LEADERSHIP")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.weekStartDate").value("2026-03-30"))
                 .andExpect(jsonPath("$.stats.totalTeams").value(2))
@@ -91,8 +91,7 @@ class LeadershipOverviewControllerTest {
 
         mockMvc.perform(get("/api/dashboard/leadership")
                         .param("date", "2026-03-30")
-                        .header("X-User-Id", "leader-1")
-                        .header("X-User-Role", "LEADERSHIP"))
+                        .with(jwtAuth("leader-1", "LEADERSHIP")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.hierarchy[0].name").value("Rally Cry Alpha"))
                 .andExpect(jsonPath("$.hierarchy[0].teamCount").value(2))
@@ -129,8 +128,7 @@ class LeadershipOverviewControllerTest {
 
         mockMvc.perform(get("/api/dashboard/leadership")
                         .param("date", "2026-03-30")
-                        .header("X-User-Id", "leader-1")
-                        .header("X-User-Role", "LEADERSHIP"))
+                        .with(jwtAuth("leader-1", "LEADERSHIP")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.hierarchy[0].name").value("Rally Cry Alpha"))
                 .andExpect(jsonPath("$.hierarchy[0].status").value("ON_TRACK"))
@@ -152,8 +150,7 @@ class LeadershipOverviewControllerTest {
 
         mockMvc.perform(get("/api/dashboard/leadership")
                         .param("date", "2026-03-30")
-                        .header("X-User-Id", "leader-1")
-                        .header("X-User-Role", "LEADERSHIP"))
+                        .with(jwtAuth("leader-1", "LEADERSHIP")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.hierarchy[0].name").value("Rally Cry Alpha"))
                 .andExpect(jsonPath("$.hierarchy[0].consecutiveZeroWeeks").value(2));
@@ -171,8 +168,7 @@ class LeadershipOverviewControllerTest {
 
         mockMvc.perform(get("/api/dashboard/leadership")
                         .param("date", "2026-03-30")
-                        .header("X-User-Id", "leader-1")
-                        .header("X-User-Role", "LEADERSHIP"))
+                        .with(jwtAuth("leader-1", "LEADERSHIP")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.hierarchy[0].name").value("Rally Cry Alpha"))
                 .andExpect(jsonPath("$.hierarchy[0].consecutiveZeroWeeks").value(3))
@@ -186,8 +182,7 @@ class LeadershipOverviewControllerTest {
 
         mockMvc.perform(get("/api/dashboard/leadership")
                         .param("date", "2026-03-30")
-                        .header("X-User-Id", "leader-1")
-                        .header("X-User-Role", "LEADERSHIP"))
+                        .with(jwtAuth("leader-1", "LEADERSHIP")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.hierarchy[0].children", hasSize(1)))
                 .andExpect(jsonPath("$.hierarchy[0].children[0].type").value("DEFINING_OBJECTIVE"))
@@ -202,8 +197,7 @@ class LeadershipOverviewControllerTest {
     void managerReturns403() throws Exception {
         mockMvc.perform(get("/api/dashboard/leadership")
                         .param("date", "2026-03-30")
-                        .header("X-User-Id", "manager-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("manager-1", "MANAGER")))
                 .andExpect(status().isForbidden());
     }
 
@@ -211,8 +205,7 @@ class LeadershipOverviewControllerTest {
     void icReturns403() throws Exception {
         mockMvc.perform(get("/api/dashboard/leadership")
                         .param("date", "2026-03-30")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isForbidden());
     }
 
@@ -220,8 +213,7 @@ class LeadershipOverviewControllerTest {
     void emptyOrgReturnsZeroedStats() throws Exception {
         mockMvc.perform(get("/api/dashboard/leadership")
                         .param("date", "2026-03-30")
-                        .header("X-User-Id", "leader-1")
-                        .header("X-User-Role", "LEADERSHIP"))
+                        .with(jwtAuth("leader-1", "LEADERSHIP")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.stats.totalTeams").value(0))
                 .andExpect(jsonPath("$.stats.activeRallyCries").value(2))
@@ -243,8 +235,7 @@ class LeadershipOverviewControllerTest {
 
         mockMvc.perform(get("/api/dashboard/executive")
                         .param("date", "2026-03-30")
-                        .header("X-User-Id", "leader-1")
-                        .header("X-User-Role", "LEADERSHIP"))
+                        .with(jwtAuth("leader-1", "LEADERSHIP")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.focusWeekStart").value("2026-03-30"))
                 .andExpect(jsonPath("$.focusWeek.totalPlans").value(2))
@@ -260,8 +251,7 @@ class LeadershipOverviewControllerTest {
     void executiveForbiddenForManager() throws Exception {
         mockMvc.perform(get("/api/dashboard/executive")
                         .param("date", "2026-03-30")
-                        .header("X-User-Id", "manager-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("manager-1", "MANAGER")))
                 .andExpect(status().isForbidden());
     }
 
@@ -269,8 +259,7 @@ class LeadershipOverviewControllerTest {
 
     private String createRallyCry(String name) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/rcdo/rally-cries")
-                        .header("X-User-Id", "admin")
-                        .header("X-User-Role", "LEADERSHIP")
+                        .with(jwtAuth("admin", "LEADERSHIP"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new CreateRallyCryRequest(name, "desc"))))
                 .andExpect(status().isCreated())
@@ -280,8 +269,7 @@ class LeadershipOverviewControllerTest {
 
     private String createDefiningObjective(String rallyCryId, String name) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/rcdo/defining-objectives")
-                        .header("X-User-Id", "admin")
-                        .header("X-User-Role", "LEADERSHIP")
+                        .with(jwtAuth("admin", "LEADERSHIP"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateDefiningObjectiveRequest(UUID.fromString(rallyCryId), name, "desc"))))
@@ -292,8 +280,7 @@ class LeadershipOverviewControllerTest {
 
     private String createOutcome(String doId, String name) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/rcdo/outcomes")
-                        .header("X-User-Id", "admin")
-                        .header("X-User-Role", "LEADERSHIP")
+                        .with(jwtAuth("admin", "LEADERSHIP"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateOutcomeRequest(UUID.fromString(doId), name, "desc"))))
@@ -305,9 +292,7 @@ class LeadershipOverviewControllerTest {
     private String createPlan(String userId, String date, String teamId) throws Exception {
         MvcResult result = mockMvc.perform(get("/api/plans")
                         .param("date", date)
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
-                        .header("X-Team-Id", teamId))
+                        .with(jwtAuth(userId, "IC", teamId)))
                 .andExpect(status().isOk())
                 .andReturn();
         return objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
@@ -315,8 +300,7 @@ class LeadershipOverviewControllerTest {
 
     private String createCommitment(String planId, String userId, String outcomeId, String description) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/plans/" + planId + "/commitments")
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth(userId, "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateCommitmentRequest(description, UUID.fromString(outcomeId), null))))

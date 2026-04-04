@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.util.List;
 import java.util.UUID;
 
+import static com.wct.support.TestJwtAuth.jwtAuth;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -46,8 +47,7 @@ class CommitmentControllerTest {
         CreateCommitmentRequest req = new CreateCommitmentRequest("Write tests", UUID.fromString(outcomeId), "some notes");
 
         mockMvc.perform(post("/api/plans/" + planId + "/commitments")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
@@ -69,8 +69,7 @@ class CommitmentControllerTest {
         CreateCommitmentRequest req = new CreateCommitmentRequest("Write tests", UUID.fromString(outcomeId), null);
 
         mockMvc.perform(post("/api/plans/" + planId + "/commitments")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isConflict());
@@ -83,15 +82,13 @@ class CommitmentControllerTest {
 
         // Archive the outcome
         mockMvc.perform(patch("/api/rcdo/outcomes/" + outcomeId + "/archive")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("mgr-1", "MANAGER")))
                 .andExpect(status().isOk());
 
         CreateCommitmentRequest req = new CreateCommitmentRequest("Write tests", UUID.fromString(outcomeId), null);
 
         mockMvc.perform(post("/api/plans/" + planId + "/commitments")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest());
@@ -104,8 +101,7 @@ class CommitmentControllerTest {
         CreateCommitmentRequest req = new CreateCommitmentRequest("Write tests", UUID.randomUUID(), null);
 
         mockMvc.perform(post("/api/plans/" + planId + "/commitments")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isNotFound());
@@ -119,8 +115,7 @@ class CommitmentControllerTest {
         CreateCommitmentRequest req = new CreateCommitmentRequest("   ", UUID.fromString(outcomeId), null);
 
         mockMvc.perform(post("/api/plans/" + planId + "/commitments")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest());
@@ -138,8 +133,7 @@ class CommitmentControllerTest {
         UpdateCommitmentRequest req = new UpdateCommitmentRequest("Updated", UUID.fromString(outcomeId2), null);
 
         mockMvc.perform(put("/api/plans/" + planId + "/commitments/" + commitmentId)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
@@ -159,14 +153,12 @@ class CommitmentControllerTest {
 
         // Delete the middle one
         mockMvc.perform(delete("/api/plans/" + planId + "/commitments/" + c2)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isNoContent());
 
         // Verify remaining have priorities 1 and 2
         mockMvc.perform(get("/api/plans/" + planId + "/commitments")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].id").value(c1))
@@ -189,8 +181,7 @@ class CommitmentControllerTest {
                 List.of(UUID.fromString(c3), UUID.fromString(c1), UUID.fromString(c2)));
 
         mockMvc.perform(put("/api/plans/" + planId + "/commitments/reorder")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
@@ -214,8 +205,7 @@ class CommitmentControllerTest {
                 List.of(UUID.fromString(c2)));
 
         mockMvc.perform(put("/api/plans/" + planId + "/commitments/reorder")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest());
@@ -231,8 +221,7 @@ class CommitmentControllerTest {
                 List.of(UUID.fromString(c1), UUID.randomUUID()));
 
         mockMvc.perform(put("/api/plans/" + planId + "/commitments/reorder")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest());
@@ -248,8 +237,7 @@ class CommitmentControllerTest {
         CreateCommitmentRequest req = new CreateCommitmentRequest("Write tests", UUID.fromString(outcomeId), null);
 
         mockMvc.perform(post("/api/plans/" + planId + "/commitments")
-                        .header("X-User-Id", "user-2")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-2", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isForbidden());
@@ -260,8 +248,7 @@ class CommitmentControllerTest {
         String planId = createPlan("user-1", "2026-03-30");
 
         mockMvc.perform(get("/api/plans/" + planId + "/commitments")
-                        .header("X-User-Id", "user-2")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-2", "IC")))
                 .andExpect(status().isForbidden());
     }
 
@@ -270,8 +257,7 @@ class CommitmentControllerTest {
         String planId = createPlan("user-1", "2026-03-30");
 
         mockMvc.perform(get("/api/plans/" + planId + "/commitments")
-                        .header("X-User-Id", "manager-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("manager-1", "MANAGER", "team-1", "user-1")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
@@ -283,8 +269,7 @@ class CommitmentControllerTest {
         String commitmentId = createCommitment(planId, "user-1", "Task", outcomeId);
 
         mockMvc.perform(get("/api/plans/" + planId + "/commitments/" + commitmentId)
-                        .header("X-User-Id", "user-2")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-2", "IC")))
                 .andExpect(status().isForbidden());
     }
 
@@ -297,8 +282,7 @@ class CommitmentControllerTest {
         String commitmentId = createCommitment(planId, "user-1", "My commitment", outcomeId);
 
         mockMvc.perform(get("/api/plans/" + planId + "/commitments/" + commitmentId)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.outcomeName").value("Test Outcome"))
                 .andExpect(jsonPath("$.definingObjectiveName").value("Test DO"))
@@ -313,9 +297,7 @@ class CommitmentControllerTest {
     private String createPlan(String userId, String date) throws Exception {
         MvcResult result = mockMvc.perform(get("/api/plans")
                         .param("date", date)
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth(userId, "IC", "team-1")))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -324,8 +306,7 @@ class CommitmentControllerTest {
 
     private void transitionPlan(String planId, String userId, String targetStatus) throws Exception {
         mockMvc.perform(post("/api/plans/" + planId + "/transition")
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth(userId, "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest(targetStatus))))
                 .andExpect(status().isOk());
@@ -341,8 +322,7 @@ class CommitmentControllerTest {
     private String createFullRcdoPath() throws Exception {
         // Create Rally Cry
         MvcResult rcResult = mockMvc.perform(post("/api/rcdo/rally-cries")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("mgr-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new CreateRallyCryRequest("Test RC", "RC desc"))))
                 .andExpect(status().isCreated())
@@ -351,8 +331,7 @@ class CommitmentControllerTest {
 
         // Create Defining Objective
         MvcResult doResult = mockMvc.perform(post("/api/rcdo/defining-objectives")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("mgr-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateDefiningObjectiveRequest(UUID.fromString(lastRallyCryId), "Test DO", "DO desc"))))
@@ -362,8 +341,7 @@ class CommitmentControllerTest {
 
         // Create Outcome
         MvcResult outcomeResult = mockMvc.perform(post("/api/rcdo/outcomes")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("mgr-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateOutcomeRequest(UUID.fromString(lastDefObjId), "Test Outcome", "Outcome desc"))))
@@ -378,8 +356,7 @@ class CommitmentControllerTest {
      */
     private String createOutcomeOnExistingPath() throws Exception {
         MvcResult outcomeResult = mockMvc.perform(post("/api/rcdo/outcomes")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("mgr-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateOutcomeRequest(UUID.fromString(lastDefObjId), "Second Outcome", "desc"))))
@@ -393,8 +370,7 @@ class CommitmentControllerTest {
         CreateCommitmentRequest req = new CreateCommitmentRequest(description, UUID.fromString(outcomeId), null);
 
         MvcResult result = mockMvc.perform(post("/api/plans/" + planId + "/commitments")
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth(userId, "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())

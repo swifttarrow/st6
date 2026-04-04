@@ -11,6 +11,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import static com.wct.support.TestJwtAuth.jwtAuth;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -34,9 +35,7 @@ class WeeklyPlanControllerTest {
     void getOrCreate_returnsDraftPlan() throws Exception {
         mockMvc.perform(get(BASE_URL)
                         .param("date", "2026-03-30")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth("user-1", "IC", "team-1")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.userId").value("user-1"))
@@ -50,9 +49,7 @@ class WeeklyPlanControllerTest {
         // First call creates
         MvcResult first = mockMvc.perform(get(BASE_URL)
                         .param("date", "2026-03-30")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth("user-1", "IC", "team-1")))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -61,9 +58,7 @@ class WeeklyPlanControllerTest {
         // Second call returns same plan
         MvcResult second = mockMvc.perform(get(BASE_URL)
                         .param("date", "2026-03-30")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth("user-1", "IC", "team-1")))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -77,9 +72,7 @@ class WeeklyPlanControllerTest {
         // 2026-04-01 is a Wednesday, should normalize to 2026-03-30 (Monday)
         mockMvc.perform(get(BASE_URL)
                         .param("date", "2026-04-01")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth("user-1", "IC", "team-1")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.weekStartDate").value("2026-03-30"));
     }
@@ -91,8 +84,7 @@ class WeeklyPlanControllerTest {
         String planId = createPlan("user-1", "2026-03-30");
 
         mockMvc.perform(post(BASE_URL + "/" + planId + "/transition")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest("LOCKED"))))
                 .andExpect(status().isOk())
@@ -105,8 +97,7 @@ class WeeklyPlanControllerTest {
         transitionPlan(planId, "user-1", "LOCKED");
 
         mockMvc.perform(post(BASE_URL + "/" + planId + "/transition")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest("RECONCILING"))))
                 .andExpect(status().isOk())
@@ -120,8 +111,7 @@ class WeeklyPlanControllerTest {
         transitionPlan(planId, "user-1", "RECONCILING");
 
         mockMvc.perform(post(BASE_URL + "/" + planId + "/transition")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest("RECONCILED"))))
                 .andExpect(status().isOk())
@@ -133,8 +123,7 @@ class WeeklyPlanControllerTest {
         String planId = createPlan("user-1", "2026-03-30");
 
         mockMvc.perform(post(BASE_URL + "/" + planId + "/transition")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest("RECONCILING"))))
                 .andExpect(status().isConflict())
@@ -147,8 +136,7 @@ class WeeklyPlanControllerTest {
         transitionPlan(planId, "user-1", "LOCKED");
 
         mockMvc.perform(post(BASE_URL + "/" + planId + "/transition")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest("RECONCILED"))))
                 .andExpect(status().isConflict())
@@ -163,8 +151,7 @@ class WeeklyPlanControllerTest {
         transitionPlan(planId, "user-1", "RECONCILED");
 
         mockMvc.perform(post(BASE_URL + "/" + planId + "/transition")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest("DRAFT"))))
                 .andExpect(status().isConflict())
@@ -178,8 +165,7 @@ class WeeklyPlanControllerTest {
         String planId = createPlan("user-1", "2026-03-30");
 
         mockMvc.perform(get(BASE_URL + "/" + planId)
-                        .header("X-User-Id", "user-2")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-2", "IC")))
                 .andExpect(status().isForbidden());
     }
 
@@ -188,8 +174,7 @@ class WeeklyPlanControllerTest {
         String planId = createPlan("user-1", "2026-03-30");
 
         mockMvc.perform(get(BASE_URL + "/" + planId)
-                        .header("X-User-Id", "manager-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("manager-1", "MANAGER", "team-1", "user-1")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value("user-1"));
     }
@@ -199,8 +184,7 @@ class WeeklyPlanControllerTest {
         String planId = createPlan("user-1", "2026-03-30");
 
         mockMvc.perform(get(BASE_URL + "/" + planId)
-                        .header("X-User-Id", "leader-1")
-                        .header("X-User-Role", "LEADERSHIP"))
+                        .with(jwtAuth("leader-1", "LEADERSHIP")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value("user-1"));
     }
@@ -213,8 +197,7 @@ class WeeklyPlanControllerTest {
         transitionPlan(planId, "user-1", "LOCKED");
 
         mockMvc.perform(get(BASE_URL + "/" + planId + "/transitions")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].fromStatus").value("DRAFT"))
@@ -228,8 +211,7 @@ class WeeklyPlanControllerTest {
         transitionPlan(planId, "user-1", "LOCKED");
 
         mockMvc.perform(get(BASE_URL + "/" + planId + "/transitions")
-                        .header("X-User-Id", "user-2")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-2", "IC")))
                 .andExpect(status().isForbidden());
     }
 
@@ -242,9 +224,7 @@ class WeeklyPlanControllerTest {
         mockMvc.perform(get(BASE_URL + "/me")
                         .param("from", "2026-03-30")
                         .param("to", "2026-03-30")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth("user-1", "IC", "team-1")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].weekStartDate").value("2026-03-30"))
@@ -257,9 +237,7 @@ class WeeklyPlanControllerTest {
         mockMvc.perform(get(BASE_URL + "/me")
                         .param("from", "2025-01-06")
                         .param("to", "2025-01-06")
-                        .header("X-User-Id", "user-99")
-                        .header("X-User-Role", "IC")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth("user-99", "IC", "team-1")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
     }
@@ -269,9 +247,7 @@ class WeeklyPlanControllerTest {
         mockMvc.perform(get(BASE_URL + "/me")
                         .param("from", "2026-04-06")
                         .param("to", "2026-03-30")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth("user-1", "IC", "team-1")))
                 .andExpect(status().isBadRequest());
     }
 
@@ -282,8 +258,7 @@ class WeeklyPlanControllerTest {
         String planId = createPlan("user-1", "2026-03-30");
 
         mockMvc.perform(post(BASE_URL + "/" + planId + "/transition")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest("LOCKED"))))
                 .andExpect(status().isOk())
@@ -295,9 +270,7 @@ class WeeklyPlanControllerTest {
     private String createPlan(String userId, String date) throws Exception {
         MvcResult result = mockMvc.perform(get(BASE_URL)
                         .param("date", date)
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth(userId, "IC", "team-1")))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -306,8 +279,7 @@ class WeeklyPlanControllerTest {
 
     private void transitionPlan(String planId, String userId, String targetStatus) throws Exception {
         mockMvc.perform(post(BASE_URL + "/" + planId + "/transition")
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth(userId, "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest(targetStatus))))
                 .andExpect(status().isOk());

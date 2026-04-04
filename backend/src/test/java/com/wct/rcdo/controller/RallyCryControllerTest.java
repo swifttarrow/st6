@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.UUID;
 
+import static com.wct.support.TestJwtAuth.jwtAuth;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -36,8 +37,7 @@ class RallyCryControllerTest {
         CreateRallyCryRequest request = new CreateRallyCryRequest("Q1 Rally", "First quarter rally cry");
 
         mockMvc.perform(post(BASE_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -55,8 +55,7 @@ class RallyCryControllerTest {
         CreateRallyCryRequest request = new CreateRallyCryRequest("Q1 Rally", "desc");
 
         mockMvc.perform(post(BASE_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
@@ -77,8 +76,7 @@ class RallyCryControllerTest {
         CreateRallyCryRequest request = new CreateRallyCryRequest("", "desc");
 
         mockMvc.perform(post(BASE_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -90,8 +88,7 @@ class RallyCryControllerTest {
         createRallyCry("Rally 1", "desc1");
 
         mockMvc.perform(get(BASE_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name").value("Rally 1"));
@@ -103,22 +100,19 @@ class RallyCryControllerTest {
 
         // Archive it
         mockMvc.perform(patch(BASE_URL + "/" + id + "/archive")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("user-1", "MANAGER")))
                 .andExpect(status().isOk());
 
         // List without includeArchived should return empty
         mockMvc.perform(get(BASE_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
 
         // List with includeArchived=true should return the item
         mockMvc.perform(get(BASE_URL)
                         .param("includeArchived", "true")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
     }
@@ -128,8 +122,7 @@ class RallyCryControllerTest {
         String id = createRallyCry("Rally 1", "desc1");
 
         mockMvc.perform(get(BASE_URL + "/" + id)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Rally 1"));
     }
@@ -137,8 +130,7 @@ class RallyCryControllerTest {
     @Test
     void findById_notFound_returns404() throws Exception {
         mockMvc.perform(get(BASE_URL + "/" + UUID.randomUUID())
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isNotFound());
     }
 
@@ -148,8 +140,7 @@ class RallyCryControllerTest {
         UpdateRallyCryRequest updateReq = new UpdateRallyCryRequest("Updated Rally", "new desc", 5);
 
         mockMvc.perform(put(BASE_URL + "/" + id)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateReq)))
                 .andExpect(status().isOk())
@@ -164,8 +155,7 @@ class RallyCryControllerTest {
         UpdateRallyCryRequest updateReq = new UpdateRallyCryRequest("Updated", "desc", 1);
 
         mockMvc.perform(put(BASE_URL + "/" + id)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateReq)))
                 .andExpect(status().isForbidden());
@@ -177,15 +167,13 @@ class RallyCryControllerTest {
 
         // Archive
         mockMvc.perform(patch(BASE_URL + "/" + id + "/archive")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("user-1", "MANAGER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.archivedAt").isNotEmpty());
 
         // Unarchive
         mockMvc.perform(patch(BASE_URL + "/" + id + "/unarchive")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("user-1", "MANAGER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.archivedAt").isEmpty());
     }
@@ -195,8 +183,7 @@ class RallyCryControllerTest {
         CreateRallyCryRequest request = new CreateRallyCryRequest("Leadership Rally", "desc");
 
         mockMvc.perform(post(BASE_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "LEADERSHIP")
+                        .with(jwtAuth("user-1", "LEADERSHIP"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated());
@@ -205,8 +192,7 @@ class RallyCryControllerTest {
     private String createRallyCry(String name, String description) throws Exception {
         CreateRallyCryRequest request = new CreateRallyCryRequest(name, description);
         MvcResult result = mockMvc.perform(post(BASE_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())

@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import static com.wct.support.TestJwtAuth.jwtAuth;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -38,9 +39,6 @@ class ArchiveSafetyTest {
     @Autowired private OutcomeRepository outcomeRepository;
     @Autowired private WeeklyPlanRepository weeklyPlanRepository;
     @Autowired private CommitmentRepository commitmentRepository;
-
-    private static final String MANAGER_HEADERS_USER = "X-User-Id";
-    private static final String MANAGER_HEADERS_ROLE = "X-User-Role";
 
     private UUID rallyCryId;
     private UUID doId;
@@ -105,8 +103,7 @@ class ArchiveSafetyTest {
     @Test
     void archiveOutcome_noActiveCommitments_returns200() throws Exception {
         mockMvc.perform(patch("/api/rcdo/outcomes/{id}/archive", outcomeId)
-                        .header(MANAGER_HEADERS_USER, "mgr-1")
-                        .header(MANAGER_HEADERS_ROLE, "MANAGER"))
+                        .with(jwtAuth("mgr-1", "MANAGER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.archivedAt").isNotEmpty());
     }
@@ -117,8 +114,7 @@ class ArchiveSafetyTest {
         createCommitment(plan.getId(), outcomeId);
 
         mockMvc.perform(patch("/api/rcdo/outcomes/{id}/archive", outcomeId)
-                        .header(MANAGER_HEADERS_USER, "mgr-1")
-                        .header(MANAGER_HEADERS_ROLE, "MANAGER"))
+                        .with(jwtAuth("mgr-1", "MANAGER")))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.activeCommitmentCount").value(1))
                 .andExpect(jsonPath("$.affectedPlans", hasSize(1)))
@@ -132,8 +128,7 @@ class ArchiveSafetyTest {
         createCommitment(plan.getId(), outcomeId);
 
         mockMvc.perform(patch("/api/rcdo/defining-objectives/{id}/archive", doId)
-                        .header(MANAGER_HEADERS_USER, "mgr-1")
-                        .header(MANAGER_HEADERS_ROLE, "MANAGER"))
+                        .with(jwtAuth("mgr-1", "MANAGER")))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.activeCommitmentCount").value(1));
     }
@@ -144,8 +139,7 @@ class ArchiveSafetyTest {
         createCommitment(plan.getId(), outcomeId);
 
         mockMvc.perform(patch("/api/rcdo/rally-cries/{id}/archive", rallyCryId)
-                        .header(MANAGER_HEADERS_USER, "mgr-1")
-                        .header(MANAGER_HEADERS_ROLE, "MANAGER"))
+                        .with(jwtAuth("mgr-1", "MANAGER")))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.activeCommitmentCount").value(1));
     }
@@ -156,8 +150,7 @@ class ArchiveSafetyTest {
         createCommitment(plan.getId(), outcomeId);
 
         mockMvc.perform(patch("/api/rcdo/outcomes/{id}/archive", outcomeId)
-                        .header(MANAGER_HEADERS_USER, "mgr-1")
-                        .header(MANAGER_HEADERS_ROLE, "MANAGER"))
+                        .with(jwtAuth("mgr-1", "MANAGER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.archivedAt").isNotEmpty());
     }
@@ -166,21 +159,18 @@ class ArchiveSafetyTest {
     void archiveDO_doesNotCascadeArchiveChildOutcomes() throws Exception {
         // No active commitments, so archive should succeed
         mockMvc.perform(patch("/api/rcdo/defining-objectives/{id}/archive", doId)
-                        .header(MANAGER_HEADERS_USER, "mgr-1")
-                        .header(MANAGER_HEADERS_ROLE, "MANAGER"))
+                        .with(jwtAuth("mgr-1", "MANAGER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.archivedAt").isNotEmpty());
 
         // Child outcomes should NOT be archived
         mockMvc.perform(get("/api/rcdo/outcomes/{id}", outcomeId)
-                        .header(MANAGER_HEADERS_USER, "mgr-1")
-                        .header(MANAGER_HEADERS_ROLE, "MANAGER"))
+                        .with(jwtAuth("mgr-1", "MANAGER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.archivedAt").isEmpty());
 
         mockMvc.perform(get("/api/rcdo/outcomes/{id}", outcome2Id)
-                        .header(MANAGER_HEADERS_USER, "mgr-1")
-                        .header(MANAGER_HEADERS_ROLE, "MANAGER"))
+                        .with(jwtAuth("mgr-1", "MANAGER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.archivedAt").isEmpty());
     }
@@ -189,22 +179,19 @@ class ArchiveSafetyTest {
     void archiveRC_doesNotCascadeArchiveChildren() throws Exception {
         // No active commitments, so archive should succeed
         mockMvc.perform(patch("/api/rcdo/rally-cries/{id}/archive", rallyCryId)
-                        .header(MANAGER_HEADERS_USER, "mgr-1")
-                        .header(MANAGER_HEADERS_ROLE, "MANAGER"))
+                        .with(jwtAuth("mgr-1", "MANAGER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.archivedAt").isNotEmpty());
 
         // Child DO should NOT be archived
         mockMvc.perform(get("/api/rcdo/defining-objectives/{id}", doId)
-                        .header(MANAGER_HEADERS_USER, "mgr-1")
-                        .header(MANAGER_HEADERS_ROLE, "MANAGER"))
+                        .with(jwtAuth("mgr-1", "MANAGER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.archivedAt").isEmpty());
 
         // Grandchild outcomes should NOT be archived
         mockMvc.perform(get("/api/rcdo/outcomes/{id}", outcomeId)
-                        .header(MANAGER_HEADERS_USER, "mgr-1")
-                        .header(MANAGER_HEADERS_ROLE, "MANAGER"))
+                        .with(jwtAuth("mgr-1", "MANAGER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.archivedAt").isEmpty());
     }

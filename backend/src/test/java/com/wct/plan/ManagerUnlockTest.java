@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.UUID;
 
+import static com.wct.support.TestJwtAuth.jwtAuth;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -41,9 +42,7 @@ class ManagerUnlockTest {
         String planId = createLockedPlan();
 
         mockMvc.perform(post(BASE_URL + "/" + planId + "/unlock")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth("mgr-1", "MANAGER", "team-1", "ic-1")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("DRAFT"))
                 .andExpect(jsonPath("$.id").value(planId));
@@ -54,10 +53,7 @@ class ManagerUnlockTest {
         String planId = createLockedPlan();
 
         mockMvc.perform(post(BASE_URL + "/" + planId + "/unlock")
-                        .header("X-User-Id", "ic-1")
-                        .header("X-User-Role", "IC")
-                        .header("X-Team-Id", "team-1")
-                        .header("X-Manager-Id", "mgr-1"))
+                        .with(jwtAuth("ic-1", "IC", "team-1", "mgr-1")))
                 .andExpect(status().isForbidden());
     }
 
@@ -66,9 +62,7 @@ class ManagerUnlockTest {
         String planId = createPlan();
 
         mockMvc.perform(post(BASE_URL + "/" + planId + "/unlock")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth("mgr-1", "MANAGER", "team-1", "ic-1")))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Plan can only be unlocked from LOCKED state"));
     }
@@ -79,9 +73,7 @@ class ManagerUnlockTest {
         transitionPlan(planId, "ic-1", "RECONCILING");
 
         mockMvc.perform(post(BASE_URL + "/" + planId + "/unlock")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth("mgr-1", "MANAGER", "team-1", "ic-1")))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Plan can only be unlocked from LOCKED state"));
     }
@@ -93,9 +85,7 @@ class ManagerUnlockTest {
         transitionPlan(planId, "ic-1", "RECONCILED");
 
         mockMvc.perform(post(BASE_URL + "/" + planId + "/unlock")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth("mgr-1", "MANAGER", "team-1", "ic-1")))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Plan can only be unlocked from LOCKED state"));
     }
@@ -106,16 +96,12 @@ class ManagerUnlockTest {
 
         // Unlock
         mockMvc.perform(post(BASE_URL + "/" + planId + "/unlock")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth("mgr-1", "MANAGER", "team-1", "ic-1")))
                 .andExpect(status().isOk());
 
         // Check audit log - should have 2 entries: DRAFT->LOCKED and LOCKED->DRAFT
         mockMvc.perform(get(BASE_URL + "/" + planId + "/transitions")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth("mgr-1", "MANAGER", "team-1", "ic-1")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[1].fromStatus").value("LOCKED"))
@@ -129,9 +115,7 @@ class ManagerUnlockTest {
 
         // Unlock as manager
         mockMvc.perform(post(BASE_URL + "/" + planId + "/unlock")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth("mgr-1", "MANAGER", "team-1", "ic-1")))
                 .andExpect(status().isOk());
 
         // Create RCDO path for commitment
@@ -141,10 +125,7 @@ class ManagerUnlockTest {
         CreateCommitmentRequest req = new CreateCommitmentRequest("New commitment", UUID.fromString(outcomeId), null);
 
         mockMvc.perform(post(BASE_URL + "/" + planId + "/commitments")
-                        .header("X-User-Id", "ic-1")
-                        .header("X-User-Role", "IC")
-                        .header("X-Team-Id", "team-1")
-                        .header("X-Manager-Id", "mgr-1")
+                        .with(jwtAuth("ic-1", "IC", "team-1", "mgr-1"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
@@ -156,9 +137,7 @@ class ManagerUnlockTest {
         String planId = createLockedPlan();
 
         mockMvc.perform(post(BASE_URL + "/" + planId + "/unlock")
-                        .header("X-User-Id", "leader-1")
-                        .header("X-User-Role", "LEADERSHIP")
-                        .header("X-Team-Id", "team-1"))
+                        .with(jwtAuth("leader-1", "LEADERSHIP", "team-1")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("DRAFT"));
     }
@@ -168,10 +147,7 @@ class ManagerUnlockTest {
     private String createPlan() throws Exception {
         MvcResult result = mockMvc.perform(get(BASE_URL)
                         .param("date", "2026-03-30")
-                        .header("X-User-Id", "ic-1")
-                        .header("X-User-Role", "IC")
-                        .header("X-Team-Id", "team-1")
-                        .header("X-Manager-Id", "mgr-1"))
+                        .with(jwtAuth("ic-1", "IC", "team-1", "mgr-1")))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -186,10 +162,7 @@ class ManagerUnlockTest {
 
     private void transitionPlan(String planId, String userId, String targetStatus) throws Exception {
         mockMvc.perform(post(BASE_URL + "/" + planId + "/transition")
-                        .header("X-User-Id", userId)
-                        .header("X-User-Role", "IC")
-                        .header("X-Team-Id", "team-1")
-                        .header("X-Manager-Id", "mgr-1")
+                        .with(jwtAuth(userId, "IC", "team-1", "mgr-1"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new PlanTransitionRequest(targetStatus))))
                 .andExpect(status().isOk());
@@ -198,8 +171,7 @@ class ManagerUnlockTest {
     private String createFullRcdoPath() throws Exception {
         // Create Rally Cry
         MvcResult rcResult = mockMvc.perform(post("/api/rcdo/rally-cries")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("mgr-1", "MANAGER", "team-1", "ic-1"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new CreateRallyCryRequest("Test RC", "RC desc"))))
                 .andExpect(status().isCreated())
@@ -208,8 +180,7 @@ class ManagerUnlockTest {
 
         // Create Defining Objective
         MvcResult doResult = mockMvc.perform(post("/api/rcdo/defining-objectives")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("mgr-1", "MANAGER", "team-1", "ic-1"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateDefiningObjectiveRequest(UUID.fromString(rallyCryId), "Test DO", "DO desc"))))
@@ -219,8 +190,7 @@ class ManagerUnlockTest {
 
         // Create Outcome
         MvcResult outcomeResult = mockMvc.perform(post("/api/rcdo/outcomes")
-                        .header("X-User-Id", "mgr-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("mgr-1", "MANAGER", "team-1", "ic-1"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new CreateOutcomeRequest(UUID.fromString(defObjId), "Test Outcome", "Outcome desc"))))

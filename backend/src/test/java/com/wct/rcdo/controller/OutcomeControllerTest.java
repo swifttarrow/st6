@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.UUID;
 
+import static com.wct.support.TestJwtAuth.jwtAuth;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -41,8 +42,7 @@ class OutcomeControllerTest {
         CreateOutcomeRequest request = new CreateOutcomeRequest(UUID.fromString(doId), "OC1", "outcome desc");
 
         mockMvc.perform(post(OC_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -57,8 +57,7 @@ class OutcomeControllerTest {
         CreateOutcomeRequest request = new CreateOutcomeRequest(UUID.fromString(doId), "OC1", "desc");
 
         mockMvc.perform(post(OC_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC")
+                        .with(jwtAuth("user-1", "IC"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
@@ -69,8 +68,7 @@ class OutcomeControllerTest {
         CreateOutcomeRequest request = new CreateOutcomeRequest(UUID.randomUUID(), "OC1", "desc");
 
         mockMvc.perform(post(OC_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound());
@@ -82,8 +80,7 @@ class OutcomeControllerTest {
         CreateOutcomeRequest request = new CreateOutcomeRequest(UUID.fromString(doId), "  ", "desc");
 
         mockMvc.perform(post(OC_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -96,8 +93,7 @@ class OutcomeControllerTest {
 
         mockMvc.perform(get(OC_URL)
                         .param("definingObjectiveId", doId)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name").value("OC1"));
@@ -109,22 +105,19 @@ class OutcomeControllerTest {
         String ocId = createOutcome(doId, "OC1", "desc");
 
         mockMvc.perform(patch(OC_URL + "/" + ocId + "/archive")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("user-1", "MANAGER")))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get(OC_URL)
                         .param("definingObjectiveId", doId)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
 
         mockMvc.perform(get(OC_URL)
                         .param("definingObjectiveId", doId)
                         .param("includeArchived", "true")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
     }
@@ -135,8 +128,7 @@ class OutcomeControllerTest {
         String ocId = createOutcome(doId, "OC1", "desc");
 
         mockMvc.perform(get(OC_URL + "/" + ocId)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("OC1"));
     }
@@ -144,8 +136,7 @@ class OutcomeControllerTest {
     @Test
     void findById_notFound_returns404() throws Exception {
         mockMvc.perform(get(OC_URL + "/" + UUID.randomUUID())
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "IC"))
+                        .with(jwtAuth("user-1", "IC")))
                 .andExpect(status().isNotFound());
     }
 
@@ -156,8 +147,7 @@ class OutcomeControllerTest {
         UpdateOutcomeRequest updateReq = new UpdateOutcomeRequest("Updated OC", "new desc", 7);
 
         mockMvc.perform(put(OC_URL + "/" + ocId)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateReq)))
                 .andExpect(status().isOk())
@@ -171,14 +161,12 @@ class OutcomeControllerTest {
         String ocId = createOutcome(doId, "OC1", "desc");
 
         mockMvc.perform(patch(OC_URL + "/" + ocId + "/archive")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("user-1", "MANAGER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.archivedAt").isNotEmpty());
 
         mockMvc.perform(patch(OC_URL + "/" + ocId + "/unarchive")
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER"))
+                        .with(jwtAuth("user-1", "MANAGER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.archivedAt").isEmpty());
     }
@@ -192,8 +180,7 @@ class OutcomeControllerTest {
     private String createRallyCry(String name, String description) throws Exception {
         CreateRallyCryRequest request = new CreateRallyCryRequest(name, description);
         MvcResult result = mockMvc.perform(post(RC_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -205,8 +192,7 @@ class OutcomeControllerTest {
         CreateDefiningObjectiveRequest request = new CreateDefiningObjectiveRequest(
                 UUID.fromString(rallyCryId), name, description);
         MvcResult result = mockMvc.perform(post(DO_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -218,8 +204,7 @@ class OutcomeControllerTest {
         CreateOutcomeRequest request = new CreateOutcomeRequest(
                 UUID.fromString(definingObjectiveId), name, description);
         MvcResult result = mockMvc.perform(post(OC_URL)
-                        .header("X-User-Id", "user-1")
-                        .header("X-User-Role", "MANAGER")
+                        .with(jwtAuth("user-1", "MANAGER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
