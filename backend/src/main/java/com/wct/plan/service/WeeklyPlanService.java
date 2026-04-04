@@ -129,9 +129,9 @@ public class WeeklyPlanService {
 
     @Transactional
     public WeeklyPlan unlockPlan(UUID planId, UserContext managerContext) {
-        // Verify role is MANAGER or LEADERSHIP
-        if (managerContext.role() == Role.IC) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only managers or leadership can unlock plans");
+        // Unlock is restricted to managers.
+        if (managerContext.role() != Role.MANAGER) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only managers can unlock plans");
         }
 
         // Load plan

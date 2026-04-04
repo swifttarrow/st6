@@ -133,13 +133,13 @@ class ManagerUnlockTest {
     }
 
     @Test
-    void leadershipUnlocksLockedPlan_returns200AndDraft() throws Exception {
+    void leadershipUnlocksLockedPlan_returns403() throws Exception {
         String planId = createLockedPlan();
 
         mockMvc.perform(post(BASE_URL + "/" + planId + "/unlock")
                         .with(jwtAuth("leader-1", "LEADERSHIP", "team-1")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("DRAFT"));
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Only managers can unlock plans"));
     }
 
     // --- Helpers ---
