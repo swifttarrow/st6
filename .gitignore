@@ -5,6 +5,7 @@ backend/build/
 # Node / Vite (frontend)
 frontend/node_modules/
 frontend/dist/
+frontend/coverage/
 
 .DS_Store
 
