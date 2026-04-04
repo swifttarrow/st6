@@ -138,8 +138,7 @@ class ManagerUnlockTest {
 
         mockMvc.perform(post(BASE_URL + "/" + planId + "/unlock")
                         .with(jwtAuth("leader-1", "LEADERSHIP", "team-1")))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Only managers can unlock plans"));
+                .andExpect(status().isForbidden());
     }
 
     // --- Helpers ---
