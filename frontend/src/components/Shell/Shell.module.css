@@ -1,15 +1,21 @@
 /* Flex row: sidebar stays in document flow so embedded mounts (e.g. host demo) are not
-   covered by a viewport-fixed rail. */
+   covered by a viewport-fixed rail.
+   Fill a sized host (flex parent / column layout) instead of always forcing 100vh, which
+   breaks viewport-locked host shells. */
 .shell {
   display: flex;
   align-items: stretch;
-  min-height: 100vh;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
   width: 100%;
 }
 
 .content {
   flex: 1;
   min-width: 0;
+  min-height: 0;
+  overflow: auto;
   padding: var(--content-padding);
   max-width: var(--content-max-width);
 }
