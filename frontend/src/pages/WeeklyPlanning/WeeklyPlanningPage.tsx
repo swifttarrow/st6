@@ -443,13 +443,36 @@ export const WeeklyPlanningPage: React.FC = () => {
 
       {weekStale && (
         <div className={styles.staleBanner} data-testid="stale-week-banner">
-          This week has ended. Visit reconciliation to review your commitments.{' '}
-          <Link
-            to={`/reconciliation?week=${encodeURIComponent(plan.weekStartDate)}`}
-            className={styles.staleLink}
-          >
-            Go to Reconciliation
-          </Link>
+          {isDraft ? (
+            readOnly ? (
+              <>
+                This week has ended for {plan.userId}. They need to lock their week before they can
+                reconcile.
+              </>
+            ) : (
+              <>
+                This week has ended. Lock your week using <strong>Lock Plan</strong> in the header
+                to reconcile.
+              </>
+            )
+          ) : readOnly ? (
+            <>
+              {plan.userId}&apos;s week has ended.
+              {plan.status === 'RECONCILED'
+                ? ' This week is reconciled.'
+                : ' They can complete reconciliation from their account.'}
+            </>
+          ) : (
+            <>
+              This week has ended. Visit reconciliation to review your commitments.{' '}
+              <Link
+                to={`/reconciliation?week=${encodeURIComponent(plan.weekStartDate)}`}
+                className={styles.staleLink}
+              >
+                Go to Reconciliation
+              </Link>
+            </>
+          )}
         </div>
       )}
 

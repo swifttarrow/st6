@@ -186,7 +186,7 @@ describe('WeeklyPlanningPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Lock Plan')).toBeDefined();
+      expect(screen.getByRole('button', { name: 'Lock Plan' })).toBeDefined();
     });
 
     expect(screen.getByText('Add Commitment')).toBeDefined();
