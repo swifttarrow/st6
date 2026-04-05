@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useApi } from '../../context/ApiContext';
 import { useUserContext } from '../../context/UserContext';
 import { Badge } from '../../components/Badge/Badge';
@@ -444,12 +444,12 @@ export const WeeklyPlanningPage: React.FC = () => {
       {weekStale && (
         <div className={styles.staleBanner} data-testid="stale-week-banner">
           This week has ended. Visit reconciliation to review your commitments.{' '}
-          <a
-            href={`/reconciliation?week=${encodeURIComponent(plan.weekStartDate)}`}
+          <Link
+            to={`/reconciliation?week=${encodeURIComponent(plan.weekStartDate)}`}
             className={styles.staleLink}
           >
             Go to Reconciliation
-          </a>
+          </Link>
         </div>
       )}
 
@@ -466,12 +466,12 @@ export const WeeklyPlanningPage: React.FC = () => {
               Your prior week ({formatWeekDate(priorWeekAttention.weekStartDate)}) is still{' '}
               <strong>{statusLabel(priorWeekAttention.status)}</strong>. Carry-forward into this week
               cannot finish until that plan is reconciled.{' '}
-              <a
-                href={`/reconciliation?week=${encodeURIComponent(priorWeekAttention.weekStartDate)}`}
+              <Link
+                to={`/reconciliation?week=${encodeURIComponent(priorWeekAttention.weekStartDate)}`}
                 className={styles.priorWeekLink}
               >
                 Reconcile prior week
-              </a>
+              </Link>
             </>
           )}
         </div>
@@ -539,9 +539,9 @@ export const WeeklyPlanningPage: React.FC = () => {
                 Weeks where you already have a plan (last 52 weeks). Open or reconcile without creating empty weeks.
               </p>
             </div>
-            <a href="/history" className={styles.historyRouteLink}>
+            <Link to="/history" className={styles.historyRouteLink}>
               Open full history
-            </a>
+            </Link>
           </div>
           {historyLoading ? (
             <p className={styles.historyHint}>Loading history…</p>
@@ -572,19 +572,21 @@ export const WeeklyPlanningPage: React.FC = () => {
                       <td>{row.commitmentCount}</td>
                       <td>
                         <div className={styles.historyActions}>
-                          <a
+                          <Link
                             className={styles.historyLink}
-                            href={`/commitments?week=${encodeURIComponent(row.weekStartDate)}`}
+                            to={`/commitments?week=${encodeURIComponent(row.weekStartDate)}`}
+                            aria-label={`Open commitments for week ${formatWeekSpan(row.weekStartDate)}`}
                           >
                             Open
-                          </a>
+                          </Link>
                           {canReconcile && (
-                            <a
+                            <Link
                               className={styles.historyLink}
-                              href={`/reconciliation?week=${encodeURIComponent(row.weekStartDate)}`}
+                              to={`/reconciliation?week=${encodeURIComponent(row.weekStartDate)}`}
+                              aria-label={`Reconcile week ${formatWeekSpan(row.weekStartDate)}`}
                             >
                               Reconcile
-                            </a>
+                            </Link>
                           )}
                         </div>
                       </td>
