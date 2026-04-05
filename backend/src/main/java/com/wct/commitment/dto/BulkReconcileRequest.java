@@ -3,6 +3,9 @@ package com.wct.commitment.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.wct.commitment.ActualStatus;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 import java.util.Objects;
@@ -10,6 +13,8 @@ import java.util.UUID;
 
 public class BulkReconcileRequest {
 
+    @Valid
+    @NotEmpty(message = "At least one reconciliation item is required")
     private List<BulkReconcileItem> items = List.of();
 
     public BulkReconcileRequest() {
@@ -28,8 +33,12 @@ public class BulkReconcileRequest {
     }
 
     public static class BulkReconcileItem {
+        @NotNull(message = "Commitment ID is required")
         private UUID commitmentId;
+
+        @NotNull(message = "Actual status is required")
         private ActualStatus actualStatus;
+
         private String reconciliationNotes;
 
         @JsonIgnore

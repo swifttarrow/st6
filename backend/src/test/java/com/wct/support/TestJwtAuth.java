@@ -1,5 +1,6 @@
 package com.wct.support;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
@@ -26,7 +27,9 @@ public final class TestJwtAuth {
                                                String fourthValue,
                                                String... remainingValues) {
         String normalizedRole = role.toUpperCase(Locale.US);
-        return SecurityMockMvcRequestPostProcessors.jwt().jwt(jwt -> {
+        return SecurityMockMvcRequestPostProcessors.jwt()
+                .authorities(new SimpleGrantedAuthority("ROLE_" + normalizedRole))
+                .jwt(jwt -> {
             jwt.subject(userId);
             jwt.claim("role", role);
             if (teamId != null && !teamId.isBlank()) {

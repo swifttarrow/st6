@@ -1,12 +1,12 @@
 package com.wct.rcdo.controller;
 
-import com.wct.auth.Role;
-import com.wct.auth.RoleGuard;
 import com.wct.rcdo.dto.CreateOutcomeRequest;
 import com.wct.rcdo.dto.OutcomeResponse;
 import com.wct.rcdo.dto.UpdateOutcomeRequest;
 import com.wct.rcdo.service.OutcomeService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,8 +24,8 @@ public class OutcomeController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public OutcomeResponse create(@RequestBody CreateOutcomeRequest request) {
-        RoleGuard.requireRole(Role.MANAGER, Role.LEADERSHIP);
+    @PreAuthorize("hasAnyRole('MANAGER', 'LEADERSHIP')")
+    public OutcomeResponse create(@Valid @RequestBody CreateOutcomeRequest request) {
         return service.create(request);
     }
 
@@ -42,21 +42,21 @@ public class OutcomeController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'LEADERSHIP')")
     public OutcomeResponse update(@PathVariable UUID id,
-                                  @RequestBody UpdateOutcomeRequest request) {
-        RoleGuard.requireRole(Role.MANAGER, Role.LEADERSHIP);
+                                  @Valid @RequestBody UpdateOutcomeRequest request) {
         return service.update(id, request);
     }
 
     @PatchMapping("/{id}/archive")
+    @PreAuthorize("hasAnyRole('MANAGER', 'LEADERSHIP')")
     public OutcomeResponse archive(@PathVariable UUID id) {
-        RoleGuard.requireRole(Role.MANAGER, Role.LEADERSHIP);
         return service.archive(id);
     }
 
     @PatchMapping("/{id}/unarchive")
+    @PreAuthorize("hasAnyRole('MANAGER', 'LEADERSHIP')")
     public OutcomeResponse unarchive(@PathVariable UUID id) {
-        RoleGuard.requireRole(Role.MANAGER, Role.LEADERSHIP);
         return service.unarchive(id);
     }
 }

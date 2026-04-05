@@ -12,8 +12,6 @@ import com.wct.plan.entity.PlanStateTransition;
 import com.wct.plan.entity.WeeklyPlan;
 import com.wct.plan.repository.PlanStateTransitionRepository;
 import com.wct.plan.repository.WeeklyPlanRepository;
-import com.wct.rcdo.entity.Outcome;
-import com.wct.rcdo.repository.OutcomeRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,18 +29,15 @@ public class WeeklyPlanService {
     private final PlanStateTransitionRepository transitionRepository;
     private final CommitmentRepository commitmentRepository;
     private final CarryForwardService carryForwardService;
-    private final OutcomeRepository outcomeRepository;
 
     public WeeklyPlanService(WeeklyPlanRepository weeklyPlanRepository,
                              PlanStateTransitionRepository transitionRepository,
                              CommitmentRepository commitmentRepository,
-                             CarryForwardService carryForwardService,
-                             OutcomeRepository outcomeRepository) {
+                             CarryForwardService carryForwardService) {
         this.weeklyPlanRepository = weeklyPlanRepository;
         this.transitionRepository = transitionRepository;
         this.commitmentRepository = commitmentRepository;
         this.carryForwardService = carryForwardService;
-        this.outcomeRepository = outcomeRepository;
     }
 
     @Transactional
@@ -88,14 +83,7 @@ public class WeeklyPlanService {
 
         // Archived outcome check for DRAFT -> LOCKED
         if (targetStatus == PlanStatus.LOCKED) {
-            List<Commitment> commitments = commitmentRepository.findByWeeklyPlanIdOrderByPriority(planId);
-            List<UUID> archivedCommitmentIds = new ArrayList<>();
-            for (Commitment c : commitments) {
-                Outcome outcome = outcomeRepository.findById(c.getOutcomeId()).orElse(null);
-                if (outcome != null && outcome.getArchivedAt() != null) {
-                    archivedCommitmentIds.add(c.getId());
-                }
-            }
+            List<UUID> archivedCommitmentIds = commitmentRepository.findArchivedCommitmentIdsByWeeklyPlanId(planId);
             if (!archivedCommitmentIds.isEmpty()) {
                 throw new ArchivedOutcomeException(archivedCommitmentIds);
             }

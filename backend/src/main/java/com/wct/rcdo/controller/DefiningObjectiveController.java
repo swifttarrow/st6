@@ -1,12 +1,12 @@
 package com.wct.rcdo.controller;
 
-import com.wct.auth.Role;
-import com.wct.auth.RoleGuard;
 import com.wct.rcdo.dto.CreateDefiningObjectiveRequest;
 import com.wct.rcdo.dto.DefiningObjectiveResponse;
 import com.wct.rcdo.dto.UpdateDefiningObjectiveRequest;
 import com.wct.rcdo.service.DefiningObjectiveService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,8 +24,8 @@ public class DefiningObjectiveController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public DefiningObjectiveResponse create(@RequestBody CreateDefiningObjectiveRequest request) {
-        RoleGuard.requireRole(Role.MANAGER, Role.LEADERSHIP);
+    @PreAuthorize("hasAnyRole('MANAGER', 'LEADERSHIP')")
+    public DefiningObjectiveResponse create(@Valid @RequestBody CreateDefiningObjectiveRequest request) {
         return service.create(request);
     }
 
@@ -42,21 +42,21 @@ public class DefiningObjectiveController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('MANAGER', 'LEADERSHIP')")
     public DefiningObjectiveResponse update(@PathVariable UUID id,
-                                            @RequestBody UpdateDefiningObjectiveRequest request) {
-        RoleGuard.requireRole(Role.MANAGER, Role.LEADERSHIP);
+                                            @Valid @RequestBody UpdateDefiningObjectiveRequest request) {
         return service.update(id, request);
     }
 
     @PatchMapping("/{id}/archive")
+    @PreAuthorize("hasAnyRole('MANAGER', 'LEADERSHIP')")
     public DefiningObjectiveResponse archive(@PathVariable UUID id) {
-        RoleGuard.requireRole(Role.MANAGER, Role.LEADERSHIP);
         return service.archive(id);
     }
 
     @PatchMapping("/{id}/unarchive")
+    @PreAuthorize("hasAnyRole('MANAGER', 'LEADERSHIP')")
     public DefiningObjectiveResponse unarchive(@PathVariable UUID id) {
-        RoleGuard.requireRole(Role.MANAGER, Role.LEADERSHIP);
         return service.unarchive(id);
     }
 }

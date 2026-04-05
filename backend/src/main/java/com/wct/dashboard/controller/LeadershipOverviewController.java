@@ -1,13 +1,12 @@
 package com.wct.dashboard.controller;
 
-import com.wct.auth.Role;
-import com.wct.auth.RoleGuard;
 import com.wct.dashboard.dto.ExecutiveOverviewResponse;
 import com.wct.dashboard.dto.OrgOverviewResponse;
 import com.wct.dashboard.service.LeadershipExecutiveService;
 import com.wct.dashboard.service.LeadershipOverviewService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,17 +28,17 @@ public class LeadershipOverviewController {
     }
 
     @GetMapping("/leadership")
+    @PreAuthorize("hasRole('LEADERSHIP')")
     public ResponseEntity<OrgOverviewResponse> getOrgOverview(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        RoleGuard.requireRole(Role.LEADERSHIP);
         OrgOverviewResponse response = leadershipOverviewService.getOrgOverview(date);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/executive")
+    @PreAuthorize("hasRole('LEADERSHIP')")
     public ResponseEntity<ExecutiveOverviewResponse> getExecutiveOverview(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        RoleGuard.requireRole(Role.LEADERSHIP);
         return ResponseEntity.ok(leadershipExecutiveService.getExecutiveOverview(date));
     }
 }

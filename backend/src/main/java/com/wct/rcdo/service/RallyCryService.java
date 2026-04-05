@@ -37,7 +37,6 @@ public class RallyCryService {
     }
 
     public RallyCryResponse create(CreateRallyCryRequest request) {
-        validateName(request.name());
         RallyCry entity = new RallyCry();
         entity.setName(request.name());
         entity.setDescription(request.description());
@@ -58,7 +57,6 @@ public class RallyCryService {
     }
 
     public RallyCryResponse update(UUID id, UpdateRallyCryRequest request) {
-        validateName(request.name());
         RallyCry entity = findEntityById(id);
         entity.setName(request.name());
         entity.setDescription(request.description());
@@ -92,12 +90,6 @@ public class RallyCryService {
     private RallyCry findEntityById(UUID id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rally Cry not found"));
-    }
-
-    private void validateName(String name) {
-        if (name == null || name.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name must not be blank");
-        }
     }
 
     private RallyCryResponse toResponse(RallyCry entity) {

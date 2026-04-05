@@ -35,7 +35,6 @@ public class DefiningObjectiveService {
     }
 
     public DefiningObjectiveResponse create(CreateDefiningObjectiveRequest request) {
-        validateName(request.name());
         if (!rallyCryRepository.existsById(request.rallyCryId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Rally Cry not found");
         }
@@ -60,7 +59,6 @@ public class DefiningObjectiveService {
     }
 
     public DefiningObjectiveResponse update(UUID id, UpdateDefiningObjectiveRequest request) {
-        validateName(request.name());
         DefiningObjective entity = findEntityById(id);
         entity.setName(request.name());
         entity.setDescription(request.description());
@@ -90,12 +88,6 @@ public class DefiningObjectiveService {
         return repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Defining Objective not found"));
-    }
-
-    private void validateName(String name) {
-        if (name == null || name.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name must not be blank");
-        }
     }
 
     private DefiningObjectiveResponse toResponse(DefiningObjective entity) {

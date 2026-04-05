@@ -34,7 +34,6 @@ public class OutcomeService {
     }
 
     public OutcomeResponse create(CreateOutcomeRequest request) {
-        validateName(request.name());
         if (!definingObjectiveRepository.existsById(request.definingObjectiveId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Defining Objective not found");
         }
@@ -59,7 +58,6 @@ public class OutcomeService {
     }
 
     public OutcomeResponse update(UUID id, UpdateOutcomeRequest request) {
-        validateName(request.name());
         Outcome entity = findEntityById(id);
         entity.setName(request.name());
         entity.setDescription(request.description());
@@ -101,12 +99,6 @@ public class OutcomeService {
     private Outcome findEntityById(UUID id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Outcome not found"));
-    }
-
-    private void validateName(String name) {
-        if (name == null || name.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name must not be blank");
-        }
     }
 
     private OutcomeResponse toResponse(Outcome entity) {

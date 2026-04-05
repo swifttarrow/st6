@@ -3,16 +3,13 @@ package com.wct.commitment.service;
 import com.wct.auth.UserContext;
 import com.wct.commitment.dto.*;
 import com.wct.commitment.entity.Commitment;
+import com.wct.commitment.repository.CommitmentDetailsProjection;
 import com.wct.commitment.repository.CommitmentRepository;
 import com.wct.plan.PlanStatus;
 import com.wct.plan.entity.WeeklyPlan;
 import com.wct.plan.service.WeeklyPlanService;
-import com.wct.rcdo.entity.DefiningObjective;
 import com.wct.rcdo.entity.Outcome;
-import com.wct.rcdo.entity.RallyCry;
-import com.wct.rcdo.repository.DefiningObjectiveRepository;
 import com.wct.rcdo.repository.OutcomeRepository;
-import com.wct.rcdo.repository.RallyCryRepository;
 import jakarta.persistence.EntityManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -28,21 +25,15 @@ public class CommitmentService {
     private final CommitmentRepository commitmentRepository;
     private final WeeklyPlanService weeklyPlanService;
     private final OutcomeRepository outcomeRepository;
-    private final DefiningObjectiveRepository definingObjectiveRepository;
-    private final RallyCryRepository rallyCryRepository;
     private final EntityManager entityManager;
 
     public CommitmentService(CommitmentRepository commitmentRepository,
                              WeeklyPlanService weeklyPlanService,
                              OutcomeRepository outcomeRepository,
-                             DefiningObjectiveRepository definingObjectiveRepository,
-                             RallyCryRepository rallyCryRepository,
                              EntityManager entityManager) {
         this.commitmentRepository = commitmentRepository;
         this.weeklyPlanService = weeklyPlanService;
         this.outcomeRepository = outcomeRepository;
-        this.definingObjectiveRepository = definingObjectiveRepository;
-        this.rallyCryRepository = rallyCryRepository;
         this.entityManager = entityManager;
     }
 
@@ -51,10 +42,6 @@ public class CommitmentService {
         WeeklyPlan plan = weeklyPlanService.getPlanById(planId);
         verifyOwnership(plan, user);
         verifyDraft(plan);
-
-        if (req.description() == null || req.description().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Description must not be blank");
-        }
 
         Outcome outcome = outcomeRepository.findById(req.outcomeId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Outcome not found"));
@@ -79,20 +66,17 @@ public class CommitmentService {
 
     public List<CommitmentResponse> listByPlan(UUID planId, UserContext user) {
         weeklyPlanService.getPlanWithAuthCheck(planId, user);
-        List<Commitment> commitments = commitmentRepository.findByWeeklyPlanIdOrderByPriority(planId);
-        return commitments.stream().map(this::buildResponse).collect(Collectors.toList());
+        return commitmentRepository.findDetailedByWeeklyPlanId(planId)
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     public CommitmentResponse getById(UUID planId, UUID commitmentId, UserContext user) {
         weeklyPlanService.getPlanWithAuthCheck(planId, user);
-        Commitment commitment = commitmentRepository.findById(commitmentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Commitment not found"));
-
-        if (!commitment.getWeeklyPlanId().equals(planId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Commitment not found in this plan");
-        }
-
-        return buildResponse(commitment);
+        return commitmentRepository.findDetailedByPlanIdAndCommitmentId(planId, commitmentId)
+                .map(this::toResponse)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Commitment not found in this plan"));
     }
 
     @Transactional
@@ -109,9 +93,6 @@ public class CommitmentService {
         }
 
         if (req.description() != null) {
-            if (req.description().isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Description must not be blank");
-            }
             commitment.setDescription(req.description());
         }
 
@@ -239,15 +220,35 @@ public class CommitmentService {
         return commitmentRepository.findByWeeklyPlanIdAndActualStatusIsNull(planId);
     }
 
-    private CommitmentResponse buildResponse(Commitment commitment) {
-        Outcome outcome = outcomeRepository.findById(commitment.getOutcomeId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Outcome not found"));
-        DefiningObjective defObj = definingObjectiveRepository.findById(outcome.getDefiningObjectiveId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Defining objective not found"));
-        RallyCry rallyCry = rallyCryRepository.findById(defObj.getRallyCryId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Rally cry not found"));
+    private CommitmentResponse toResponse(CommitmentDetailsProjection commitment) {
+        return new CommitmentResponse(
+                commitment.getId(),
+                commitment.getDescription(),
+                commitment.getPriority(),
+                commitment.getNotes(),
+                commitment.getOutcomeId(),
+                commitment.getOutcomeName(),
+                commitment.getDefiningObjectiveId(),
+                commitment.getDefiningObjectiveName(),
+                commitment.getRallyCryId(),
+                commitment.getRallyCryName(),
+                commitment.getActualStatus() != null ? commitment.getActualStatus().name() : null,
+                commitment.getReconciliationNotes(),
+                commitment.getCarriedForwardFromId(),
+                commitment.getCarriedForwardFromId() != null,
+                Boolean.TRUE.equals(commitment.getOutcomeArchived()),
+                commitment.getCreatedAt(),
+                commitment.getUpdatedAt()
+        );
+    }
 
-        return CommitmentResponse.from(commitment, outcome, defObj, rallyCry);
+    private CommitmentResponse buildResponse(Commitment commitment) {
+        return commitmentRepository.findDetailedByPlanIdAndCommitmentId(commitment.getWeeklyPlanId(), commitment.getId())
+                .map(this::toResponse)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Commitment details not found after save"
+                ));
     }
 
     private void verifyOwnership(WeeklyPlan plan, UserContext user) {

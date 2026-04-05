@@ -1,9 +1,10 @@
 package com.wct.commitment.controller;
 
+import com.wct.auth.CurrentUser;
 import com.wct.auth.UserContext;
-import com.wct.auth.UserContextHolder;
 import com.wct.commitment.dto.*;
 import com.wct.commitment.service.CommitmentService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,23 +24,23 @@ public class CommitmentController {
 
     @PostMapping
     public ResponseEntity<CommitmentResponse> create(@PathVariable UUID planId,
-                                                     @RequestBody CreateCommitmentRequest request) {
-        UserContext user = UserContextHolder.get();
+                                                     @Valid @RequestBody CreateCommitmentRequest request,
+                                                     @CurrentUser UserContext user) {
         CommitmentResponse response = commitmentService.create(planId, request, user);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
-    public ResponseEntity<List<CommitmentResponse>> list(@PathVariable UUID planId) {
-        UserContext user = UserContextHolder.get();
+    public ResponseEntity<List<CommitmentResponse>> list(@PathVariable UUID planId,
+                                                         @CurrentUser UserContext user) {
         List<CommitmentResponse> responses = commitmentService.listByPlan(planId, user);
         return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/{commitmentId}")
     public ResponseEntity<CommitmentResponse> getById(@PathVariable UUID planId,
-                                                      @PathVariable UUID commitmentId) {
-        UserContext user = UserContextHolder.get();
+                                                      @PathVariable UUID commitmentId,
+                                                      @CurrentUser UserContext user) {
         CommitmentResponse response = commitmentService.getById(planId, commitmentId, user);
         return ResponseEntity.ok(response);
     }
@@ -47,24 +48,24 @@ public class CommitmentController {
     @PutMapping("/{commitmentId}")
     public ResponseEntity<CommitmentResponse> update(@PathVariable UUID planId,
                                                      @PathVariable UUID commitmentId,
-                                                     @RequestBody UpdateCommitmentRequest request) {
-        UserContext user = UserContextHolder.get();
+                                                     @Valid @RequestBody UpdateCommitmentRequest request,
+                                                     @CurrentUser UserContext user) {
         CommitmentResponse response = commitmentService.update(planId, commitmentId, request, user);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{commitmentId}")
     public ResponseEntity<Void> delete(@PathVariable UUID planId,
-                                       @PathVariable UUID commitmentId) {
-        UserContext user = UserContextHolder.get();
+                                       @PathVariable UUID commitmentId,
+                                       @CurrentUser UserContext user) {
         commitmentService.delete(planId, commitmentId, user);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/reorder")
     public ResponseEntity<List<CommitmentResponse>> reorder(@PathVariable UUID planId,
-                                                            @RequestBody ReorderCommitmentsRequest request) {
-        UserContext user = UserContextHolder.get();
+                                                            @Valid @RequestBody ReorderCommitmentsRequest request,
+                                                            @CurrentUser UserContext user) {
         List<CommitmentResponse> responses = commitmentService.reorder(planId, request, user);
         return ResponseEntity.ok(responses);
     }
@@ -72,16 +73,16 @@ public class CommitmentController {
     @PatchMapping("/{commitmentId}/reconcile")
     public ResponseEntity<CommitmentResponse> reconcile(@PathVariable UUID planId,
                                                         @PathVariable UUID commitmentId,
-                                                        @RequestBody ReconcileCommitmentRequest request) {
-        UserContext user = UserContextHolder.get();
+                                                        @Valid @RequestBody ReconcileCommitmentRequest request,
+                                                        @CurrentUser UserContext user) {
         CommitmentResponse response = commitmentService.reconcile(planId, commitmentId, request, user);
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/reconcile")
     public ResponseEntity<List<CommitmentResponse>> bulkReconcile(@PathVariable UUID planId,
-                                                                   @RequestBody BulkReconcileRequest request) {
-        UserContext user = UserContextHolder.get();
+                                                                  @Valid @RequestBody BulkReconcileRequest request,
+                                                                  @CurrentUser UserContext user) {
         List<CommitmentResponse> responses = commitmentService.bulkReconcile(planId, request, user);
         return ResponseEntity.ok(responses);
     }

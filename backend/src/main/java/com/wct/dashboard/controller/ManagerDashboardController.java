@@ -1,14 +1,14 @@
 package com.wct.dashboard.controller;
 
+import com.wct.auth.CurrentUser;
 import com.wct.auth.Role;
-import com.wct.auth.RoleGuard;
 import com.wct.auth.UserContext;
-import com.wct.auth.UserContextHolder;
 import com.wct.dashboard.dto.TeamOverviewResponse;
 import com.wct.dashboard.service.ManagerDashboardService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,11 +29,11 @@ public class ManagerDashboardController {
     }
 
     @GetMapping("/team")
+    @PreAuthorize("hasAnyRole('MANAGER', 'LEADERSHIP')")
     public ResponseEntity<TeamOverviewResponse> getTeamOverview(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(required = false) List<String> memberIds) {
-        RoleGuard.requireRole(Role.MANAGER, Role.LEADERSHIP);
-        UserContext user = UserContextHolder.get();
+            @RequestParam(required = false) List<String> memberIds,
+            @CurrentUser UserContext user) {
         TeamOverviewResponse response = managerDashboardService.getTeamOverview(resolveMemberIds(user, memberIds), date);
         return ResponseEntity.ok(response);
     }

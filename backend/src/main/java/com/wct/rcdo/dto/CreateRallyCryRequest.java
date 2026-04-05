@@ -1,4 +1,9 @@
 package com.wct.rcdo.dto;
 
-public record CreateRallyCryRequest(String name, String description) {
+import jakarta.validation.constraints.NotBlank;
+
+public record CreateRallyCryRequest(
+        @NotBlank(message = "Name must not be blank") String name,
+        String description
+) {
 }

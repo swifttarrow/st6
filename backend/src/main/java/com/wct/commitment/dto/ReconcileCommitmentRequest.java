@@ -3,9 +3,11 @@ package com.wct.commitment.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.wct.commitment.ActualStatus;
+import jakarta.validation.constraints.NotNull;
 
 public class ReconcileCommitmentRequest {
 
+    @NotNull(message = "Actual status is required")
     private ActualStatus actualStatus;
     private String reconciliationNotes;
 
