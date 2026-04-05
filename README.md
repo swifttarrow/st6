@@ -20,15 +20,22 @@ A narrated walkthrough of the product is in the repo root:
 
 ## Local development
 
-1. **Backend** (from `backend/`): run the Spring Boot app on port `8080`.
-2. **Frontend remote** (from `frontend/`): `npm install` then `npm run dev`.
-3. **Host-shell demo** (from `frontend/`): `npm run dev:host-demo` to open the host integration page at `/host-demo.html`.
-4. Optional richer sample data: use PostgreSQL plus [`backend/scripts/seed.sh`](./backend/scripts/seed.sh). The old repo-root `seed.sh` is from the earlier header-auth prototype and is no longer the recommended path.
+1. **Start PostgreSQL** from the repo root: `docker compose up -d postgres`
+2. **Backend** (from `backend/`): `SPRING_PROFILES_ACTIVE=local-postgres APP_AUTH_HMAC_SECRET=local-dev-jwt-secret-0123456789abcdef ./gradlew bootRun`
+3. **Frontend remote** (from `frontend/`): `npm install` then `npm run dev`
+4. **Host-shell demo** (from `frontend/`): `npm run dev:host-demo` to open the host integration page at `/host-demo.html`
+5. Optional richer sample data: use [`backend/scripts/seed.sh`](./backend/scripts/seed.sh) after the Postgres container is healthy. The old repo-root `seed.sh` is from the earlier header-auth prototype and is no longer the recommended path.
+
+Notes:
+
+- Local development is now Postgres-first so queries and Flyway migrations behave more like production.
+- Automated tests still use the default in-memory H2 profile for speed and isolation.
+- Override local DB connection settings with `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD` if you are not using the bundled Compose service.
 
 ## Authentication
 
 - **All environments:** the backend now authenticates API requests with Bearer JWTs only. Browser-supplied identity headers are no longer accepted.
-- **Local development:** the standalone Vite page no longer offers a local login picker. Mount the micro-frontend from a host app or inject `window.__WCT_HOST_CONTEXT__` with a valid JWT-backed context before loading [frontend/index.html](/Users/swifttarrow/learning/gauntlet/hiring-partners/st6/frontend/index.html).
+- **Local development:** the standalone Vite page no longer offers a local login picker. Mount the micro-frontend from a host app or inject `window.__WCT_HOST_CONTEXT__` with a valid JWT-backed context before loading [`frontend/index.html`](./frontend/index.html).
 - **Backend JWT config:** provide either standard Spring resource-server JWT configuration (`issuer-uri` / `jwk-set-uri`) or an `app.auth.hmac-secret` value for local/test signing.
 - **Host-shell demo mode:** set `APP_DEMO_HOST_ENABLED=true` alongside `APP_AUTH_HMAC_SECRET=...` to expose a demo-only `/demo-host/context` endpoint that mints local review tokens for the host shell.
 - **Expected JWT claims by default:** `sub` (user ID), `role`, `team_id`, `manager_id`, and `direct_reports`. Claim names are configurable in [backend/src/main/resources/application.yml](./backend/src/main/resources/application.yml).
@@ -39,7 +46,8 @@ A narrated walkthrough of the product is in the repo root:
 This repo includes a lightweight host-shell demonstration so reviewers can see the micro-frontend mounted the way a real PA host app would.
 
 1. Start the backend:
-   `cd backend && APP_AUTH_HMAC_SECRET=local-dev-jwt-secret-0123456789abcdef APP_DEMO_HOST_ENABLED=true ./gradlew bootRun`
+   `docker compose up -d postgres`
+   `cd backend && SPRING_PROFILES_ACTIVE=local-postgres APP_AUTH_HMAC_SECRET=local-dev-jwt-secret-0123456789abcdef APP_DEMO_HOST_ENABLED=true ./gradlew bootRun`
 2. Start the frontend host demo:
    `cd frontend && npm install && npm run dev:host-demo`
 3. Open `http://localhost:5173/host-demo.html`
