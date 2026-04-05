@@ -243,6 +243,27 @@ class WeeklyPlanControllerTest {
     }
 
     @Test
+    void getExistingPlan_returnsExistingPlanWithoutCreating() throws Exception {
+        String planId = createPlan("user-1", "2026-03-30");
+
+        mockMvc.perform(get(BASE_URL + "/existing")
+                        .param("date", "2026-04-01")
+                        .with(jwtAuth("user-1", "IC", "team-1")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(planId))
+                .andExpect(jsonPath("$.weekStartDate").value("2026-03-30"));
+    }
+
+    @Test
+    void getExistingPlan_returns404WhenMissing() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/existing")
+                        .param("date", "2026-03-30")
+                        .with(jwtAuth("user-1", "IC", "team-1")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("NOT_FOUND"));
+    }
+
+    @Test
     void listMyPlans_rejectsInvertedRange() throws Exception {
         mockMvc.perform(get(BASE_URL + "/me")
                         .param("from", "2026-04-06")

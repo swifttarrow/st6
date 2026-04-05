@@ -39,7 +39,7 @@ public class CommitmentService {
 
     @Transactional
     public CommitmentResponse create(UUID planId, CreateCommitmentRequest req, UserContext user) {
-        WeeklyPlan plan = weeklyPlanService.getPlanById(planId);
+        WeeklyPlan plan = weeklyPlanService.getPlanByIdForUpdate(planId);
         verifyOwnership(plan, user);
         verifyDraft(plan);
 
@@ -81,7 +81,7 @@ public class CommitmentService {
 
     @Transactional
     public CommitmentResponse update(UUID planId, UUID commitmentId, UpdateCommitmentRequest req, UserContext user) {
-        WeeklyPlan plan = weeklyPlanService.getPlanById(planId);
+        WeeklyPlan plan = weeklyPlanService.getPlanByIdForUpdate(planId);
         verifyOwnership(plan, user);
         verifyDraft(plan);
 
@@ -116,7 +116,7 @@ public class CommitmentService {
 
     @Transactional
     public void delete(UUID planId, UUID commitmentId, UserContext user) {
-        WeeklyPlan plan = weeklyPlanService.getPlanById(planId);
+        WeeklyPlan plan = weeklyPlanService.getPlanByIdForUpdate(planId);
         verifyOwnership(plan, user);
         verifyDraft(plan);
 
@@ -128,18 +128,16 @@ public class CommitmentService {
         }
 
         commitmentRepository.delete(commitment);
+        commitmentRepository.flush();
 
         // Recompact priorities
         List<Commitment> remaining = commitmentRepository.findByWeeklyPlanIdOrderByPriority(planId);
-        for (int i = 0; i < remaining.size(); i++) {
-            remaining.get(i).setPriority(i + 1);
-        }
-        commitmentRepository.saveAll(remaining);
+        rewritePriorities(remaining);
     }
 
     @Transactional
     public List<CommitmentResponse> reorder(UUID planId, ReorderCommitmentsRequest req, UserContext user) {
-        WeeklyPlan plan = weeklyPlanService.getPlanById(planId);
+        WeeklyPlan plan = weeklyPlanService.getPlanByIdForUpdate(planId);
         verifyOwnership(plan, user);
         verifyDraft(plan);
 
@@ -154,20 +152,18 @@ public class CommitmentService {
 
         Map<UUID, Commitment> byId = existing.stream().collect(Collectors.toMap(Commitment::getId, c -> c));
         List<Commitment> reordered = new ArrayList<>();
-        int priority = 1;
         for (UUID id : req.orderedCommitmentIds()) {
             Commitment c = byId.get(id);
-            c.setPriority(priority++);
             reordered.add(c);
         }
-        commitmentRepository.saveAll(reordered);
+        rewritePriorities(reordered);
 
         return reordered.stream().map(this::buildResponse).collect(Collectors.toList());
     }
 
     @Transactional
     public CommitmentResponse reconcile(UUID planId, UUID commitmentId, ReconcileCommitmentRequest req, UserContext user) {
-        WeeklyPlan plan = weeklyPlanService.getPlanById(planId);
+        WeeklyPlan plan = weeklyPlanService.getPlanByIdForUpdate(planId);
         verifyOwnership(plan, user);
         verifyReconciling(plan);
 
@@ -190,7 +186,7 @@ public class CommitmentService {
 
     @Transactional
     public List<CommitmentResponse> bulkReconcile(UUID planId, BulkReconcileRequest req, UserContext user) {
-        WeeklyPlan plan = weeklyPlanService.getPlanById(planId);
+        WeeklyPlan plan = weeklyPlanService.getPlanByIdForUpdate(planId);
         verifyOwnership(plan, user);
         verifyReconciling(plan);
 
@@ -249,6 +245,18 @@ public class CommitmentService {
                         HttpStatus.INTERNAL_SERVER_ERROR,
                         "Commitment details not found after save"
                 ));
+    }
+
+    private void rewritePriorities(List<Commitment> commitments) {
+        for (int i = 0; i < commitments.size(); i++) {
+            commitments.get(i).setPriority(-(i + 1));
+        }
+        commitmentRepository.saveAllAndFlush(commitments);
+
+        for (int i = 0; i < commitments.size(); i++) {
+            commitments.get(i).setPriority(i + 1);
+        }
+        commitmentRepository.saveAllAndFlush(commitments);
     }
 
     private void verifyOwnership(WeeklyPlan plan, UserContext user) {

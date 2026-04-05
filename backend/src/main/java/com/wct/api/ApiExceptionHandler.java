@@ -150,8 +150,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler({
             HttpMessageNotReadableException.class,
-            MethodArgumentTypeMismatchException.class,
-            IllegalArgumentException.class
+            MethodArgumentTypeMismatchException.class
     })
     public ResponseEntity<Map<String, Object>> handleBadRequest(Exception ex, HttpServletRequest request) {
         return response(

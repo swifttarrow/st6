@@ -12,6 +12,7 @@ import com.wct.plan.entity.PlanStateTransition;
 import com.wct.plan.entity.WeeklyPlan;
 import com.wct.plan.repository.PlanStateTransitionRepository;
 import com.wct.plan.repository.WeeklyPlanRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,13 +53,29 @@ public class WeeklyPlanService {
         plan.setWeekStartDate(monday);
         plan.setTeamId(user.teamId());
         plan.setStatus(PlanStatus.DRAFT);
-        plan = weeklyPlanRepository.save(plan);
+        try {
+            plan = weeklyPlanRepository.saveAndFlush(plan);
+        } catch (DataIntegrityViolationException ex) {
+            return weeklyPlanRepository.findByUserIdAndWeekStartDate(userId, monday)
+                    .orElseThrow(() -> ex);
+        }
         carryForwardService.carryForward(plan);
         return plan;
     }
 
+    public WeeklyPlan getExistingPlan(String userId, LocalDate date) {
+        LocalDate monday = WeekDateUtil.toMonday(date);
+        return weeklyPlanRepository.findByUserIdAndWeekStartDate(userId, monday)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan not found"));
+    }
+
     public WeeklyPlan getPlanById(UUID planId) {
         return weeklyPlanRepository.findById(planId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan not found"));
+    }
+
+    public WeeklyPlan getPlanByIdForUpdate(UUID planId) {
+        return weeklyPlanRepository.findByIdForUpdate(planId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plan not found"));
     }
 

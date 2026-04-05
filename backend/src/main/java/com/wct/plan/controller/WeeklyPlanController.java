@@ -46,6 +46,14 @@ public class WeeklyPlanController {
         return ResponseEntity.ok(weeklyPlanService.listMyPlanSummaries(user.userId(), from, to));
     }
 
+    @GetMapping("/existing")
+    public ResponseEntity<WeeklyPlanResponse> getExistingPlan(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @CurrentUser UserContext user) {
+        WeeklyPlan plan = weeklyPlanService.getExistingPlan(user.userId(), date);
+        return ResponseEntity.ok(WeeklyPlanResponse.from(plan));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<WeeklyPlanResponse> getPlanById(@PathVariable UUID id,
                                                           @CurrentUser UserContext user) {
