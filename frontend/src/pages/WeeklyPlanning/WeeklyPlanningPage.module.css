@@ -91,6 +91,20 @@
   background: var(--color-grey-50, #fafafa);
 }
 
+.historyRow {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.historyRow:hover {
+  background: var(--color-grey-50, #fafafa);
+}
+
+.historyRow:focus-visible {
+  outline: 2px solid var(--color-accent, #2563eb);
+  outline-offset: -2px;
+}
+
 .historyActions {
   display: flex;
   flex-wrap: wrap;

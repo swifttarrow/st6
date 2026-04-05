@@ -173,6 +173,22 @@ describe('ReconciliationPage', () => {
     expect(screen.getByText('Fix bugs')).toBeDefined();
   });
 
+  it('shows an empty-week CTA when there are no commitments', async () => {
+    mockApi.commitments.listCommitments.mockResolvedValue([]);
+
+    render(
+      <MemoryRouter {...routerOpts}>
+        <ReconciliationPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('No commitments this week')).toBeDefined();
+    });
+
+    expect(screen.getByRole('button', { name: 'Finish Empty Week' })).toBeDefined();
+  });
+
   it('submit button disabled when not all commitments annotated', async () => {
     render(
       <MemoryRouter {...routerOpts}>
@@ -294,6 +310,34 @@ describe('ReconciliationPage', () => {
 
     await waitFor(() => {
       expect(mockApi.plans.transitionPlan).toHaveBeenCalledWith('plan-1', 'RECONCILED');
+    });
+  });
+
+  it('finishes an empty week from the empty state', async () => {
+    mockApi.commitments.listCommitments.mockResolvedValue([]);
+    mockApi.plans.transitionPlan.mockResolvedValue({
+      ...mockPlanReconciling,
+      status: 'RECONCILED' as const,
+    });
+
+    render(
+      <MemoryRouter {...routerOpts}>
+        <ReconciliationPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Finish Empty Week' })).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Finish Empty Week' }));
+
+    await waitFor(() => {
+      expect(mockApi.plans.transitionPlan).toHaveBeenCalledWith('plan-1', 'RECONCILED');
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Back to Commitments' })).toBeDefined();
     });
   });
 

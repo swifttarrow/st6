@@ -247,8 +247,11 @@ describe('WeeklyPlanningPage', () => {
     });
 
     expect(
-      screen.getByText('Use Add Commitment in the toolbar to link an outcome to this week.'),
+      screen.getByText(
+        'Add your first commitment to start planning this week, or lock an empty week if you intentionally have nothing to commit.',
+      ),
     ).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Add First Commitment' })).toBeDefined();
   });
 
   it('opens the commitment form when Add Commitment is clicked', async () => {
@@ -312,8 +315,41 @@ describe('WeeklyPlanningPage', () => {
       expect(screen.getByText('Your plan history')).toBeDefined();
     });
 
-    expect(screen.getAllByText('Open').length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByLabelText(/Open commitments for week/i)).toBeNull();
     expect(screen.getAllByText('Reconcile').length).toBeGreaterThan(0);
+  });
+
+  it('opens commitments when a history row is clicked', async () => {
+    mockApi.plans.listMyPlans.mockImplementation((from: string, to: string) => {
+      if (from === to) {
+        return Promise.resolve([]);
+      }
+      return Promise.resolve([
+        {
+          id: 'hist-1',
+          weekStartDate: '2026-03-16',
+          status: 'RECONCILED' as const,
+          commitmentCount: 2,
+        },
+      ]);
+    });
+
+    render(
+      <MemoryRouter>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('history-row-2026-03-16')).toBeDefined();
+    });
+
+    mockApi.plans.getPlan.mockClear();
+    fireEvent.click(screen.getByTestId('history-row-2026-03-16'));
+
+    await waitFor(() => {
+      expect(mockApi.plans.getPlan).toHaveBeenCalledWith('2026-03-16');
+    });
   });
 
   it('shows load error when getPlan fails', async () => {
@@ -386,13 +422,27 @@ describe('WeeklyPlanningPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Begin Reconciliation' })).toBeDefined();
+      expect(screen.getByRole('button', { name: 'Start Reconciliation' })).toBeDefined();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Begin Reconciliation' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start Reconciliation' }));
 
     await waitFor(() => {
       expect(mockApi.plans.transitionPlan).toHaveBeenCalledWith('plan-1', 'RECONCILING');
+    });
+  });
+
+  it('shows a reconciliation action when the plan is already reconciled', async () => {
+    mockApi.plans.getPlan.mockResolvedValue({ ...mockPlan, status: 'RECONCILED' as const });
+
+    render(
+      <MemoryRouter>
+        <WeeklyPlanningPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'View Reconciliation' })).toBeDefined();
     });
   });
 
@@ -530,10 +580,10 @@ describe('WeeklyPlanningPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Begin Reconciliation' })).toBeDefined();
+      expect(screen.getByRole('button', { name: 'Start Reconciliation' })).toBeDefined();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Begin Reconciliation' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start Reconciliation' }));
 
     await waitFor(() => {
       expect(screen.getByText('Cannot enter reconciliation')).toBeDefined();

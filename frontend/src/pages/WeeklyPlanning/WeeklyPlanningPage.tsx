@@ -1,7 +1,5 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { useApi } from '../../context/ApiContext';
-import { useUserContext } from '../../context/UserContext';
+import React, { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Badge } from '../../components/Badge/Badge';
 import { ActionBar } from '../../components/ActionBar/ActionBar';
 import { WeekNavigator } from '../../components/WeekNavigator/WeekNavigator';
@@ -11,16 +9,10 @@ import { CommitmentForm } from '../../components/CommitmentForm/CommitmentForm';
 import { CarryForwardBanner } from '../../components/CarryForwardBanner/CarryForwardBanner';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { ErrorToast } from '../../components/ErrorToast/ErrorToast';
-import {
-  WeeklyPlan,
-  Commitment,
-  RcdoTreeRallyCry,
-  PlanStatus,
-  TeamOverviewResponse,
-  MyPlanSummary,
-} from '../../api/types';
+import { PlanStatus } from '../../api/types';
 import type { BadgeVariant } from '../../components/Badge/Badge';
-import { addWeeks, formatWeekSpan, getMonday, getTodayDate } from '../../utils/weekDates';
+import { formatWeekSpan } from '../../utils/weekDates';
+import { useWeeklyPlanningModel } from './useWeeklyPlanningModel';
 import styles from './WeeklyPlanningPage.module.css';
 
 function formatWeekDate(dateStr: string): string {
@@ -32,7 +24,6 @@ function formatWeekDate(dateStr: string): string {
     year: 'numeric',
   });
 }
-
 
 function getStatusBadge(status: PlanStatus): { label: string; variant: BadgeVariant } {
   switch (status) {
@@ -47,14 +38,8 @@ function getStatusBadge(status: PlanStatus): { label: string; variant: BadgeVari
   }
 }
 
-function isWeekStale(weekStartDate: string): boolean {
-  const [year, month, day] = weekStartDate.split('-').map(Number);
-  const friday = new Date(year, month - 1, day + 4, 23, 59, 59, 999);
-  return new Date() > friday;
-}
-
-function statusLabel(s: PlanStatus): string {
-  switch (s) {
+function statusLabel(status: PlanStatus): string {
+  switch (status) {
     case 'DRAFT':
       return 'Draft';
     case 'LOCKED':
@@ -66,275 +51,52 @@ function statusLabel(s: PlanStatus): string {
   }
 }
 
+function reconciliationPath(weekStartDate: string): string {
+  return `/reconciliation?week=${encodeURIComponent(weekStartDate)}`;
+}
+
 export const WeeklyPlanningPage: React.FC = () => {
-  const api = useApi();
-  const userContext = useUserContext();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
-
-  const planIdParam = searchParams.get('planId');
-  const weekParam = searchParams.get('week');
-  const weekMonday = useMemo(
-    () => getMonday(weekParam ?? getTodayDate()),
-    [weekParam],
-  );
-
-  const memberIdsFromUrl = useMemo(() => {
-    const ids = searchParams.getAll('memberIds');
-    if (ids.length > 0) return ids;
-    if (userContext.directReportIds && userContext.directReportIds.length > 0) {
-      return userContext.directReportIds;
-    }
-    return [];
-  }, [searchParams, userContext.directReportIds]);
-
-  const [plan, setPlan] = useState<WeeklyPlan | null>(null);
-  const [commitments, setCommitments] = useState<Commitment[]>([]);
-  const [tree, setTree] = useState<RcdoTreeRallyCry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [toastError, setToastError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [editingCommitment, setEditingCommitment] = useState<Commitment | null>(null);
-  const [bannerDismissed, setBannerDismissed] = useState(false);
-  const [locking, setLocking] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [teamOverview, setTeamOverview] = useState<TeamOverviewResponse | null>(null);
-  const [myPlanHistory, setMyPlanHistory] = useState<MyPlanSummary[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [priorWeekAttention, setPriorWeekAttention] = useState<{
-    weekStartDate: string;
-    status: PlanStatus;
-  } | null>(null);
-
-  const handleWeekChange = useCallback(
-    (nextDate: string) => {
-      const mon = getMonday(nextDate);
-      setSearchParams(
-        (prev) => {
-          const p = new URLSearchParams(prev);
-          p.set('week', mon);
-          p.delete('planId');
-          return p;
-        },
-        { replace: true },
-      );
-    },
-    [setSearchParams],
-  );
-
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      setPriorWeekAttention(null);
-      const fetchedPlan = planIdParam
-        ? await api.plans.getPlanById(planIdParam)
-        : await api.plans.getPlan(weekMonday);
-
-      const loadTeamPicker =
-        userContext.role === 'MANAGER' || userContext.role === 'LEADERSHIP';
-
-      const checkOwnPriorWeek = fetchedPlan.userId === userContext.userId;
-      const priorWeekMonday = addWeeks(fetchedPlan.weekStartDate, -1);
-
-      const [fetchedTree, overview, fetchedCommitments, priorWeekRows] = await Promise.all([
-        api.rcdo.getTree(),
-        loadTeamPicker
-          ? api.dashboard.getTeamOverview(fetchedPlan.weekStartDate, memberIdsFromUrl).catch(() => null)
-          : Promise.resolve(null),
-        api.commitments.listCommitments(fetchedPlan.id),
-        checkOwnPriorWeek
-          ? api.plans.listMyPlans(
-              priorWeekMonday,
-              priorWeekMonday,
-            ).catch(() => [] as MyPlanSummary[])
-          : Promise.resolve(null),
-      ]);
-
-      setPlan(fetchedPlan);
-      setTree(fetchedTree);
-      setTeamOverview(overview);
-      setCommitments(fetchedCommitments);
-
-      let nextPriorWeekAttention: typeof priorWeekAttention = null;
-      if (priorWeekRows) {
-        const row = priorWeekRows[0];
-        if (row && row.status !== 'RECONCILED') {
-          nextPriorWeekAttention = { weekStartDate: row.weekStartDate, status: row.status };
-        }
-      }
-
-      if (!nextPriorWeekAttention && overview) {
-        const selectedMember = overview.members.find((member) => member.userId === fetchedPlan.userId);
-        if (selectedMember?.priorWeekStartDate && selectedMember.priorWeekStatus) {
-          nextPriorWeekAttention = {
-            weekStartDate: selectedMember.priorWeekStartDate,
-            status: selectedMember.priorWeekStatus as PlanStatus,
-          };
-        }
-      }
-
-      setPriorWeekAttention(nextPriorWeekAttention);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data');
-    } finally {
-      setLoading(false);
-    }
-  }, [api, planIdParam, weekMonday, userContext.role, userContext.userId, memberIdsFromUrl]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  const refreshCommitments = useCallback(async () => {
-    if (!plan) return;
-    const fetched = await api.commitments.listCommitments(plan.id);
-    setCommitments(fetched);
-  }, [api, plan]);
-
-  useEffect(() => {
-    if (!plan) return;
-    const ro = plan.userId !== userContext.userId;
-    if (planIdParam || ro) return;
-
-    let cancelled = false;
-    (async () => {
-      setHistoryLoading(true);
-      try {
-        const to = getMonday(getTodayDate());
-        const from = addWeeks(to, -52);
-        const rows = await api.plans.listMyPlans(from, to);
-        if (!cancelled) setMyPlanHistory(rows);
-      } catch {
-        if (!cancelled) setMyPlanHistory([]);
-      } finally {
-        if (!cancelled) setHistoryLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [api, plan, planIdParam, userContext.userId]);
-
-  const carriedForwardCount = useMemo(
-    () => commitments.filter(c => c.carriedForward).length,
-    [commitments],
-  );
-
-  const archivedOutcomeCount = useMemo(
-    () => commitments.filter(c => c.outcomeArchived).length,
-    [commitments],
-  );
-
-  const weekStale = useMemo(
-    () => plan ? isWeekStale(plan.weekStartDate) : false,
-    [plan],
-  );
-
-  const handleLock = useCallback(async () => {
-    if (!plan) return;
-
-    if (archivedOutcomeCount > 0) {
-      setToastError(
-        `Cannot lock: ${archivedOutcomeCount} commitment(s) reference archived outcomes. Please re-link them first.`,
-      );
-      return;
-    }
-
-    try {
-      setLocking(true);
-      const updated = await api.plans.transitionPlan(plan.id, 'LOCKED');
-      setPlan(updated);
-    } catch (err) {
-      setToastError(err instanceof Error ? err.message : 'Failed to lock plan');
-    } finally {
-      setLocking(false);
-    }
-  }, [api, plan, archivedOutcomeCount]);
-
-  const handleStartReconciliation = useCallback(async () => {
-    if (!plan) return;
-    try {
-      const updated = await api.plans.transitionPlan(plan.id, 'RECONCILING');
-      setPlan(updated);
-    } catch (err) {
-      setToastError(err instanceof Error ? err.message : 'Failed to start reconciliation');
-    }
-  }, [api, plan]);
-
-  const handleAddCommitment = useCallback(() => {
-    setEditingCommitment(null);
-    setShowForm(true);
-  }, []);
-
-  const handleEditCommitment = useCallback((commitment: Commitment) => {
-    setEditingCommitment(commitment);
-    setShowForm(true);
-  }, []);
-
-  const handleRelink = useCallback((commitmentId: string) => {
-    const commitment = commitments.find(c => c.id === commitmentId);
-    if (commitment) {
-      setEditingCommitment(commitment);
-      setShowForm(true);
-    }
-  }, [commitments]);
-
-  const handleDeleteCommitment = useCallback(async (commitmentId: string) => {
-    if (!plan) return;
-    try {
-      await api.commitments.deleteCommitment(plan.id, commitmentId);
-      await refreshCommitments();
-    } catch (err) {
-      setToastError(err instanceof Error ? err.message : 'Failed to delete commitment');
-    }
-  }, [api, plan, refreshCommitments]);
-
-  const handleReorder = useCallback(async (orderedIds: string[]) => {
-    if (!plan) return;
-    try {
-      const reordered = await api.commitments.reorderCommitments(plan.id, orderedIds);
-      setCommitments(reordered);
-    } catch (err) {
-      setToastError(err instanceof Error ? err.message : 'Failed to reorder commitments');
-    }
-  }, [api, plan]);
-
-  const handleFormSubmit = useCallback(async (data: { description: string; outcomeId: string }) => {
-    if (!plan) return;
-    try {
-      setSaving(true);
-      if (editingCommitment) {
-        await api.commitments.updateCommitment(plan.id, editingCommitment.id, {
-          description: data.description,
-          outcomeId: data.outcomeId,
-        });
-      } else {
-        await api.commitments.createCommitment(plan.id, {
-          description: data.description,
-          outcomeId: data.outcomeId,
-        });
-      }
-      setShowForm(false);
-      setEditingCommitment(null);
-      await refreshCommitments();
-    } catch (err) {
-      setToastError(err instanceof Error ? err.message : 'Failed to save commitment');
-    } finally {
-      setSaving(false);
-    }
-  }, [api, plan, editingCommitment, refreshCommitments]);
-
-  const handleFormCancel = useCallback(() => {
-    setShowForm(false);
-    setEditingCommitment(null);
-  }, []);
-
-  const readOnly = useMemo(
-    () => Boolean(plan && plan.userId !== userContext.userId),
-    [plan, userContext.userId],
-  );
+  const {
+    planIdParam,
+    weekMonday,
+    plan,
+    commitments,
+    tree,
+    loading,
+    error,
+    toastError,
+    showForm,
+    editingCommitment,
+    bannerDismissed,
+    locking,
+    saving,
+    myPlanHistory,
+    historyLoading,
+    priorWeekAttention,
+    carriedForwardCount,
+    readOnly,
+    weekStale,
+    teamPickerMembers,
+    showTeamPicker,
+    showWeekNavigator,
+    weekNavDate,
+    handleWeekChange,
+    handleLock,
+    handleStartReconciliation,
+    handleViewReconciliation,
+    handleAddCommitment,
+    handleEditCommitment,
+    handleRelink,
+    handleDeleteCommitment,
+    handleReorder,
+    handleFormSubmit,
+    handleFormCancel,
+    handlePersonSelect,
+    dismissCarryForwardBanner,
+    dismissToastError,
+    openCommitmentsWeek,
+    searchOutcomes,
+  } = useWeeklyPlanningModel();
 
   const pageTitle = useMemo(() => {
     const dateLabel = plan ? formatWeekDate(plan.weekStartDate) : '';
@@ -344,28 +106,6 @@ export const WeeklyPlanningPage: React.FC = () => {
     }
     return `Commitments \u2014 ${dateLabel}`;
   }, [plan, readOnly]);
-
-  const handlePersonSelect = useCallback(
-    (nextPlanId: string | null) => {
-      const explicitMemberIds = searchParams.getAll('memberIds');
-      const params = new URLSearchParams();
-      explicitMemberIds.forEach(id => params.append('memberIds', id));
-      const w = searchParams.get('week');
-      if (w) params.set('week', getMonday(w));
-      if (nextPlanId) params.set('planId', nextPlanId);
-      const qs = params.toString();
-      navigate(qs ? `/commitments?${qs}` : '/commitments');
-    },
-    [navigate, searchParams],
-  );
-
-  const teamPickerMembers = teamOverview?.members ?? [];
-  const showTeamPicker =
-    (userContext.role === 'MANAGER' || userContext.role === 'LEADERSHIP') &&
-    teamPickerMembers.length > 0;
-
-  const showWeekNavigator = !planIdParam;
-  const weekNavDate = plan ? plan.weekStartDate : weekMonday;
 
   if (loading) {
     return <div className={styles.loading}>Loading...</div>;
@@ -386,6 +126,25 @@ export const WeeklyPlanningPage: React.FC = () => {
   const showPriorWeekBanner = priorWeekAttention !== null;
   const treeIsEmpty = tree.length === 0;
   const showHistoryBlock = !planIdParam && !readOnly;
+  const emptyStateTitle = isDraft ? 'No commitments yet' : 'No commitments this week';
+  const emptyStateDescription = readOnly
+    ? 'This plan has no commitments for this week.'
+    : isDraft
+      ? 'Add your first commitment to start planning this week, or lock an empty week if you intentionally have nothing to commit.'
+      : plan.status === 'LOCKED'
+        ? 'No commitments were added for this week. Start reconciliation to close out the empty week.'
+        : plan.status === 'RECONCILING'
+          ? 'No commitments were added for this week. Continue reconciliation to close out the empty week.'
+          : 'This week was completed without any commitments.';
+  const emptyStateAction = readOnly
+    ? undefined
+    : isDraft
+      ? { label: 'Add First Commitment', onClick: handleAddCommitment }
+      : plan.status === 'LOCKED'
+        ? { label: 'Start Reconciliation', onClick: handleStartReconciliation }
+        : plan.status === 'RECONCILING'
+          ? { label: 'Continue Reconciliation', onClick: handleViewReconciliation }
+          : { label: 'View Reconciliation', onClick: handleViewReconciliation };
 
   return (
     <div className={styles.page}>
@@ -401,17 +160,17 @@ export const WeeklyPlanningPage: React.FC = () => {
                 id="commitments-person-select"
                 className={styles.personSelect}
                 value={planIdParam ?? ''}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  handlePersonSelect(v === '' ? null : v);
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  handlePersonSelect(nextValue === '' ? null : nextValue);
                 }}
               >
                 <option value="">Me</option>
                 {teamPickerMembers
-                  .filter(m => m.planId)
-                  .map(m => (
-                    <option key={m.userId} value={m.planId!}>
-                      {m.userId}
+                  .filter(member => member.planId)
+                  .map(member => (
+                    <option key={member.userId} value={member.planId!}>
+                      {member.userId}
                     </option>
                   ))}
               </select>
@@ -428,6 +187,7 @@ export const WeeklyPlanningPage: React.FC = () => {
                 onLock={handleLock}
                 onAddCommitment={handleAddCommitment}
                 onStartReconciliation={handleStartReconciliation}
+                onViewReconciliation={handleViewReconciliation}
                 locking={locking}
               />
             )}
@@ -466,7 +226,7 @@ export const WeeklyPlanningPage: React.FC = () => {
             <>
               This week has ended. Visit reconciliation to review your commitments.{' '}
               <Link
-                to={`/reconciliation?week=${encodeURIComponent(plan.weekStartDate)}`}
+                to={reconciliationPath(plan.weekStartDate)}
                 className={styles.staleLink}
               >
                 Go to Reconciliation
@@ -490,7 +250,7 @@ export const WeeklyPlanningPage: React.FC = () => {
               <strong>{statusLabel(priorWeekAttention.status)}</strong>. Carry-forward into this week
               cannot finish until that plan is reconciled.{' '}
               <Link
-                to={`/reconciliation?week=${encodeURIComponent(priorWeekAttention.weekStartDate)}`}
+                to={reconciliationPath(priorWeekAttention.weekStartDate)}
                 className={styles.priorWeekLink}
               >
                 Reconcile prior week
@@ -503,7 +263,7 @@ export const WeeklyPlanningPage: React.FC = () => {
       {showCarryForwardBanner && (
         <CarryForwardBanner
           carriedForwardCount={carriedForwardCount}
-          onDismiss={() => setBannerDismissed(true)}
+          onDismiss={dismissCarryForwardBanner}
         />
       )}
 
@@ -524,14 +284,9 @@ export const WeeklyPlanningPage: React.FC = () => {
           {commitments.length === 0 ? (
             <div className={styles.emptyMain}>
               <EmptyState
-                title="No commitments yet"
-                description={
-                  readOnly
-                    ? 'This plan has no commitments for this week.'
-                    : isDraft
-                      ? 'Use Add Commitment in the toolbar to link an outcome to this week.'
-                      : 'This week has no commitments yet.'
-                }
+                title={emptyStateTitle}
+                description={emptyStateDescription}
+                action={emptyStateAction}
               />
             </div>
           ) : (
@@ -559,7 +314,7 @@ export const WeeklyPlanningPage: React.FC = () => {
                 Your plan history
               </h2>
               <p className={styles.historyHint}>
-                Weeks where you already have a plan (last 52 weeks). Open or reconcile without creating empty weeks.
+                Weeks where you already have a plan (last 52 weeks). Click a row to open commitments, or jump straight to reconciliation.
               </p>
             </div>
             <Link to="/history" className={styles.historyRouteLink}>
@@ -588,25 +343,29 @@ export const WeeklyPlanningPage: React.FC = () => {
                   return (
                     <tr
                       key={row.id}
-                      className={isCurrent ? styles.historyRowCurrent : undefined}
+                      className={`${styles.historyRow} ${isCurrent ? styles.historyRowCurrent : ''}`}
+                      tabIndex={0}
+                      onClick={() => openCommitmentsWeek(row.weekStartDate)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          openCommitmentsWeek(row.weekStartDate);
+                        }
+                      }}
+                      data-testid={`history-row-${row.weekStartDate}`}
                     >
                       <td>{formatWeekSpan(row.weekStartDate)}</td>
                       <td>{statusLabel(row.status)}</td>
                       <td>{row.commitmentCount}</td>
                       <td>
                         <div className={styles.historyActions}>
-                          <Link
-                            className={styles.historyLink}
-                            to={`/commitments?week=${encodeURIComponent(row.weekStartDate)}`}
-                            aria-label={`Open commitments for week ${formatWeekSpan(row.weekStartDate)}`}
-                          >
-                            Open
-                          </Link>
                           {canReconcile && (
                             <Link
                               className={styles.historyLink}
-                              to={`/reconciliation?week=${encodeURIComponent(row.weekStartDate)}`}
+                              to={reconciliationPath(row.weekStartDate)}
                               aria-label={`Reconcile week ${formatWeekSpan(row.weekStartDate)}`}
+                              onClick={(event) => event.stopPropagation()}
+                              onKeyDown={(event) => event.stopPropagation()}
                             >
                               Reconcile
                             </Link>
@@ -627,7 +386,7 @@ export const WeeklyPlanningPage: React.FC = () => {
           mode={editingCommitment ? 'edit' : 'create'}
           commitment={editingCommitment ?? undefined}
           tree={tree}
-          searchOutcomes={(q) => api.rcdo.searchOutcomes(q)}
+          searchOutcomes={searchOutcomes}
           onSubmit={handleFormSubmit}
           onCancel={handleFormCancel}
         />
@@ -636,7 +395,7 @@ export const WeeklyPlanningPage: React.FC = () => {
       {toastError && (
         <ErrorToast
           message={toastError}
-          onDismiss={() => setToastError(null)}
+          onDismiss={dismissToastError}
         />
       )}
     </div>

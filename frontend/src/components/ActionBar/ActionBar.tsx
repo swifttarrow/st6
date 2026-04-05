@@ -7,6 +7,7 @@ interface ActionBarProps {
   onLock: () => void;
   onAddCommitment: () => void;
   onStartReconciliation: () => void;
+  onViewReconciliation: () => void;
   locking?: boolean;
 }
 
@@ -15,6 +16,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   onLock,
   onAddCommitment,
   onStartReconciliation,
+  onViewReconciliation,
   locking = false,
 }) => {
   return (
@@ -33,11 +35,18 @@ export const ActionBar: React.FC<ActionBarProps> = ({
       )}
       {planStatus === 'LOCKED' && (
         <button className={styles.buttonFilled} onClick={onStartReconciliation} type="button">
-          Begin Reconciliation
+          Start Reconciliation
         </button>
       )}
-      {(planStatus === 'RECONCILING' || planStatus === 'RECONCILED') && (
-        <span className={styles.linkButton}>View Reconciliation</span>
+      {planStatus === 'RECONCILING' && (
+        <button className={styles.linkButton} onClick={onViewReconciliation} type="button">
+          Continue Reconciliation
+        </button>
+      )}
+      {planStatus === 'RECONCILED' && (
+        <button className={styles.linkButton} onClick={onViewReconciliation} type="button">
+          View Reconciliation
+        </button>
       )}
     </div>
   );

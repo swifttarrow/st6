@@ -44,3 +44,8 @@
 .actionButton:hover {
   background: var(--color-red-dark);
 }
+
+.actionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

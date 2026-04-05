@@ -202,11 +202,26 @@ export const ReconciliationPage: React.FC = () => {
   }
 
   const isReconciled = plan.status === 'RECONCILED';
-  const allAnnotated = commitments.length > 0 && commitments.every((c) => c.actualStatus != null);
+  const allAnnotated = commitments.every((c) => c.actualStatus != null);
 
   const badge = getStatusBadge(plan.status);
   const title = formatWeekRange(plan.weekStartDate);
   const navDate = plan.weekStartDate;
+  const commitmentsPath = `/commitments?${commitmentsQuery(plan.weekStartDate)}`;
+  const emptyStateTitle = isReconciled ? 'No commitments were planned' : 'No commitments this week';
+  const emptyStateDescription = isReconciled
+    ? 'This week was already reconciled without any commitments.'
+    : 'There are no commitments to annotate for this week. Finish reconciliation to close out the empty week.';
+  const emptyStateAction = isReconciled
+    ? {
+        label: 'Back to Commitments',
+        onClick: () => navigate(commitmentsPath),
+      }
+    : {
+        label: submitting ? 'Finishing...' : 'Finish Empty Week',
+        onClick: handleSubmit,
+        disabled: submitting,
+      };
 
   return (
     <div className={styles.page}>
@@ -225,12 +240,9 @@ export const ReconciliationPage: React.FC = () => {
 
         {commitments.length === 0 ? (
           <EmptyState
-            title="No commitments to reconcile"
-            description="There are no commitments for this week. Go back to planning to add commitments."
-            action={{
-              label: 'Go to Planning',
-              onClick: () => navigate(`/commitments?${commitmentsQuery(plan.weekStartDate)}`),
-            }}
+            title={emptyStateTitle}
+            description={emptyStateDescription}
+            action={emptyStateAction}
           />
         ) : (
           <>

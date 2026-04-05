@@ -25,4 +25,16 @@ describe('EmptyState', () => {
     fireEvent.click(screen.getByTestId('empty-state-action'));
     expect(onClick).toHaveBeenCalledTimes(1);
   });
+
+  it('supports disabling the action button', () => {
+    render(
+      <EmptyState
+        title="T"
+        description="D"
+        action={{ label: 'Disabled', onClick: vi.fn(), disabled: true }}
+      />,
+    );
+
+    expect((screen.getByRole('button', { name: 'Disabled' }) as HTMLButtonElement).disabled).toBe(true);
+  });
 });

@@ -21,7 +21,7 @@ function effectiveWeekMonday(pathname: string, search: string): string {
 }
 
 const RECONCILIATION_DISABLED_TITLE =
-  'Reconciliation opens after you lock your week on Commitments (or if a plan exists for that week).';
+  'Reconciliation opens after you lock your week on Commitments.';
 
 export function useReconciliationNavAvailable(): {
   enabled: boolean;

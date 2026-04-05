@@ -7,6 +7,7 @@ interface EmptyStateProps {
   action?: {
     label: string;
     onClick: () => void;
+    disabled?: boolean;
   };
 }
 
@@ -31,6 +32,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           className={styles.actionButton}
           onClick={action.onClick}
           type="button"
+          disabled={action.disabled}
           data-testid="empty-state-action"
         >
           {action.label}
