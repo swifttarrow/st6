@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Load demo data into PostgreSQL (spring profile: prod in application.yml).
-# Seeds multiple users across several weeks; see header in seed.sql for user ids.
+# Load demo data into PostgreSQL (recommended local profile: local-postgres).
+# Seeds multiple users across several weeks (base + -b/-c tiers, expanded RCDO); see seed.sql header.
 # Requires: psql, migrations applied, database created.
 #
 # Env (optional): PGHOST PGPORT PGUSER PGDATABASE DB_PASSWORD
-# Defaults match application.yml prod datasource: localhost:5432, db wctdb, user wct.
+# Defaults match docker-compose.yml / application-local-postgres.yml: localhost:5432, db wctdb, user wct.
 
 set -euo pipefail
 
