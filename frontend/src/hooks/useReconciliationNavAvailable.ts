@@ -4,7 +4,7 @@ import { useApi } from '../context/ApiContext';
 import type { WeeklyPlan } from '../api/types';
 import { getMonday, getTodayDate } from '../utils/weekDates';
 
-/** Matches ReconciliationPage: LOCKED (will transition), RECONCILING, RECONCILED stay on page. */
+/** Matches ReconciliationPage: only an existing LOCKED/RECONCILING/RECONCILED plan enables the page. */
 function isPlanEligibleForReconciliationPage(plan: WeeklyPlan): boolean {
   if (plan.status === 'LOCKED') return true;
   if (plan.status === 'RECONCILING' || plan.status === 'RECONCILED') return true;
@@ -40,7 +40,7 @@ export function useReconciliationNavAvailable(): {
       setLoading(true);
       try {
         const date = effectiveWeekMonday(location.pathname, location.search);
-        const plan = await api.plans.getPlan(date);
+        const plan = await api.plans.getExistingPlan(date);
         if (!cancelled) {
           setEnabled(isPlanEligibleForReconciliationPage(plan));
         }

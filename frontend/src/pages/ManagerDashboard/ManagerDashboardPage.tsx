@@ -22,11 +22,11 @@ export const ManagerDashboardPage: React.FC = () => {
   const memberIds = useMemo(() => {
     const ids = searchParams.getAll('memberIds');
     if (ids.length > 0) return ids;
-    if (userContext.directReportIds && userContext.directReportIds.length > 0) {
+    if (userContext.role === 'MANAGER' && userContext.directReportIds && userContext.directReportIds.length > 0) {
       return userContext.directReportIds;
     }
     return [];
-  }, [searchParams, userContext.directReportIds]);
+  }, [searchParams, userContext.directReportIds, userContext.role]);
 
   const [currentDate, setCurrentDate] = useState(getTodayDate);
   const [data, setData] = useState<TeamOverviewResponse | null>(null);
@@ -48,8 +48,14 @@ export const ManagerDashboardPage: React.FC = () => {
   }, [api, memberIds]);
 
   useEffect(() => {
+    if (userContext.role === 'IC') {
+      return;
+    }
+    if (userContext.role === 'LEADERSHIP' && memberIds.length === 0) {
+      return;
+    }
     loadData(currentDate);
-  }, [loadData, currentDate]);
+  }, [currentDate, loadData, memberIds.length, userContext.role]);
 
   const handleWeekChange = useCallback((date: string) => {
     setCurrentDate(date);
@@ -77,6 +83,10 @@ export const ManagerDashboardPage: React.FC = () => {
   // Role guard: redirect IC users
   if (userContext.role === 'IC') {
     return <Navigate to="/commitments" replace />;
+  }
+
+  if (userContext.role === 'LEADERSHIP' && memberIds.length === 0) {
+    return <Navigate to="/leadership" replace />;
   }
 
   if (loading) {

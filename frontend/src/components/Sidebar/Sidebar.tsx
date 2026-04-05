@@ -19,6 +19,7 @@ interface NavItem {
   path: string;
   label: string;
   minRole?: UserRole;
+  visibleRoles?: UserRole[];
   icon: React.ReactNode;
 }
 
@@ -38,6 +39,7 @@ const NAV_ITEMS: NavItem[] = [
     path: '/team',
     label: 'Team Dashboard',
     minRole: 'MANAGER',
+    visibleRoles: ['MANAGER'],
     icon: <LayoutDashboard size={16} strokeWidth={1.75} />,
   },
   {
@@ -77,6 +79,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
   const roleLevel = ROLE_HIERARCHY[userRole];
 
   const visibleItems = NAV_ITEMS.filter((item) => {
+    if (item.visibleRoles) {
+      return item.visibleRoles.includes(userRole);
+    }
     if (!item.minRole) return true;
     return roleLevel >= ROLE_HIERARCHY[item.minRole];
   });

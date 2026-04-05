@@ -34,6 +34,12 @@ describe('createPlansApi', () => {
     expect(result).toEqual(mockPlan);
   });
 
+  it('getExistingPlan calls GET /api/plans/existing?date=...', async () => {
+    const api = createPlansApi(client);
+    await api.getExistingPlan('2026-03-30');
+    expect(client.get).toHaveBeenCalledWith('/api/plans/existing?date=2026-03-30');
+  });
+
   it('getPlanById calls GET /api/plans/{id}', async () => {
     const api = createPlansApi(client);
     await api.getPlanById('plan-123');

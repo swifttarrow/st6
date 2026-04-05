@@ -6,11 +6,12 @@ import { UserContextProvider } from '../context/UserContext';
 import { Sidebar } from '../components/Sidebar/Sidebar';
 
 /** Stable reference — useReconciliationNavAvailable depends on `api` in useEffect. */
-const { mockApi, mockGetPlan } = vi.hoisted(() => {
-  const mockGetPlanInner = vi.fn();
+const { mockApi, mockGetExistingPlan } = vi.hoisted(() => {
+  const mockGetExistingPlanInner = vi.fn();
   const api = {
     plans: {
-      getPlan: mockGetPlanInner,
+      getPlan: vi.fn(),
+      getExistingPlan: mockGetExistingPlanInner,
       getPlanById: vi.fn(),
       listMyPlans: vi.fn(),
       transitionPlan: vi.fn(),
@@ -28,7 +29,7 @@ const { mockApi, mockGetPlan } = vi.hoisted(() => {
       bulkReconcile: vi.fn(),
     },
   };
-  return { mockApi: api, mockGetPlan: mockGetPlanInner };
+  return { mockApi: api, mockGetExistingPlan: mockGetExistingPlanInner };
 });
 
 vi.mock('../context/ApiContext', () => ({
@@ -54,7 +55,7 @@ function renderSidebar(role: 'IC' | 'MANAGER' | 'LEADERSHIP') {
   );
 }
 
-/** Waits for reconciliation nav to finish loading (getPlan settled + React updated). */
+/** Waits for reconciliation nav to finish loading (existing-plan lookup settled + React updated). */
 async function waitForReconciliationNavEnabled() {
   await waitFor(() => {
     expect(screen.getByRole('link', { name: /Reconciliation/i })).toBeDefined();
@@ -63,8 +64,8 @@ async function waitForReconciliationNavEnabled() {
 
 describe('Sidebar', () => {
   beforeEach(() => {
-    mockGetPlan.mockReset();
-    mockGetPlan.mockResolvedValue(mockPlanReconciling);
+    mockGetExistingPlan.mockReset();
+    mockGetExistingPlan.mockResolvedValue(mockPlanReconciling);
   });
 
   it('shows only IC nav items for IC role', async () => {
@@ -85,10 +86,10 @@ describe('Sidebar', () => {
     expect(screen.queryByText('Leadership View')).toBeNull();
   });
 
-  it('shows all nav items for LEADERSHIP role', async () => {
+  it('shows leadership-only nav items without the manager dashboard shortcut', async () => {
     renderSidebar('LEADERSHIP');
     await waitForReconciliationNavEnabled();
-    expect(screen.getByText('Team Dashboard')).toBeDefined();
+    expect(screen.queryByText('Team Dashboard')).toBeNull();
     expect(screen.getByText('Leadership View')).toBeDefined();
     expect(screen.getByText('Executive rollup')).toBeDefined();
     expect(screen.getByText('RCDO Management')).toBeDefined();
@@ -101,7 +102,7 @@ describe('Sidebar', () => {
   });
 
   it('disables Reconciliation nav when plan is not eligible', async () => {
-    mockGetPlan.mockResolvedValue({ ...mockPlanReconciling, status: 'DRAFT' as const });
+    mockGetExistingPlan.mockResolvedValue({ ...mockPlanReconciling, status: 'DRAFT' as const });
     renderSidebar('IC');
 
     await waitFor(() => {

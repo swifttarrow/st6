@@ -76,6 +76,7 @@ const mockDirectReportIds = ['alice'];
 const mockApi = {
   plans: {
     getPlan: vi.fn().mockResolvedValue(mockPlan),
+    getExistingPlan: vi.fn(),
     getPlanById: vi.fn(),
     listMyPlans: vi.fn().mockResolvedValue([]),
     transitionPlan: vi.fn(),

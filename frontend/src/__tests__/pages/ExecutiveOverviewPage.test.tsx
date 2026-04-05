@@ -52,6 +52,7 @@ function buildExecutivePayload(overrides: Partial<ExecutiveOverviewResponse['foc
 const mockApi = {
   plans: {
     getPlan: vi.fn(),
+    getExistingPlan: vi.fn(),
     getPlanById: vi.fn(),
     listMyPlans: vi.fn(),
     transitionPlan: vi.fn(),

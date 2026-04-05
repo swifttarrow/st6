@@ -57,6 +57,7 @@ const mockOrgOverview = {
 const mockApi = {
   plans: {
     getPlan: vi.fn(),
+    getExistingPlan: vi.fn(),
     getPlanById: vi.fn(),
     transitionPlan: vi.fn(),
     unlockPlan: vi.fn(),

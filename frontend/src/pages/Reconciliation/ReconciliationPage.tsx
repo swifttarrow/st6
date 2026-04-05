@@ -98,10 +98,13 @@ export const ReconciliationPage: React.FC = () => {
       let fetchedPlan: WeeklyPlan;
 
       try {
-        fetchedPlan = await api.plans.getPlan(weekMonday);
-      } catch {
-        navigate(`/commitments?${commitmentsQuery(weekMonday)}`, { replace: true });
-        return;
+        fetchedPlan = await api.plans.getExistingPlan(weekMonday);
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) {
+          navigate(`/commitments?${commitmentsQuery(weekMonday)}`, { replace: true });
+          return;
+        }
+        throw err;
       }
 
       if (fetchedPlan.status === 'LOCKED') {

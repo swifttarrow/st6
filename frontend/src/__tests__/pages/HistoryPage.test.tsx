@@ -28,6 +28,7 @@ const mockHistory = [
 const mockApi = {
   plans: {
     getPlan: vi.fn(),
+    getExistingPlan: vi.fn(),
     getPlanById: vi.fn(),
     listMyPlans: vi.fn(),
     transitionPlan: vi.fn(),

@@ -142,6 +142,7 @@ const strategyTree = [
 const mockApi = {
   plans: {
     getPlan: vi.fn(),
+    getExistingPlan: vi.fn(),
     getPlanById: vi.fn(),
     listMyPlans: vi.fn(),
     transitionPlan: vi.fn(),
@@ -214,6 +215,7 @@ describe('AppRouter', () => {
     mockDirectReportIds = undefined;
 
     mockApi.plans.getPlan.mockResolvedValue(mockDraftPlan);
+    mockApi.plans.getExistingPlan.mockResolvedValue(mockDraftPlan);
     mockApi.plans.getPlanById.mockResolvedValue(mockDraftPlan);
     mockApi.plans.listMyPlans.mockResolvedValue(mockHistory);
     mockApi.plans.transitionPlan.mockResolvedValue(mockReconcilingPlan);
@@ -258,7 +260,7 @@ describe('AppRouter', () => {
   });
 
   it('renders reconciliation when plan is in RECONCILING status', async () => {
-    mockApi.plans.getPlan.mockResolvedValue(mockReconcilingPlan);
+    mockApi.plans.getExistingPlan.mockResolvedValue(mockReconcilingPlan);
 
     renderApp(['/reconciliation']);
 

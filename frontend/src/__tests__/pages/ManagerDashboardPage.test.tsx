@@ -85,6 +85,7 @@ const mockTeamOverview = {
 const mockApi = {
   plans: {
     getPlan: vi.fn(),
+    getExistingPlan: vi.fn(),
     getPlanById: vi.fn(),
     transitionPlan: vi.fn(),
     unlockPlan: vi.fn(),
@@ -303,6 +304,19 @@ describe('ManagerDashboardPage', () => {
 
     // IC role should not see the dashboard
     expect(screen.queryByTestId('manager-dashboard')).toBeNull();
+  });
+
+  it('redirects leadership users without explicit memberIds to /leadership', () => {
+    mockRole = 'LEADERSHIP';
+
+    render(
+      <MemoryRouter initialEntries={['/team']}>
+        <ManagerDashboardPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByTestId('manager-dashboard')).toBeNull();
+    expect(mockApi.dashboard.getTeamOverview).not.toHaveBeenCalled();
   });
 
   it('shows error state on API failure', async () => {

@@ -3,6 +3,7 @@ import { WeeklyPlan, PlanStatus, PlanTransition, MyPlanSummary } from './types';
 
 export interface PlansApi {
   getPlan(date: string): Promise<WeeklyPlan>;
+  getExistingPlan(date: string): Promise<WeeklyPlan>;
   getPlanById(planId: string): Promise<WeeklyPlan>;
   listMyPlans(from: string, to: string): Promise<MyPlanSummary[]>;
   transitionPlan(planId: string, targetStatus: PlanStatus): Promise<WeeklyPlan>;
@@ -15,6 +16,10 @@ export function createPlansApi(client: ApiClient): PlansApi {
     getPlan(date: string): Promise<WeeklyPlan> {
       const encoded = encodeURIComponent(date);
       return client.get<WeeklyPlan>(`/api/plans?date=${encoded}`);
+    },
+    getExistingPlan(date: string): Promise<WeeklyPlan> {
+      const encoded = encodeURIComponent(date);
+      return client.get<WeeklyPlan>(`/api/plans/existing?date=${encoded}`);
     },
     getPlanById(planId: string): Promise<WeeklyPlan> {
       return client.get<WeeklyPlan>(`/api/plans/${planId}`);

@@ -89,6 +89,7 @@ const mockCommitmentsAnnotated = [
 const mockApi = {
   plans: {
     getPlan: vi.fn(),
+    getExistingPlan: vi.fn(),
     getPlanById: vi.fn(),
     transitionPlan: vi.fn(),
     unlockPlan: vi.fn(),
@@ -126,7 +127,7 @@ describe('ReconciliationPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockClear();
-    mockApi.plans.getPlan.mockResolvedValue(mockPlanReconciling);
+    mockApi.plans.getExistingPlan.mockResolvedValue(mockPlanReconciling);
     mockApi.rcdo.getTree.mockResolvedValue(mockTree);
     mockApi.commitments.listCommitments.mockResolvedValue(mockCommitmentsPending);
   });
@@ -251,7 +252,7 @@ describe('ReconciliationPage', () => {
   });
 
   it('rehydrates reconciliation notes on reconciled plans', async () => {
-    mockApi.plans.getPlan.mockResolvedValue(mockPlanReconciled);
+    mockApi.plans.getExistingPlan.mockResolvedValue(mockPlanReconciled);
     mockApi.commitments.listCommitments.mockResolvedValue([
       {
         ...mockCommitmentsPending[0],
@@ -275,7 +276,7 @@ describe('ReconciliationPage', () => {
   });
 
   it('redirects to /commitments when plan is DRAFT', async () => {
-    mockApi.plans.getPlan.mockResolvedValue(mockPlanDraft);
+    mockApi.plans.getExistingPlan.mockResolvedValue(mockPlanDraft);
 
     render(
       <MemoryRouter {...routerOpts}>

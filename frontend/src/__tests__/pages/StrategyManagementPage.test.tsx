@@ -48,7 +48,7 @@ const mockApi = {
     archiveOutcome: vi.fn().mockResolvedValue({}),
     unarchiveOutcome: vi.fn().mockResolvedValue({}),
   },
-  plans: { getPlan: vi.fn(), getPlanById: vi.fn(), transitionPlan: vi.fn(), unlockPlan: vi.fn(), getTransitions: vi.fn() },
+  plans: { getPlan: vi.fn(), getExistingPlan: vi.fn(), getPlanById: vi.fn(), transitionPlan: vi.fn(), unlockPlan: vi.fn(), getTransitions: vi.fn() },
   commitments: { listCommitments: vi.fn(), createCommitment: vi.fn(), updateCommitment: vi.fn(), deleteCommitment: vi.fn(), reorderCommitments: vi.fn(), reconcileCommitment: vi.fn(), bulkReconcile: vi.fn() },
   dashboard: { getTeamOverview: vi.fn(), getOrgOverview: vi.fn() },
 };
