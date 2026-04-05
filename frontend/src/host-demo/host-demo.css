@@ -25,6 +25,10 @@ body {
     linear-gradient(180deg, #f5efe2 0%, #f8f5ef 46%, #f1ece5 100%);
 }
 
+body.host-demo-page {
+  min-height: 100dvh;
+}
+
 button,
 input,
 select,
@@ -33,7 +37,6 @@ textarea {
 }
 
 .host-demo-shell {
-  min-height: 100vh;
   padding: 28px;
 }
 
@@ -57,6 +60,7 @@ textarea {
   padding: 28px;
   background: var(--demo-surface);
   backdrop-filter: blur(22px);
+  align-self: start;
 }
 
 .host-demo-kicker {
@@ -76,7 +80,7 @@ textarea {
 }
 
 .host-demo-copy,
-.host-demo-meta,
+.host-demo-session-body .host-demo-meta,
 .host-demo-empty {
   color: var(--demo-muted);
   line-height: 1.6;
@@ -96,13 +100,13 @@ textarea {
 
 .host-demo-personas {
   display: grid;
-  gap: 12px;
-  margin: 0 0 24px;
+  gap: 8px;
+  margin: 0 0 18px;
 }
 
 .host-demo-persona {
   width: 100%;
-  padding: 16px 18px;
+  padding: 12px 16px;
   text-align: left;
   border: 1px solid var(--demo-border);
   border-radius: 20px;
@@ -116,8 +120,8 @@ textarea {
     background 160ms ease;
 }
 
-.host-demo-persona:hover,
-.host-demo-persona:focus-visible {
+.host-demo-persona:hover:not(:disabled),
+.host-demo-persona:focus-visible:not(:disabled) {
   transform: translateY(-1px);
   border-color: rgba(164, 76, 36, 0.36);
   box-shadow: 0 10px 26px rgba(164, 76, 36, 0.14);
@@ -129,83 +133,98 @@ textarea {
   background: linear-gradient(135deg, rgba(164, 76, 36, 0.14), rgba(255, 255, 255, 0.95));
 }
 
-.host-demo-persona-label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 700;
-}
-
-.host-demo-persona-meta {
-  display: block;
-  color: var(--demo-muted);
-  font-size: 0.95rem;
-  line-height: 1.45;
-}
-
-.host-demo-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 22px;
-}
-
-.host-demo-button {
-  border: 0;
-  border-radius: 999px;
-  padding: 12px 18px;
-  background: #1d2733;
-  color: white;
-  cursor: pointer;
-  transition:
-    transform 160ms ease,
-    opacity 160ms ease,
-    box-shadow 160ms ease;
-}
-
-.host-demo-button:hover,
-.host-demo-button:focus-visible {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(29, 39, 51, 0.18);
-  outline: none;
-}
-
-.host-demo-button:disabled {
+.host-demo-persona:disabled {
   cursor: wait;
   opacity: 0.72;
   transform: none;
   box-shadow: none;
 }
 
-.host-demo-button.is-secondary {
-  background: rgba(29, 39, 51, 0.08);
+.host-demo-persona-label {
+  display: block;
+  font-weight: 700;
+}
+
+.host-demo-session-details {
+  margin: 0 0 18px;
+  border: 1px solid var(--demo-border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.74);
+  overflow: hidden;
+}
+
+.host-demo-session-summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: normal;
+}
+
+.host-demo-session-summary::-webkit-details-marker {
+  display: none;
+}
+
+.host-demo-session-summary::marker {
+  content: '';
+}
+
+.host-demo-session-summary-label {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
   color: var(--demo-ink);
 }
 
 .host-demo-status {
-  margin: 0 0 18px;
-  padding: 14px 16px;
-  border: 1px solid var(--demo-border);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.74);
+  margin: 0 0 12px;
   color: var(--demo-muted);
   line-height: 1.5;
 }
 
+.host-demo-session-details.is-error .host-demo-status,
 .host-demo-status.is-error {
-  border-color: rgba(148, 47, 47, 0.25);
-  background: rgba(148, 47, 47, 0.08);
   color: #7d2f2f;
 }
 
-.host-demo-meta {
-  margin: 0 0 18px;
+.host-demo-session-details.is-error {
+  border-color: rgba(148, 47, 47, 0.25);
+  background: rgba(148, 47, 47, 0.08);
+}
+
+.host-demo-session-chevron {
+  flex-shrink: 0;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: 0.35rem;
+  border-right: 2px solid var(--demo-muted);
+  border-bottom: 2px solid var(--demo-muted);
+  transform: rotate(45deg);
+  transition: transform 160ms ease;
+}
+
+.host-demo-session-details[open] .host-demo-session-chevron {
+  transform: rotate(225deg);
+  margin-top: 0.55rem;
+}
+
+.host-demo-session-body {
+  padding: 14px 16px 16px;
+  border-top: 1px solid var(--demo-border);
+}
+
+.host-demo-session-body .host-demo-meta {
+  margin: 0 0 14px;
   font-size: 0.95rem;
 }
 
-.host-demo-json {
+.host-demo-session-body .host-demo-json {
   margin: 0;
   padding: 16px;
-  border-radius: 18px;
+  border-radius: 14px;
   background: #18212c;
   color: #edf4fb;
   overflow: auto;
@@ -241,24 +260,103 @@ textarea {
 }
 
 .host-demo-stage-body {
-  min-height: calc(100vh - 112px);
   padding: 22px;
 }
 
 .host-demo-module {
-  min-height: calc(100vh - 156px);
+  min-height: min(520px, 62vh);
   border-radius: 24px;
-  overflow: hidden;
+  overflow: auto;
   background: white;
   border: 1px solid rgba(29, 39, 51, 0.08);
 }
 
 .host-demo-empty {
   display: grid;
-  min-height: calc(100vh - 156px);
+  min-height: min(480px, 58vh);
   place-items: center;
   text-align: center;
   padding: 32px;
+}
+
+/* Desktop: one screen, no page scroll — scroll inside sidebar or module only */
+@media (min-width: 1101px) {
+  html.host-demo-page,
+  body.host-demo-page {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  #host-demo {
+    height: 100%;
+  }
+
+  .host-demo-shell {
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .host-demo-layout {
+    flex: 1;
+    min-height: 0;
+    grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .host-demo-sidebar {
+    position: static;
+    top: auto;
+    min-height: 0;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    align-self: stretch;
+  }
+
+  .host-demo-stage {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .host-demo-stage-bar {
+    flex-shrink: 0;
+  }
+
+  .host-demo-stage-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .host-demo-module {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+  }
+
+  .host-demo-module > * {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+  }
+
+  .host-demo-empty {
+    flex: 1;
+    min-height: 0;
+    box-sizing: border-box;
+  }
 }
 
 .host-demo-empty-card {

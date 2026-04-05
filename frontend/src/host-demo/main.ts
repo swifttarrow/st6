@@ -6,7 +6,6 @@ type PersonaKey = 'ic' | 'manager' | 'leadership';
 interface PersonaCard {
   key: PersonaKey;
   label: string;
-  summary: string;
 }
 
 interface DemoHostContextResponse extends HostContext {
@@ -17,21 +16,9 @@ interface DemoHostContextResponse extends HostContext {
 }
 
 const PERSONAS: PersonaCard[] = [
-  {
-    key: 'manager',
-    label: 'Morgan (Manager)',
-    summary: 'Direct-report scope comes from the host session, not from a local login form inside the module.',
-  },
-  {
-    key: 'ic',
-    label: 'Alice (IC)',
-    summary: 'A contributor session mounted with a user token and routed straight into the weekly workflow.',
-  },
-  {
-    key: 'leadership',
-    label: 'Lee (Leadership)',
-    summary: 'An org-level session showing that the same remote can mount under a different host-owned identity.',
-  },
+  { key: 'ic', label: 'Alice (IC)' },
+  { key: 'manager', label: 'Morgan (Manager)' },
+  { key: 'leadership', label: 'Lee (Leadership)' },
 ];
 
 const rootElement = document.getElementById('host-demo');
@@ -64,28 +51,25 @@ root.innerHTML = `
           <div class="host-demo-personas" data-personas></div>
         </section>
 
-        <div class="host-demo-actions">
-          <button type="button" class="host-demo-button" data-load>
-            Load selected session
-          </button>
-          <button type="button" class="host-demo-button is-secondary" data-unmount>
-            Unmount module
-          </button>
-        </div>
-
-        <p class="host-demo-status" data-status>
-          Waiting for a host session. Start the backend with <code>APP_DEMO_HOST_ENABLED=true</code> and an
-          <code>APP_AUTH_HMAC_SECRET</code>, then load a persona.
-        </p>
-
-        <p class="host-demo-meta" data-meta>
-          The host fetches <code>/demo-host/context</code>, receives a JWT-backed context, and mounts the remote in a
-          memory router so the host shell keeps control of the top-level URL.
-        </p>
-
-        <pre class="host-demo-json" data-context>{
+        <details class="host-demo-session-details" data-session-details open>
+          <summary class="host-demo-session-summary">
+            <span class="host-demo-session-summary-label">See more details</span>
+            <span class="host-demo-session-chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="host-demo-session-body">
+            <p class="host-demo-status" data-status>
+              Waiting for a host session. Start the backend with APP_DEMO_HOST_ENABLED=true and APP_AUTH_HMAC_SECRET,
+              then select a persona above.
+            </p>
+            <p class="host-demo-meta" data-meta>
+              The host fetches <code>/demo-host/context</code>, receives a JWT-backed context, and mounts the remote in a
+              memory router so the host shell keeps control of the top-level URL.
+            </p>
+            <pre class="host-demo-json" data-context>{
   "hostContext": null
 }</pre>
+          </div>
+        </details>
       </aside>
 
       <section class="host-demo-stage" aria-labelledby="stage-title">
@@ -93,7 +77,7 @@ root.innerHTML = `
           <div>
             <h2 id="stage-title" class="host-demo-stage-title">Mounted Weekly Commitment Tracker</h2>
             <p class="host-demo-stage-subtitle" data-stage-subtitle>
-              No remote is mounted yet. Load a host session to boot the module.
+              No remote is mounted yet. Select a host session to boot the module.
             </p>
           </div>
         </div>
@@ -117,15 +101,14 @@ root.innerHTML = `
 `;
 
 const personasContainer = requiredElement<HTMLElement>('[data-personas]');
-const loadButton = requiredElement<HTMLButtonElement>('[data-load]');
-const unmountButton = requiredElement<HTMLButtonElement>('[data-unmount]');
+const sessionDetails = requiredElement<HTMLDetailsElement>('[data-session-details]');
 const statusElement = requiredElement<HTMLElement>('[data-status]');
 const metaElement = requiredElement<HTMLElement>('[data-meta]');
 const contextElement = requiredElement<HTMLElement>('[data-context]');
 const stageSubtitleElement = requiredElement<HTMLElement>('[data-stage-subtitle]');
 const moduleRoot = requiredElement<HTMLElement>('[data-module-root]');
 
-let currentPersona: PersonaKey = 'manager';
+let currentPersona: PersonaKey = 'ic';
 let mountedContext: DemoHostContextResponse | null = null;
 let loading = false;
 
@@ -137,13 +120,14 @@ function renderPersonaButtons(): void {
     button.type = 'button';
     button.className = `host-demo-persona${persona.key === currentPersona ? ' is-active' : ''}`;
     button.dataset.persona = persona.key;
-    button.innerHTML = `
-      <span class="host-demo-persona-label">${persona.label}</span>
-      <span class="host-demo-persona-meta">${persona.summary}</span>
-    `;
+    button.innerHTML = `<span class="host-demo-persona-label">${persona.label}</span>`;
+    button.disabled = loading;
     button.addEventListener('click', () => {
+      if (loading) return;
+      if (mountedContext?.persona === persona.key && currentPersona === persona.key) return;
       currentPersona = persona.key;
       renderPersonaButtons();
+      void loadPersona(persona.key);
     });
     personasContainer.appendChild(button);
   }
@@ -151,13 +135,12 @@ function renderPersonaButtons(): void {
 
 function setLoading(nextValue: boolean): void {
   loading = nextValue;
-  loadButton.disabled = nextValue;
-  unmountButton.disabled = nextValue;
-  loadButton.textContent = nextValue ? 'Requesting host context...' : 'Load selected session';
+  renderPersonaButtons();
 }
 
 function renderUnmountedState(): void {
-  stageSubtitleElement.textContent = 'No remote is mounted yet. Load a host session to boot the module.';
+  unmount();
+  stageSubtitleElement.textContent = 'No remote is mounted yet. Select a host session to boot the module.';
   moduleRoot.innerHTML = `
     <div class="host-demo-empty">
       <div class="host-demo-empty-card">
@@ -205,16 +188,10 @@ function renderContextPreview(context: DemoHostContextResponse | null): void {
 function setStatus(message: string, tone: 'default' | 'error' = 'default'): void {
   statusElement.textContent = message;
   statusElement.classList.toggle('is-error', tone === 'error');
-}
-
-function unmountModule(): void {
-  unmount();
-  mountedContext = null;
-  renderContextPreview(null);
-  metaElement.textContent =
-    'The host fetches /demo-host/context, receives a JWT-backed context, and mounts the remote in a memory router so the host shell keeps control of the top-level URL.';
-  renderUnmountedState();
-  setStatus('The remote has been unmounted. Choose a persona to mount a fresh host session.');
+  sessionDetails.classList.toggle('is-error', tone === 'error');
+  if (tone === 'error') {
+    sessionDetails.open = true;
+  }
 }
 
 async function loadPersona(persona: PersonaKey): Promise<void> {
@@ -236,7 +213,6 @@ async function loadPersona(persona: PersonaKey): Promise<void> {
     const context = (await response.json()) as DemoHostContextResponse;
     mountedContext = context;
 
-    moduleRoot.innerHTML = '';
     mount(
       moduleRoot,
       {
@@ -259,6 +235,7 @@ async function loadPersona(persona: PersonaKey): Promise<void> {
     stageSubtitleElement.textContent = `Mounted as ${context.label} on ${context.defaultRoute}. Use the module navigation to explore without leaving the host shell.`;
     metaElement.textContent = `${context.summary} The host shell requested the token, chose the initial route, and passed the final context into mount(...).`;
     setStatus(`Mounted ${context.label}. The backend still validates the JWT before any /api request succeeds.`);
+    sessionDetails.open = false;
   } catch (error) {
     renderUnmountedState();
     renderContextPreview(null);
@@ -271,14 +248,6 @@ async function loadPersona(persona: PersonaKey): Promise<void> {
     setLoading(false);
   }
 }
-
-loadButton.addEventListener('click', () => {
-  void loadPersona(currentPersona);
-});
-
-unmountButton.addEventListener('click', () => {
-  unmountModule();
-});
 
 renderPersonaButtons();
 renderUnmountedState();
